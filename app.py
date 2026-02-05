@@ -6,7 +6,15 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": False
+    }
+})
 
 def extract_pdf_data(file_path):
     """Extrait les données du PDF avec pdfplumber"""
@@ -163,7 +171,11 @@ def extract_pdf_data(file_path):
 def analyze_pdf():
     """Analyse les PDF envoyés"""
     if request.method == 'OPTIONS':
-        return '', 204
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response, 204
     
     if 'pdfs' not in request.files:
         return jsonify({'success': False, 'error': 'Aucun fichier envoyé'}), 400
@@ -225,7 +237,9 @@ def analyze_pdf():
 @app.route('/health', methods=['GET'])
 def health():
     """Health check"""
-    return jsonify({'status': 'healthy', 'version': '1.0.0'})
+    response = jsonify({'status': 'healthy', 'version': '1.0.0'})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
