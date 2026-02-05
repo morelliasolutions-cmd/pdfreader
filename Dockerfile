@@ -41,9 +41,9 @@ USER appuser
 # Exposer le port
 EXPOSE 5000
 
-# Health check
+# Health check (use PORT env variable)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" || exit 1
+    CMD sh -c "python -c 'import urllib.request, os; urllib.request.urlopen(\"http://localhost:%s/health\" % os.getenv(\'PORT\', \'5000\'))' || exit 1"
 
 # Commande de démarrage : utiliser gunicorn (2 workers) et binder à la variable d'environnement PORT
 # Exécuter via sh -c pour permettre l'expansion de ${PORT}
