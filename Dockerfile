@@ -45,5 +45,6 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" || exit 1
 
-# Commande de démarrage
-CMD ["python", "-u", "app.py"]
+# Commande de démarrage : utiliser gunicorn (2 workers) et binder à la variable d'environnement PORT
+# Exécuter via sh -c pour permettre l'expansion de ${PORT}
+CMD ["sh", "-c", "gunicorn -w 2 -b 0.0.0.0:${PORT} app:app"]
