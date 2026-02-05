@@ -76,8 +76,12 @@ def extract_pdf_data(file_path):
                                 sp_columns['3'] = col_idx
                             elif cell_upper == 'SP4':
                                 sp_columns['4'] = col_idx
-                            if 'Câble' in cell_str or 'Cable' in cell_str:
-                                cable_column_idx = col_idx
+                            # Supporter plusieurs langues/variantes pour l'en-tête "cable"
+                            # On évite de matcher "longueur" ou "länge"
+                            if cable_column_idx is None:
+                                # Detection plus souple: contient cabl ou kabel, mais pas longueur/länge/length
+                                if re.search(r'câbl|cabl|kabel', cell_str, re.IGNORECASE) and not re.search(r'long|läng|length', cell_str, re.IGNORECASE):
+                                    cable_column_idx = col_idx
                         if header_row_idx is not None and (sp_columns or cable_column_idx is not None):
                             break
                     
@@ -134,6 +138,21 @@ def extract_pdf_data(file_path):
             if cleaned_cables:
                 data['cable'] = " / ".join(cleaned_cables)
             
+            # Si une ligne de fibres n'a pas de `cable` mais des valeurs de fibre,
+            # tenter de remplir avec le câble détecté globalement ou le dernier connu.
+            if fibers_by_cable:
+                last_known = None
+                for row in fibers_by_cable:
+                    if row.get('cable'):
+                        last_known = row['cable']
+                    else:
+                        # Si on a un seul câble détecté globalement, l'utiliser
+                        if len(cleaned_cables) == 1:
+                            row['cable'] = cleaned_cables[0]
+                            last_known = row['cable']
+                        elif last_known:
+                            row['cable'] = last_known
+
             data['fibers_by_cable'] = fibers_by_cable
             
             # Fusionner les fibres (première valeur non nulle par colonne)
