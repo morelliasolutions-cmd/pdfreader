@@ -1262,17 +1262,17 @@
                     return;
                 }
 
-                const typeIntervention = document.getElementById('importTypeSelect')?.value || 'swisscom';
-                const mapped = mapRowsToMandats(rows, typeIntervention);
-                await importMandatsToSupabase(mapped);
+                // const typeIntervention = document.getElementById('importTypeSelect')?.value || 'swisscom';
+                const appointments = mapRowsToAppointments(rows);
+                await importAppointmentsToSupabase(appointments);
             } catch (error) {
                 console.error('Erreur import Excel/CSV:', error);
                 showErrorToast('Erreur lors de la lecture du fichier Excel/CSV.');
             }
         }
 
-        async function importMandatsToSupabase(mapped) {
-            if (!mapped || mapped.length === 0) {
+        async function importAppointmentsToSupabase(appointments) {
+            if (!appointments || appointments.length === 0) {
                 showErrorToast('Aucune ligne valide à importer.');
                 return;
             }
@@ -1282,22 +1282,40 @@
                 return;
             }
 
-            const batchSize = 200;
+            // Récupérer un employee_id par défaut (obligatoire pour appointments)
+            let defaultEmpId = null;
+            const { data: emp, error: empErr } = await window.supabase
+                .from('employees')
+                .select('id')
+                .limit(1)
+                .maybeSingle();
+            
+            if (emp) defaultEmpId = emp.id;
+            else console.warn('⚠️ Aucun employé trouvé pour assignation par défaut');
+
+            const batchSize = 100;
             let inserted = 0;
 
-            for (let i = 0; i < mapped.length; i += batchSize) {
-                const batch = mapped.slice(i, i + batchSize).map(row => {
-                    const clean = { ...row };
-                    delete clean.isImported;
-                    return clean;
+            for (let i = 0; i < appointments.length; i += batchSize) {
+                const batch = appointments.slice(i, i + batchSize).map(row => {
+                    return {
+                        ...row,
+                        employee_id: defaultEmpId, // FK obligatoire
+                        start_time: '08:00:00',
+                        end_time: '17:00:00',
+                        activity: 'Installation FTTH',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
                 });
 
                 const { error, data } = await window.supabase
-                    .from('mandats')
+                    .from('appointments')
                     .upsert(batch, { 
-                        onConflict: 'numero_mandat',
+                        onConflict: 'mandate_number',
                         ignoreDuplicates: false 
                     })
+                    .select('id');
                     .select('id');
 
                 if (error) {
@@ -1561,7 +1579,7 @@
             });
         }
 
-        function mapRowsToMandats(rows, typeIntervention) {
+        function mapRowsToAppointments(rows) {
             return rows.map(row => {
                 const normalized = normalizeRow(row);
                 const phoneFromColumns = getPhoneFromColumns(row, normalized);
@@ -1574,34 +1592,24 @@
                 const infoSe = getValue(normalized, ['info se', 'infose', 'info']);
                 const email = extractEmail(infoSe);
                 const dateIntervention = parseDate(getValue(normalized, ['app. start', 'app start', 'date', 'date intervention']));
-                const orderType = getValue(normalized, ['order type']);
                 const socketLabel = getValue(normalized, ['socket label']);
-                const bu = getValue(normalized, ['bu']);
-                const region = getValue(normalized, ['region']);
+                // const orderType = getValue(normalized, ['order type']);
+                // const bu = getValue(normalized, ['bu']);
 
-                const notes = [infoSe, orderType ? `Order Type: ${orderType}` : '', socketLabel ? `Socket: ${socketLabel}` : '', bu ? `BU: ${bu}` : '', region ? `Region: ${region}` : '']
-                    .filter(Boolean)
-                    .join(' | ');
+                // Adresse concaténée
+                const addressParts = [street, zip, city].filter(Boolean);
+                const fullAddress = addressParts.length > 0 ? addressParts.join(' ') : null;
 
                 return {
-                    numero_mandat: orderId || `IMPORT-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
-                    nom_client: fullName || 'Client',
-                    prenom_client: '',
-                    telephone: phone || '',
-                    email: email || '',
-                    adresse: street || '',
-                    npa: zip || '',
-                    ville: city || '',
-                    type_intervention: typeIntervention,
-                    date_intervention: dateIntervention || null,
-                    notes: notes,
-                    tu: bu || null,
-                    tu_valide: false,
-                    priorite: false,
-                    statut: 'en_attente',
-                    isImported: true
+                    mandate_number: orderId, // CLE UNIQUE
+                    client_name: fullName || 'Client Inconnu',
+                    phone: phone || null,
+                    email: email || null,
+                    address: fullAddress,
+                    date: dateIntervention || null, // Format YYYY-MM-DD
+                    pto_reference: socketLabel || null
                 };
-            }).filter(m => m.numero_mandat);
+            }).filter(m => m.mandate_number);
         }
 
         function normalizeRow(row) {
