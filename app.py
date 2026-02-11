@@ -13,7 +13,7 @@ CORS(app, origins="*", methods=["GET", "POST", "OPTIONS"], allow_headers=["Conte
 
 # Configuration du modèle IA
 OLLAMA_API_URL = "https://agtelecom-ollama.yhmr4j.easypanel.host/api/generate"
-OLLAMA_MODEL = "qwen2.5:3b"
+OLLAMA_MODEL = "qwen2.5:1.5b"
 
 def extract_pdf_data(file_path):
     """Extrait les données du PDF avec pdfplumber (extraction traditionnelle renforcée)"""
@@ -229,8 +229,10 @@ def extract_pdf_data(file_path):
 
 
 def extract_with_ai(full_text, file_name):
-    """Extrait les données du PDF en utilisant le modèle IA Qwen2.5:3b"""
+    """Extrait les données du PDF en utilisant le modèle IA Qwen2.5:1.5b"""
     try:
+        print(f"🤖 Début extraction IA pour: {file_name}")
+        
         # Préparer le prompt pour le modèle
         prompt = f"""Tu es un assistant d'extraction de données de mandats de fibre optique Swisscom. Analyse le texte suivant et extrait les informations structurées.
 
@@ -252,6 +254,8 @@ Instructions:
 
 Réponds UNIQUEMENT avec le JSON, sans texte supplémentaire."""
 
+        print(f"🔄 Appel API Ollama ({OLLAMA_MODEL})...")
+        
         # Appeler l'API Ollama
         response = requests.post(
             OLLAMA_API_URL,
@@ -265,19 +269,28 @@ Réponds UNIQUEMENT avec le JSON, sans texte supplémentaire."""
                     "num_predict": 500
                 }
             },
-            timeout=30
+            timeout=60
         )
         
         if response.status_code != 200:
-            print(f"Erreur API Ollama: {response.status_code}")
+            print(f"❌ Erreur API Ollama: {response.status_code} - {response.text}")
             return None
         
         result = response.json()
+        duration = result.get('total_duration', 0) / 1e9
+        print(f"⏱️ Durée traitement IA: {duration:.2f}s")
+        
         ai_response = result.get('response', '').strip()
+        print(f"📝 Réponse IA (premiers 200 car): {ai_response[:200]}...")
         
         # Extraire le JSON de la réponse
-        # Le modèle peut ajouter du texte avant/après le JSON
-        json_match = re.search(r'\{[^}]*\}', ai_response, re.DOTALL)
+        # Le modèle peut entourer le JSON avec ```json...``` ou ajouter du texte
+        # Nettoyer d'abord les blocs markdown
+        cleaned_response = re.sub(r'```json\s*', '', ai_response)
+        cleaned_response = re.sub(r'```\s*$', '', cleaned_response)
+        
+        # Chercher le JSON dans la réponse nettoyée
+        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', cleaned_response, re.DOTALL)
         if json_match:
             json_str = json_match.group(0)
             ai_data = json.loads(json_str)
@@ -288,22 +301,26 @@ Réponds UNIQUEMENT avec le JSON, sans texte supplémentaire."""
                 if value and value != "null" and value != "None":
                     cleaned_data[key] = value
             
+            print(f"✅ IA a extrait {len(cleaned_data)} champs: {list(cleaned_data.keys())}")
             return cleaned_data
         else:
-            print(f"Pas de JSON trouvé dans la réponse IA: {ai_response[:200]}")
+            print(f"⚠️ Pas de JSON trouvé dans la réponse IA: {ai_response[:200]}")
             return None
             
     except requests.Timeout:
-        print(f"Timeout lors de l'appel à l'API Ollama pour {file_name}")
+        print(f"⏱️ Timeout lors de l'appel à l'API Ollama pour {file_name}")
         return None
     except requests.RequestException as e:
-        print(f"Erreur réseau lors de l'appel à l'API Ollama: {e}")
+        print(f"🌐 Erreur réseau lors de l'appel à l'API Ollama: {e}")
         return None
     except json.JSONDecodeError as e:
-        print(f"Erreur parsing JSON de la réponse IA: {e}")
+        print(f"📄 Erreur parsing JSON de la réponse IA: {e}")
+        print(f"Réponse brute: {ai_response[:500]}")
         return None
     except Exception as e:
-        print(f"Erreur extraction IA: {e}")
+        print(f"❌ Erreur extraction IA: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
@@ -313,8 +330,10 @@ def merge_extractions(traditional_data, ai_data):
     
     if not ai_data:
         merged['ai_contribution'] = False
+        print("ℹ️ Aucune contribution IA (ai_data est None ou vide)")
         return merged
     
+    print(f"🔀 Fusion des données - IA a fourni: {list(ai_data.keys())}")
     ai_filled_fields = []
     
     # Liste des champs à fusionner
@@ -329,15 +348,20 @@ def merge_extractions(traditional_data, ai_data):
         if (not traditional_value or traditional_value == '') and ai_value:
             merged[field] = ai_value
             ai_filled_fields.append(field)
+            print(f"  ✅ IA complète '{field}': {ai_value}")
         # Si les deux ont trouvé quelque chose mais que c'est différent
         # On fait confiance à l'extraction traditionnelle mais on ajoute une note
         elif traditional_value and ai_value and str(traditional_value) != str(ai_value):
             # Pour certains champs critiques, on préfère l'extraction traditionnelle
             if field in ['mandate_number', 'socket_label']:
                 merged[f'{field}_ai_alternative'] = ai_value
+                print(f"  ℹ️ Conflit '{field}': traditionnel={traditional_value}, IA={ai_value} (garde traditionnel)")
     
     merged['ai_contribution'] = len(ai_filled_fields) > 0
     merged['ai_filled_fields'] = ai_filled_fields
+    
+    print(f"📊 Résultat fusion: {len(ai_filled_fields)} champs complétés par IA: {ai_filled_fields}")
+    print(f"   ai_contribution = {merged['ai_contribution']}")
     
     return merged
 
@@ -370,19 +394,37 @@ def analyze_pdf():
             temp_path = f'/tmp/{file.filename}'
             file.save(temp_path)
             
+            print(f"\n{'='*60}")
+            print(f"📄 Traitement: {file.filename}")
+            print(f"{'='*60}")
+            
             # EXTRACTION PARALLÈLE : Traditionnelle + IA
+            print("🚀 Lancement extraction parallèle (Traditionnelle + IA)...")
+            
             with ThreadPoolExecutor(max_workers=2) as executor:
-                # Lance les deux extractions en parallèle
+                # Lance l'extraction traditionnelle
+                print("  📝 Thread 1: Extraction traditionnelle...")
                 future_traditional = executor.submit(extract_pdf_data, temp_path)
                 
-                # On attendra le texte de l'extraction traditionnelle pour l'IA
+                # On attend le texte de l'extraction traditionnelle pour l'IA
                 traditional_data = future_traditional.result()
+                print(f"  ✅ Extraction traditionnelle terminée")
+                print(f"     Champs trouvés: {[k for k, v in traditional_data.items() if v and k != 'full_text']}")
+                
                 full_text = traditional_data.get('full_text', '')
                 
                 # Lance l'extraction IA avec le texte
+                print(f"  🤖 Thread 2: Extraction IA (texte: {len(full_text)} caractères)...")
                 future_ai = executor.submit(extract_with_ai, full_text, file.filename)
                 ai_data = future_ai.result()
+                
+                if ai_data:
+                    print(f"  ✅ Extraction IA terminée")
+                    print(f"     Champs trouvés: {list(ai_data.keys())}")
+                else:
+                    print(f"  ⚠️ Extraction IA n'a rien retourné")
             
+            print("\n🔀 Fusion des extractions...")
             # Fusionner les deux sources
             merged_data = merge_extractions(traditional_data, ai_data)
             
