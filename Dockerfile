@@ -46,5 +46,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD ["python", "-c", "import urllib.request,os; urllib.request.urlopen('http://localhost:%s/health' % os.getenv('PORT','5000'))"]
 
 # Commande de démarrage : utiliser gunicorn (2 workers) et binder à la variable d'environnement PORT
+# Timeout de 300s (5 minutes) pour permettre l'analyse de plusieurs PDFs avec IA
 # Exécuter via sh -c pour permettre l'expansion de ${PORT}
-CMD ["sh", "-c", "gunicorn -w 2 -b 0.0.0.0:${PORT} app:app"]
+CMD ["sh", "-c", "gunicorn -w 2 --timeout 300 -b 0.0.0.0:${PORT} app:app"]
