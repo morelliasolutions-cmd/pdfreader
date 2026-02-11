@@ -663,7 +663,7 @@
                     .from('appointments')
                     .select(`
                         *,
-                        employee:employees(id, nom, prenom)
+                        employee:employees(id, first_name, last_name)
                     `)
                     .order('created_at', { ascending: false });
                 
@@ -727,8 +727,8 @@
                         created_at: apt.created_at,
                         updated_at: apt.updated_at,
                         // Données supplémentaires pour l'affichage
-                        _employee_nom: apt.employee?.nom || '',
-                        _employee_prenom: apt.employee?.prenom || ''
+                        _employee_nom: apt.employee?.first_name || '',
+                        _employee_prenom: apt.employee?.last_name || ''
                     };
                 });
                 
