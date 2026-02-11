@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="theme-color" content="#ea2a33"/>
+    <link rel="manifest" href="./manifest.json"/>
+    <title>Mandats - ConnectFiber</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsrsasign@10.8.6/lib/jsrsasign-all-min.js" defer></script>
+    <script src="js/config.js?v=7" defer></script>
+    <script src="js/api.js?v=7" defer></script>
+    <script src="js/role-access-control.js?v=1" defer></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ea2a33",
+                        "primary-dark": "#c82229",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#211111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2a2a2a",
+                        "card-light": "#ffffff",
+                        "card-dark": "#2a1a1a",
+                        "text-dark": "#0f172a",
+                        "text-muted": "#64748b",
+                        "border-color": "#e2e8f0"
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Spline Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        
+        /* Styles pour les toasts de notification */
+        #successToast, #errorToast {
+            transform: translateX(400px);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        
+        #successToast.translate-x-0, #errorToast.translate-x-0 {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        #successToast.-translate-x-full, #errorToast.-translate-x-full {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        
+        /* Animation d'entrée */
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        /* Zones Drag & Drop */
+        .drop-zone {
+            border: 2px dashed #e2e8f0;
+            transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+        }
+        .drop-zone.drag-over {
+            border-color: #ea2a33;
+            background-color: rgba(234, 42, 51, 0.06);
+            transform: scale(1.01);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-dark dark:text-white h-screen flex overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="flex w-72 flex-col border-r border-border-color bg-surface-light dark:bg-surface-dark h-full hidden lg:flex shrink-0 transition-all duration-300">
+        <div class="flex flex-col h-full p-4 justify-between">
+            <div class="flex flex-col gap-8">
+                <div class="flex gap-3 items-center px-2">
+                    <div class="size-8 text-primary">
+                        <svg class="w-full h-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+                            <path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">ConnectFiber</h1>
+                        <p class="text-text-muted text-xs font-medium uppercase tracking-wider">Gestion Chantier</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a id="nav-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="dashboard.html">
+                        <span class="material-symbols-outlined text-2xl">dashboard</span>
+                        <span class="text-sm font-medium">Tableau de bord</span>
+                    </a>
+                    <a id="nav-pointage" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="pointage.html">
+                        <span class="material-symbols-outlined text-2xl">timer</span>
+                        <span class="text-sm font-medium">Pointage</span>
+                    </a>
+                    <a id="nav-production" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="production.html">
+                        <span class="material-symbols-outlined text-2xl">factory</span>
+                        <span class="text-sm font-medium">Production</span>
+                    </a>
+                    <a id="nav-personnel" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="personnel.html">
+                        <span class="material-symbols-outlined text-2xl">group</span>
+                        <span class="text-sm font-medium">Personnel</span>
+                    </a>
+                    <a id="nav-planning" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="planif.html">
+                        <span class="material-symbols-outlined text-2xl">calendar_month</span>
+                        <span class="text-sm font-medium">Planning</span>
+                    </a>
+                    <a id="nav-mandat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors bg-primary/10 text-primary" href="mandats.html">
+                        <span class="material-symbols-outlined text-2xl">assignment</span>
+                        <span class="text-sm font-bold">Mandat</span>
+                    </a>
+                    <a id="nav-inventaire" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="inventaire/inventaire.html" target="_blank">
+                        <span class="material-symbols-outlined text-2xl">inventory</span>
+                        <span class="text-sm font-medium">Inventaire</span>
+                    </a>
+                    <a id="nav-parametres" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="parametres.html">
+                        <span class="material-symbols-outlined text-2xl">settings</span>
+                        <span class="text-sm font-medium">Paramètres</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+    
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Header -->
+        <header class="bg-surface-light dark:bg-surface-dark border-b border-[#f4f0f0] dark:border-gray-800 sticky top-0 z-50 shrink-0">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3 lg:hidden">
+                        <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                        <span class="text-lg font-bold text-gray-900 dark:text-white">Veloxnumeric</span>
+                    </div>
+                    <div class="hidden lg:block"></div>
+                    <div class="flex items-center gap-4">
+                        <button class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors relative">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-gray-800"></span>
+                        </button>
+                        <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <p id="userName" class="text-sm font-bold leading-none"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 leading-none mt-1">Admin RH</p>
+                            </div>
+                            <button onclick="logout()" class="size-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                                <span class="material-symbols-outlined text-gray-600 dark:text-gray-300">logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+            <!-- Page Header -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tight text-gray-900 dark:text-white mb-2">Gestion des Mandats</h2>
+                    <p class="text-gray-500 dark:text-gray-400 max-w-2xl">Gérez les mandats clients, assignez les techniciens et suivez l'avancement des interventions.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="loadMandats(true)" class="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors" title="Rafraîchir les données">
+                        <span class="material-symbols-outlined text-lg">refresh</span>
+                    </button>
+                    <button onclick="exportMandatsToExcel()" class="flex items-center justify-center gap-2 bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-800 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors" title="Exporter en Excel">
+                        <span class="material-symbols-outlined text-lg">download</span>
+                        <span>Exporter Excel</span>
+                    </button>
+                    <button id="btn-add-mandat" onclick="openModal('addMandatModal')" class="flex items-center justify-center gap-2 bg-primary hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-xl">add</span>
+                        <span>Ajouter un mandat</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm mb-6 flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <div class="relative w-full lg:w-96">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="material-symbols-outlined text-gray-400">search</span>
+                    </div>
+                    <input id="searchInput" onkeyup="filterTable()" class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm" placeholder="Rechercher par numéro, nom, ville..." type="text"/>
+                </div>
+                <div class="flex items-center gap-2 w-full lg:w-auto flex-wrap">
+                    <select id="statutFilter" onchange="filterTable()" class="px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors">
+                        <option value="All">Tous les statuts</option>
+                        <option value="en_attente">En attente</option>
+                        <option value="assigne">Assigné</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="termine">Terminé</option>
+                        <option value="annule">Annulé</option>
+                    </select>
+                    <select id="typeFilter" onchange="filterTable()" class="px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors">
+                        <option value="All">Tous les types</option>
+                        <option value="swisscom">Swisscom</option>
+                        <option value="ftth_fr">FTTH FR</option>
+                        <option value="sig">SIG</option>
+                        <option value="rea">REA</option>
+                        <option value="smartmetering">Smart Metering</option>
+                    </select>
+                    <div class="h-6 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2"></div>
+                    <button onclick="resetFilters()" class="text-sm text-primary font-bold whitespace-nowrap hover:underline">Réinitialiser</button>
+                </div>
+            </div>
+
+            <!-- Import Zones -->
+            <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Type de mandat pour l'import</label>
+                        <select id="importTypeSelect" class="px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors">
+                            <option value="swisscom">Swisscom</option>
+                            <option value="ftth_fr">FTTH FR</option>
+                            <option value="sig">SIG</option>
+                            <option value="rea">REA</option>
+                            <option value="smartmetering">Smart Metering</option>
+                        </select>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Ce type sera appliqué à toutes les lignes importées.</p>
+                    </div>
+                    <div>
+                        <div id="pdfDropZone" class="drop-zone rounded-xl p-4 bg-white dark:bg-gray-900/30 flex items-center justify-between gap-4 cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-3xl text-primary">picture_as_pdf</span>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white">Analyser des PDF</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Glissez-déposez vos PDF de mandats</p>
+                                </div>
+                            </div>
+                            <span id="pdfDropHint" class="text-xs text-gray-400">Glisser-déposer ou cliquer</span>
+                            <input id="pdfInput" type="file" accept="application/pdf" multiple class="hidden" />
+                        </div>
+                        <!-- Résultats d'analyse PDF -->
+                        <div id="pdfAnalysisResults" class="hidden mt-4 space-y-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Résultats d'analyse</h4>
+                                <button onclick="closePdfAnalysis()" class="text-xs text-gray-500 hover:text-gray-700">Fermer</button>
+                            </div>
+                            <div id="pdfAnalysisContent" class="space-y-2"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div id="excelDropZone" class="drop-zone rounded-xl p-4 bg-white dark:bg-gray-900/30 flex items-center justify-between gap-4 cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-3xl text-primary">upload_file</span>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white">Importer Excel / CSV</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">.xlsx, .xls ou .csv</p>
+                                </div>
+                            </div>
+                            <span id="excelDropHint" class="text-xs text-gray-400">Glisser-déposer</span>
+                            <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mandats Table -->
+            <div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table id="mandatsTable" class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                        <thead class="bg-gray-50 dark:bg-gray-900/50">
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">N° Mandat</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Client</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Contact</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Adresse</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Type</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Date planifiée</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">Statut</th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" scope="col">TU</th>
+                                <th class="relative px-3 py-3" scope="col"><span class="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="mandatsTableBody" class="bg-white dark:bg-surface-dark divide-y divide-gray-200 dark:divide-gray-800">
+                            <tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Mandat Modal -->
+    <div id="addMandatModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeModal('addMandatModal')"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-surface-dark rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <form onsubmit="addMandat(event)">
+                    <div class="bg-white dark:bg-surface-dark px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Ajouter un mandat</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">N° Mandat *</label>
+                                <input type="text" name="numero_mandat" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Type d'intervention *</label>
+                                <select name="type_intervention" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                                    <option value="swisscom">Swisscom</option>
+                                    <option value="ftth_fr">FTTH FR</option>
+                                    <option value="sig">SIG</option>
+                                    <option value="rea">REA</option>
+                                    <option value="smartmetering">Smart Metering</option>
+                                </select>
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nom client *</label>
+                                <input type="text" name="nom_client" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prénom client</label>
+                                <input type="text" name="prenom_client" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Téléphone</label>
+                                <input type="tel" name="telephone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                                <input type="email" name="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Adresse *</label>
+                                <input type="text" name="adresse" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">NPA</label>
+                                <input type="text" name="npa" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ville</label>
+                                <input type="text" name="ville" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date intervention</label>
+                                <input type="date" name="date_intervention" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700">
+                            </div>
+                            <div class="col-span-1 flex items-center pt-6">
+                                <input type="checkbox" name="priorite" id="priorite" class="rounded border-gray-300 text-primary focus:ring-primary">
+                                <label for="priorite" class="ml-2 block text-sm text-gray-900 dark:text-white">Priorité urgente</label>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                                <textarea name="notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">Ajouter</button>
+                        <button type="button" onclick="closeModal('addMandatModal')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Notification Toast -->
+    <div id="successToast" class="fixed top-4 right-4 z-[9999] hidden -translate-x-full opacity-0">
+        <div class="bg-white dark:bg-surface-dark rounded-lg shadow-xl border border-green-200 dark:border-green-800 p-4 min-w-[320px] max-w-md">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">Succès</h4>
+                    <p id="successMessage" class="text-sm text-gray-600 dark:text-gray-400 mt-1"></p>
+                </div>
+                <button onclick="hideSuccessToast()" class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Notification Toast -->
+    <div id="errorToast" class="fixed top-4 right-4 z-[9999] hidden -translate-x-full opacity-0">
+        <div class="bg-white dark:bg-surface-dark rounded-lg shadow-xl border border-red-200 dark:border-red-800 p-4 min-w-[320px] max-w-md">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-red-600 dark:text-red-400">error</span>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">Erreur</h4>
+                    <p id="errorMessage" class="text-sm text-gray-600 dark:text-gray-400 mt-1"></p>
+                </div>
+                <button onclick="hideErrorToast()" class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Technicians Modal -->
+    <div id="assignTechniciansModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeModal('assignTechniciansModal')"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-surface-dark rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+                <div class="bg-white dark:bg-surface-dark px-4 pt-5 pb-4 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Assigner des techniciens</h3>
+                        <button onclick="closeModal('assignTechniciansModal')" class="text-gray-400 hover:text-gray-500">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Mandat: <span id="assignMandatNumber" class="font-bold text-primary"></span></p>
+                    
+                    <div id="techniciansList" class="space-y-2 max-h-96 overflow-y-auto">
+                        <!-- Will be filled dynamically -->
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button onclick="saveAssignedTechnicians()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">Valider</button>
+                    <button type="button" onclick="closeModal('assignTechniciansModal')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">Annuler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // currentUser est déjà déclaré dans role-access-control.js
+        // let currentUser = null; // ❌ Ne pas redéclarer !
+        let mandats = [];
+        let employees = [];
+        let currentMandatId = null;
+
+        let isChecking = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (isChecking) return;
+            isChecking = true;
+
+            setupImportZones();
+            
+            console.log('🔍 Mandats - Vérification authentification...');
+            
+            // Attendre que Supabase soit initialisé
+            let supabaseReady = false;
+            let attempts = 0;
+            while (!supabaseReady && attempts < 30) {
+                if (window.supabase && typeof window.supabase.from === 'function') {
+                    supabaseReady = true;
+                    console.log('✅ Supabase initialisé');
+                } else {
+                    console.log('⏳ Attente initialisation Supabase...', attempts);
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+            }
+            
+            if (!supabaseReady) {
+                console.error('❌ Supabase non initialisé après 3 secondes');
+                const tbody = document.getElementById('mandatsTableBody');
+                tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Erreur: Impossible d\'initialiser la connexion à la base de données</td></tr>';
+                return;
+            }
+            
+            if (!window.VeloxAPI) {
+                console.log('⏳ Attente VeloxAPI...');
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            try {
+                const session = await window.VeloxAPI.getSession();
+                console.log('✅ Session récupérée:', session?.user?.email);
+                
+                if (!session || !session.user) {
+                    console.warn('❌ Pas de session, redirection...');
+                    window.location.replace('index.html');
+                    return;
+                }
+                currentUser = session.user;
+                document.getElementById('userName').textContent = currentUser.email.split('@')[0];
+                
+                console.log('📋 Chargement des employés...');
+                await loadEmployees();
+                console.log('✅ Employés chargés:', employees.length);
+                
+                console.log('📋 Chargement des mandats...');
+                await loadMandats();
+                console.log('✅ Mandats chargés:', mandats.length);
+            } catch (error) {
+                console.error('❌ Erreur:', error);
+                window.location.replace('index.html');
+            }
+        });
+
+        async function logout() {
+            await window.VeloxAPI.signOut();
+            window.location.href = 'index.html';
+        }
+
+        async function loadEmployees() {
+            try {
+                employees = await window.VeloxAPI.getEmployees();
+                // Filter only technicians
+                employees = employees.filter(emp => emp.type === 'Technicien' && emp.status === 'Actif');
+            } catch (error) {
+                console.error('Erreur chargement employés:', error);
+            }
+        }
+
+        // Constantes pour le cache
+        const CACHE_KEY = 'veloxnumeric_mandats_cache';
+        const CACHE_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 1 mois en millisecondes
+
+        /**
+         * Récupère les mandats depuis le cache si valide
+         * @returns {Object|null} { data: [], timestamp: number } ou null si cache invalide
+         */
+        function getCachedMandats() {
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (!cached) {
+                    console.log('📦 Aucun cache trouvé');
+                    return null;
+                }
+
+                const cacheData = JSON.parse(cached);
+                const now = Date.now();
+                const cacheAge = now - cacheData.timestamp;
+
+                if (cacheAge > CACHE_DURATION_MS) {
+                    console.log('📦 Cache expiré (âge:', Math.round(cacheAge / (24 * 60 * 60 * 1000)), 'jours)');
+                    localStorage.removeItem(CACHE_KEY);
+                    return null;
+                }
+
+                const remainingDays = Math.round((CACHE_DURATION_MS - cacheAge) / (24 * 60 * 60 * 1000));
+                console.log('✅ Cache valide (reste', remainingDays, 'jours)');
+                return cacheData;
+            } catch (error) {
+                console.error('Erreur lecture cache:', error);
+                localStorage.removeItem(CACHE_KEY);
+                return null;
+            }
+        }
+
+        /**
+         * Sauvegarde les mandats dans le cache
+         * @param {Array} mandatsData - Les données des mandats à mettre en cache
+         */
+        function setCachedMandats(mandatsData) {
+            try {
+                const cacheData = {
+                    data: mandatsData,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+                console.log('💾 Cache mis à jour avec', mandatsData.length, 'mandats');
+            } catch (error) {
+                console.error('Erreur sauvegarde cache:', error);
+                // Si le localStorage est plein, on essaie de nettoyer d'anciens caches
+                try {
+                    const keys = Object.keys(localStorage);
+                    keys.forEach(key => {
+                        if (key.startsWith('veloxnumeric_') && key !== CACHE_KEY) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                    // Réessayer
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+                    console.log('💾 Cache mis à jour après nettoyage');
+                } catch (e) {
+                    console.warn('⚠️ Impossible de sauvegarder le cache:', e);
+                }
+            }
+        }
+
+        /**
+         * Invalide le cache des mandats
+         */
+        function invalidateMandatsCache() {
+            localStorage.removeItem(CACHE_KEY);
+            console.log('🗑️ Cache invalidé');
+        }
+
+        async function loadMandats(forceRefresh = false) {
+            try {
+                // Vérifier que Supabase est initialisé
+                if (!window.supabase) {
+                    console.error('Supabase non initialisé');
+                    const tbody = document.getElementById('mandatsTableBody');
+                    tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Erreur: Base de données non initialisée</td></tr>';
+                    return;
+                }
+
+                // Vérifier le cache si pas de refresh forcé
+                if (!forceRefresh) {
+                    const cached = getCachedMandats();
+                    if (cached && cached.data) {
+                        console.log('📦 Utilisation du cache:', cached.data.length, 'mandats');
+                        mandats = cached.data;
+                        await renderMandatsTable();
+                        
+                        // Charger en arrière-plan pour mettre à jour le cache
+                        loadMandatsFromSupabase(true);
+                        return;
+                    }
+                }
+
+                // Charger depuis Supabase
+                await loadMandatsFromSupabase(false);
+            } catch (error) {
+                console.error('Erreur chargement mandats:', error);
+                const tbody = document.getElementById('mandatsTableBody');
+                tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Erreur: ${error.message}</td></tr>`;
+            }
+        }
+
+        /**
+         * Charge les mandats depuis Supabase et met à jour le cache
+         * @param {boolean} silent - Si true, ne met pas à jour l'affichage (rechargement en arrière-plan)
+         */
+        async function loadMandatsFromSupabase(silent = false) {
+            try {
+                const { data, error } = await window.supabase
+                    .from('mandats')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    console.error('Erreur SQL:', error);
+                    throw error;
+                }
+                
+                console.log('📥 Mandats chargés depuis Supabase:', data?.length || 0);
+                mandats = data || [];
+                
+                // Mettre à jour le cache
+                setCachedMandats(mandats);
+                
+                // Mettre à jour l'affichage si ce n'est pas un rechargement silencieux
+                if (!silent) {
+                    await renderMandatsTable();
+                } else {
+                    console.log('🔄 Cache mis à jour en arrière-plan');
+                }
+            } catch (error) {
+                console.error('Erreur chargement depuis Supabase:', error);
+                if (!silent) {
+                    const tbody = document.getElementById('mandatsTableBody');
+                    tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Erreur: ${error.message}</td></tr>`;
+                }
+                throw error;
+            }
+        }
+
+        function setupImportZones() {
+            const excelZone = document.getElementById('excelDropZone');
+            const excelInput = document.getElementById('excelInput');
+            const pdfZone = document.getElementById('pdfDropZone');
+            const pdfInput = document.getElementById('pdfInput');
+
+            if (excelZone && excelInput) {
+                setupDropZone(excelZone, excelInput, handleExcelFiles);
+            }
+            if (pdfZone && pdfInput) {
+                setupDropZone(pdfZone, pdfInput, handlePdfFiles);
+            }
+        }
+
+        function setupDropZone(zoneEl, inputEl, onFiles) {
+            zoneEl.addEventListener('click', () => inputEl.click());
+            zoneEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zoneEl.classList.add('drag-over');
+            });
+            zoneEl.addEventListener('dragleave', () => zoneEl.classList.remove('drag-over'));
+            zoneEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zoneEl.classList.remove('drag-over');
+                if (e.dataTransfer?.files?.length) {
+                    onFiles(e.dataTransfer.files);
+                }
+            });
+            inputEl.addEventListener('change', () => {
+                if (inputEl.files?.length) {
+                    onFiles(inputEl.files);
+                }
+            });
+        }
+
+        // Configuration webhook n8n pour archivage OneDrive
+        const N8N_WEBHOOK_CONFIG = {
+            url: 'https://velox-n8n.yhmr4j.easypanel.host/webhook-test/b590df38-6d6b-47c6-9abc-5c4d554a6e00',
+            secret: 'mskZCfw8DgXAIkhr'
+        };
+
+        // Générer JWT pour authentification n8n
+        function generateJWT(secret) {
+            // Header
+            const header = {
+                alg: 'HS256',
+                typ: 'JWT'
+            };
+            
+            // Payload avec timestamp et expiration (5 min)
+            const payload = {
+                iat: Math.floor(Date.now() / 1000),
+                exp: Math.floor(Date.now() / 1000) + 300
+            };
+            
+            // Utiliser jsrsasign pour signer le JWT
+            if (typeof KJUR !== 'undefined') {
+                const sHeader = JSON.stringify(header);
+                const sPayload = JSON.stringify(payload);
+                return KJUR.jws.JWS.sign('HS256', sHeader, sPayload, secret);
+            } else {
+                console.warn('JWT lib non chargée, envoi sans auth');
+                return null;
+            }
+        }
+
+        // Archiver PDFs sur OneDrive via webhook n8n
+        async function archivePdfsToOneDrive(files, extractedResults) {
+            console.log('📤 [WEBHOOK] Début archivage de', files.length, 'PDF(s) vers OneDrive');
+            console.log('📤 [WEBHOOK] URL:', N8N_WEBHOOK_CONFIG.url);
+            
+            try {
+                // Générer JWT pour auth
+                const token = generateJWT(N8N_WEBHOOK_CONFIG.secret);
+                console.log('📤 [WEBHOOK] JWT généré:', token ? 'OUI ✅' : 'NON ❌');
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const result = extractedResults[i];
+                    
+                    console.log(`📤 [WEBHOOK] Traitement fichier ${i+1}/${files.length}:`, file.name);
+                    
+                    if (!result || !result.success) {
+                        console.warn('⚠️ [WEBHOOK] Skip archivage pour', file.name, '- extraction échouée');
+                        continue;
+                    }
+                    
+                    const metadata = {
+                        mandate_number: result.data?.mandate_number || 'unknown',
+                        original_filename: file.name,
+                        date: new Date().toISOString(),
+                        cable: result.data?.cable || null,
+                        socket_label: result.data?.socket_label || null,
+                        fibers: {
+                            fiber_1: result.data?.fiber_1 || null,
+                            fiber_2: result.data?.fiber_2 || null,
+                            fiber_3: result.data?.fiber_3 || null,
+                            fiber_4: result.data?.fiber_4 || null
+                        },
+                        phone: result.data?.phone || null,
+                        confidence: result.confidence || 0,
+                        type: 'swisscom_mandate'
+                    };
+                    
+                    // Générer nom de fichier pour OneDrive
+                    const date = new Date().toISOString().split('T')[0];
+                    const mandateNum = metadata.mandate_number;
+                    const newFilename = `${date}_${mandateNum}_swisscom.pdf`;
+                    
+                    // Préparer FormData
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('metadata', JSON.stringify(metadata));
+                    formData.append('new_filename', newFilename);
+                    
+                    // Envoyer vers webhook n8n
+                    const headers = {};
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
+                    console.log('📤 [WEBHOOK] Envoi vers n8n...');
+                    console.log('📤 [WEBHOOK] - Fichier:', newFilename);
+                    console.log('📤 [WEBHOOK] - Auth:', token ? 'Avec JWT' : 'SANS AUTH');
+                    
+                    const response = await fetch(N8N_WEBHOOK_CONFIG.url, {
+                        method: 'POST',
+                        headers: headers,
+                        body: formData
+                    });
+                    
+                    console.log('📤 [WEBHOOK] Réponse status:', response.status);
+                    const responseText = await response.text();
+                    console.log('📤 [WEBHOOK] Réponse body:', responseText);
+                    
+                    if (response.ok) {
+                        console.log('✅ [WEBHOOK] Archivé avec succès:', newFilename);
+                    } else {
+                        console.warn('⚠️ [WEBHOOK] Erreur archivage:', response.status, responseText);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ [WEBHOOK] Erreur archivage OneDrive:', error);
+                console.error('❌ [WEBHOOK] Stack:', error.stack);
+                // Ne pas bloquer le reste du traitement si l'archivage échoue
+            }
+            
+            console.log('📤 [WEBHOOK] Fin du processus d\'archivage');
+        }
+
+        async function handlePdfFiles(files) {
+            if (!files || files.length === 0) return;
+            
+            const hint = document.getElementById('pdfDropHint');
+            
+            if (hint) {
+                hint.textContent = `Analyse en cours de ${files.length} PDF (extraction double)...`;
+            }
+
+            try {
+                // Créer FormData pour envoyer les PDF
+                const formData = new FormData();
+                Array.from(files).forEach((file, index) => {
+                    formData.append('pdfs', file);
+                });
+
+                // Appeler l'API d'analyse PDF sur le VPS
+                const response = await fetch('https://velox-pdfswisscom.yhmr4j.easypanel.host/api/analyze-pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erreur serveur lors de l\'analyse');
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.results) {
+                    // Archiver les PDFs sur OneDrive via webhook n8n
+                    await archivePdfsToOneDrive(files, data.results);
+                    
+                    // Insérer/mettre à jour dans Supabase avec fusion intelligente
+                    const { createdCount, updatedCount } = await insertOrUpdateAppointmentsFromPdf(data.results);
+                    
+                    // Toast discret de confirmation
+                    showSuccessToast(`✅ ${data.count} mandats traités (${createdCount} créés, ${updatedCount} mis à jour)`);
+                    
+                    // Popup de résumé détaillé avec informations d'extraction IA
+                    const lowConfidenceFiles = data.results.filter(r => r.confidence < 1.0);
+                    const aiContributedFiles = data.results.filter(r => r.extraction_sources?.ai_contributed);
+                    
+                    let summaryMessage = `📊 Résumé du traitement\n\n`;
+                    summaryMessage += `✅ ${createdCount} mandat(s) créé(s)\n`;
+                    summaryMessage += `🔄 ${updatedCount} mandat(s) mis à jour\n`;
+                    summaryMessage += `📄 ${data.count} PDF analysé(s)\n`;
+                    summaryMessage += `🤖 ${aiContributedFiles.length} fichier(s) enrichi(s) par IA\n`;
+                    
+                    // Afficher les contributions IA
+                    if (aiContributedFiles.length > 0) {
+                        summaryMessage += `\n🤖 Contributions de l'IA :\n`;
+                        aiContributedFiles.forEach(r => {
+                            const fields = r.extraction_sources?.ai_fields || [];
+                            if (fields.length > 0) {
+                                summaryMessage += `• ${r.file_name}: ${fields.join(', ')}\n`;
+                            }
+                        });
+                    }
+                    
+                    if (lowConfidenceFiles.length > 0) {
+                        summaryMessage += `\n⚠️ ${lowConfidenceFiles.length} fichier(s) nécessitent une vérification :\n`;
+                        summaryMessage += lowConfidenceFiles.map(r => {
+                            const sources = r.extraction_sources;
+                            const sourceIcon = sources?.ai_contributed ? '🤖✓' : '📝';
+                            return `${sourceIcon} ${r.file_name} (${Math.round(r.confidence * 100)}%)`;
+                        }).join('\n');
+                    } else {
+                        summaryMessage += `\n✅ Tous les fichiers ont été traités avec succès`;
+                    }
+                    
+                    showWarningAlert(summaryMessage);
+                    
+                    if (hint) {
+                        const aiCount = aiContributedFiles.length;
+                        hint.textContent = `${data.count} PDF analysé(s) ✓${aiCount > 0 ? ` (${aiCount} enrichi(s) par IA 🤖)` : ''}`;
+                    }
+                    
+                    // Recharger la liste des mandats si la fonction existe
+                    if (typeof loadAppointments === 'function') {
+                        await loadAppointments();
+                    }
+                } else {
+                    throw new Error('Aucun résultat d\'analyse');
+                }
+            } catch (error) {
+                console.error('Erreur analyse PDF:', error);
+                if (hint) {
+                    hint.textContent = 'Erreur d\'analyse';
+                }
+                showErrorToast('Impossible d\'analyser les PDF. Vérifiez la connexion au serveur.');
+            }
+        }
+
+        function showWarningAlert(message) {
+            // Alerte modale simple pour résumé ou fichiers à vérifier
+            const alertHtml = `
+                <div id="warningAlertModal" class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+                    <div class="flex items-center justify-center min-h-screen p-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+                            <div class="flex items-start gap-3 mb-4">
+                                <span class="material-symbols-outlined text-primary text-3xl">info</span>
+                                <div>
+                                    <h3 class="text-lg font-bold mb-2">Résumé du traitement</h3>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">${message}</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button onclick="document.getElementById('warningAlertModal').remove()" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark">
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', alertHtml);
+        }
+        
+        async function insertOrUpdateAppointmentsFromPdf(results) {
+            let createdCount = 0;
+            let updatedCount = 0;
+            let errorCount = 0;
+
+            console.log('📋 Traitement de', results.length, 'résultat(s) PDF');
+
+            for (const result of results) {
+                console.log('--- Traitement fichier:', result.file_name);
+                
+                // Log des sources d'extraction
+                if (result.extraction_sources) {
+                    console.log('🔍 Sources:', 
+                        'Traditionnel:', result.extraction_sources.traditional,
+                        'IA:', result.extraction_sources.ai,
+                        'IA contribution:', result.extraction_sources.ai_contributed,
+                        'Champs IA:', result.extraction_sources.ai_fields
+                    );
+                }
+                
+                if (!result.success) {
+                    console.warn('⚠️ Fichier non traité (échec analyse):', result.file_name);
+                    errorCount++;
+                    continue;
+                }
+                
+                if (!result.data) {
+                    console.warn('⚠️ Pas de données dans le résultat:', result.file_name);
+                    errorCount++;
+                    continue;
+                }
+                
+                const pdfData = result.data;
+                console.log('📄 Données extraites:', pdfData);
+                
+                const mandateNumber = pdfData.mandate_number;
+                
+                if (!mandateNumber) {
+                    console.warn('⚠️ Pas de numéro de mandat trouvé dans:', result.file_name);
+                    errorCount++;
+                    continue;
+                }
+
+                console.log('🔍 Recherche du mandat:', mandateNumber);
+
+                // Vérifier si un appointment existe déjà avec ce mandate_number
+                const { data: existing, error: searchError } = await supabase
+                    .from('appointments')
+                    .select('id, phone, address, client_name')
+                    .eq('mandate_number', mandateNumber)
+                    .maybeSingle();
+
+                if (searchError && searchError.code !== 'PGRST116') {
+                    console.error('❌ Erreur recherche appointment:', searchError);
+                    errorCount++;
+                    continue;
+                }
+
+                console.log('Résultat recherche:', existing ? `Trouvé (ID: ${existing.id})` : 'Non trouvé');
+
+                // Données techniques du PDF (toujours mises à jour)
+                const technicalData = {
+                    mandate_number: mandateNumber,
+                    pto_reference: pdfData.socket_label || null,
+                    cable_alim: pdfData.cable || null,
+                    fibre_1: pdfData.fiber_1 || null,
+                    fibre_2: pdfData.fiber_2 || null,
+                    fibre_3: pdfData.fiber_3 || null,
+                    fibre_4: pdfData.fiber_4 || null,
+                    updated_at: new Date().toISOString()
+                };
+
+                console.log('💾 Données à sauvegarder:', technicalData);
+
+                if (existing) {
+                    // UPDATE : préserver les valeurs existantes (phone, address, client_name)
+                    // On ne les remplace QUE si elles sont vides/nulles
+                    if (pdfData.phone && (!existing.phone || existing.phone.trim() === '')) {
+                        technicalData.phone = pdfData.phone;
+                        console.log('📞 Ajout téléphone:', pdfData.phone);
+                    }
+                    
+                    if (pdfData.address && (!existing.address || existing.address.trim() === '' || existing.address === 'À compléter')) {
+                        technicalData.address = pdfData.address;
+                        console.log('📍 Ajout adresse (IA):', pdfData.address);
+                    }
+                    
+                    if (pdfData.client_name && (!existing.client_name || existing.client_name.startsWith('Client '))) {
+                        technicalData.client_name = pdfData.client_name;
+                        console.log('👤 Ajout nom client (IA):', pdfData.client_name);
+                    }
+
+                    console.log('🔄 Mise à jour appointment ID:', existing.id);
+                    const { error } = await supabase
+                        .from('appointments')
+                        .update(technicalData)
+                        .eq('id', existing.id);
+
+                    if (error) {
+                        console.error('❌ Erreur mise à jour appointment:', error);
+                        errorCount++;
+                    } else {
+                        updatedCount++;
+                        console.log('✅ Appointment mis à jour:', mandateNumber);
+                    }
+                } else {
+                    // INSERT : nouveau mandat - récupérer un employee_id par défaut
+                    console.log('➕ Création nouveau appointment - récupération employee_id...');
+                    
+                    // Récupérer le premier employé disponible
+                    const { data: employees, error: empError } = await supabase
+                        .from('employees')
+                        .select('id')
+                        .limit(1)
+                        .single();
+                    
+                    if (empError || !employees) {
+                        console.error('❌ Impossible de récupérer un employee_id:', empError);
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    // Ajouter les champs obligatoires avec valeurs par défaut ou données IA
+                    if (pdfData.phone) technicalData.phone = pdfData.phone;
+                    
+                    technicalData.employee_id = employees.id;
+                    technicalData.date = new Date().toISOString().split('T')[0]; // Date du jour
+                    technicalData.start_time = '08:00:00'; // Heure début par défaut
+                    technicalData.end_time = '17:00:00'; // Heure fin par défaut
+                    technicalData.activity = 'Installation FTTH'; // Activité par défaut
+                    
+                    // Utiliser les données IA si disponibles, sinon valeurs par défaut
+                    technicalData.address = pdfData.address || 'À compléter';
+                    technicalData.client_name = pdfData.client_name || ('Client ' + mandateNumber);
+                    
+                    if (pdfData.address) {
+                        console.log('📍 Utilisation adresse IA:', pdfData.address);
+                    }
+                    if (pdfData.client_name) {
+                        console.log('👤 Utilisation nom client IA:', pdfData.client_name);
+                    }
+                    
+                    console.log('💾 Données INSERT complètes:', technicalData);
+
+                    const { data: inserted, error } = await supabase
+                        .from('appointments')
+                        .insert([technicalData])
+                        .select();
+
+                    if (error) {
+                        console.error('❌ Erreur création appointment:', error);
+                        errorCount++;
+                    } else {
+                        createdCount++;
+                        console.log('✅ Appointment créé:', mandateNumber, inserted);
+                    }
+                }
+            }
+
+            console.log(`📊 Résumé: ${createdCount} créés, ${updatedCount} mis à jour, ${errorCount} erreurs`);
+            return { createdCount, updatedCount };
+        }
+
+        async function handleExcelFiles(files) {
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            const hint = document.getElementById('excelDropHint');
+            if (hint) {
+                hint.textContent = file.name;
+            }
+
+            try {
+                const rows = await parseExcelOrCsv(file);
+                if (!rows || rows.length === 0) {
+                    showErrorToast('Aucune ligne trouvée dans le fichier.');
+                    return;
+                }
+
+                const typeIntervention = document.getElementById('importTypeSelect')?.value || 'swisscom';
+                const mapped = mapRowsToMandats(rows, typeIntervention);
+                await importMandatsToSupabase(mapped);
+            } catch (error) {
+                console.error('Erreur import Excel/CSV:', error);
+                showErrorToast('Erreur lors de la lecture du fichier Excel/CSV.');
+            }
+        }
+
+        async function importMandatsToSupabase(mapped) {
+            if (!mapped || mapped.length === 0) {
+                showErrorToast('Aucune ligne valide à importer.');
+                return;
+            }
+
+            if (!window.supabase) {
+                showErrorToast('Connexion Supabase non disponible.');
+                return;
+            }
+
+            const batchSize = 200;
+            let inserted = 0;
+
+            for (let i = 0; i < mapped.length; i += batchSize) {
+                const batch = mapped.slice(i, i + batchSize).map(row => {
+                    const clean = { ...row };
+                    delete clean.isImported;
+                    return clean;
+                });
+
+                const { error, data } = await window.supabase
+                    .from('mandats')
+                    .upsert(batch, { 
+                        onConflict: 'numero_mandat',
+                        ignoreDuplicates: false 
+                    })
+                    .select('id');
+
+                if (error) {
+                    console.error('Erreur import Supabase:', error);
+                    showErrorToast(`Erreur import Supabase: ${error.message || JSON.stringify(error)}`);
+                    return;
+                }
+
+                inserted += data?.length || batch.length;
+            }
+
+            showSuccessToast(`${inserted} mandat(s) importé(s) avec succès.`);
+            invalidateMandatsCache();
+            await loadMandats(true);
+        }
+
+        async function parseExcelOrCsv(file) {
+            const ext = file.name.toLowerCase().split('.').pop();
+
+            let rawRows;
+            if (ext === 'csv') {
+                const arrayBuffer = await file.arrayBuffer();
+                const text = decodeWithFallback(arrayBuffer);
+                rawRows = parseCsvSemicolon(text);
+            } else {
+                const arrayBuffer = await file.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+            }
+
+            // Fusionner les lignes Order Type avec les lignes principales
+            return mergeOrderTypeRows(rawRows);
+        }
+
+        /**
+         * Fusionne les lignes où Order Type (colonne G) est sur la ligne suivante
+         * avec la ligne principale du mandat
+         */
+        function mergeOrderTypeRows(rows) {
+            if (!rows || rows.length === 0) return rows;
+
+            const merged = [];
+            let i = 0;
+
+            while (i < rows.length) {
+                const currentRow = rows[i];
+                const nextRow = rows[i + 1];
+
+                // Vérifier si la ligne suivante est une ligne "Order Type" uniquement
+                // (la plupart des colonnes sont vides sauf Order Type)
+                if (nextRow && isOrderTypeOnlyRow(currentRow, nextRow)) {
+                    // Fusionner Order Type de la ligne suivante dans la ligne actuelle
+                    const orderType = getOrderTypeFromRow(nextRow);
+                    if (orderType) {
+                        // Ajouter Order Type dans les notes de la ligne principale
+                        const existingNotes = currentRow['Info SE'] || currentRow['info se'] || currentRow['notes'] || '';
+                        if (existingNotes && !existingNotes.includes('Order Type:')) {
+                            currentRow['Order Type'] = orderType;
+                        } else if (!currentRow['Order Type']) {
+                            currentRow['Order Type'] = orderType;
+                        }
+                    }
+                    merged.push(currentRow);
+                    i += 2; // Sauter la ligne Order Type
+                } else {
+                    merged.push(currentRow);
+                    i++;
+                }
+            }
+
+            return merged;
+        }
+
+        /**
+         * Vérifie si nextRow est une ligne qui contient uniquement Order Type
+         * (majorité des colonnes vides)
+         */
+        function isOrderTypeOnlyRow(currentRow, nextRow) {
+            if (!nextRow) return false;
+
+            // Compter les colonnes non-vides dans chaque ligne
+            const currentFilled = Object.values(currentRow).filter(v => v && String(v).trim() !== '').length;
+            const nextFilled = Object.values(nextRow).filter(v => v && String(v).trim() !== '').length;
+
+            // Si la ligne suivante a beaucoup moins de colonnes remplies (max 2-3)
+            // et que la ligne actuelle a des données substantielles
+            if (currentFilled >= 4 && nextFilled <= 3) {
+                // Vérifier si nextRow contient Order Type dans une de ses colonnes
+                const orderType = getOrderTypeFromRow(nextRow);
+                return !!orderType;
+            }
+
+            return false;
+        }
+
+        /**
+         * Extrait la valeur Order Type de n'importe quelle colonne de la ligne
+         */
+        function getOrderTypeFromRow(row) {
+            if (!row) return null;
+
+            // Chercher dans les colonnes possibles pour Order Type
+            const possibleKeys = [
+                'Order Type', 'order type', 'ORDER TYPE',
+                'G', 'Col G', 'Column G',
+                ...Object.keys(row) // Parcourir toutes les colonnes
+            ];
+
+            for (const key of possibleKeys) {
+                const value = row[key];
+                if (value && String(value).trim() !== '') {
+                    const trimmed = String(value).trim();
+                    // Exclure les valeurs qui sont clairement pas un Order Type
+                    if (trimmed.length > 1 && trimmed.length < 100) {
+                        return trimmed;
+                    }
+                }
+            }
+
+            // Si aucune colonne nommée trouvée, prendre la première valeur non-vide
+            const values = Object.values(row).filter(v => v && String(v).trim() !== '');
+            if (values.length === 1) {
+                return String(values[0]).trim();
+            }
+
+            return null;
+        }
+
+        /**
+         * Exporte les mandats vers Excel avec Order Type sur la ligne sous le nom du client
+         */
+        function exportMandatsToExcel() {
+            if (!mandats || mandats.length === 0) {
+                showErrorToast('Aucun mandat à exporter.');
+                return;
+            }
+
+            try {
+                // Préparer les données pour l'export avec le format spécial
+                const exportData = [];
+                
+                mandats.forEach(mandat => {
+                    // Extraire Order Type des notes si présent
+                    const orderTypeMatch = mandat.notes?.match(/Order Type:\s*([^|]+)/);
+                    const orderType = orderTypeMatch ? orderTypeMatch[1].trim() : '';
+                    
+                    // Ligne principale avec le nom du client
+                    const mainRow = {
+                        'Numéro Mandat': mandat.numero_mandat || '',
+                        'Client': mandat.nom_client || '',
+                        'Prénom': mandat.prenom_client || '',
+                        'Téléphone': mandat.telephone || '',
+                        'Email': mandat.email || '',
+                        'Adresse': mandat.adresse || '',
+                        'Order Type': '', // Colonne G vide sur ligne principale
+                        'NPA': mandat.npa || '',
+                        'Ville': mandat.ville || '',
+                        'Type': mandat.type_intervention || '',
+                        'Date Intervention': mandat.date_intervention || '',
+                        'Statut': mandat.statut || '',
+                        'Notes': mandat.notes || '',
+                        'TU': mandat.tu || '',
+                        'Priorité': mandat.priorite ? 'Oui' : 'Non'
+                    };
+                    exportData.push(mainRow);
+                    
+                    // Ligne suivante avec Order Type sous le nom du client (si Order Type existe)
+                    if (orderType) {
+                        const orderTypeRow = {
+                            'Numéro Mandat': '',
+                            'Client': '',
+                            'Prénom': '',
+                            'Téléphone': '',
+                            'Email': '',
+                            'Adresse': '',
+                            'Order Type': orderType, // Colonne G contient Order Type
+                            'NPA': '',
+                            'Ville': '',
+                            'Type': '',
+                            'Date Intervention': '',
+                            'Statut': '',
+                            'Notes': '',
+                            'TU': '',
+                            'Priorité': ''
+                        };
+                        exportData.push(orderTypeRow);
+                    }
+                });
+
+                // Créer le fichier Excel
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Mandats');
+                
+                // Télécharger le fichier
+                const today = new Date().toISOString().split('T')[0];
+                const filename = `mandats_export_${today}.xlsx`;
+                XLSX.writeFile(workbook, filename);
+                
+                showSuccessToast(`${mandats.length} mandat(s) exporté(s) avec succès.`);
+            } catch (error) {
+                console.error('Erreur export Excel:', error);
+                showErrorToast('Erreur lors de l\'export Excel.');
+            }
+        }
+
+        function decodeWithFallback(arrayBuffer) {
+            try {
+                return new TextDecoder('windows-1252').decode(arrayBuffer);
+            } catch (e) {
+                return new TextDecoder('utf-8').decode(arrayBuffer);
+            }
+        }
+
+        function parseCsvSemicolon(text) {
+            const rows = [];
+            let current = '';
+            let row = [];
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const next = text[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && next === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ';' && !inQuotes) {
+                    row.push(current);
+                    current = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (current.length > 0 || row.length > 0) {
+                        row.push(current);
+                        rows.push(row);
+                        row = [];
+                        current = '';
+                    }
+                } else {
+                    current += char;
+                }
+            }
+
+            if (current.length > 0 || row.length > 0) {
+                row.push(current);
+                rows.push(row);
+            }
+
+            if (rows.length === 0) return [];
+            const headers = rows.shift().map(h => h.trim());
+            return rows.filter(r => r.length > 1).map(r => {
+                const obj = {};
+                headers.forEach((h, idx) => {
+                    obj[h] = r[idx] ?? '';
+                });
+                return obj;
+            });
+        }
+
+        function mapRowsToMandats(rows, typeIntervention) {
+            return rows.map(row => {
+                const normalized = normalizeRow(row);
+                const phoneFromColumns = getPhoneFromColumns(row, normalized);
+                const orderId = getValue(normalized, ['order id', 'orderid', 'numero', 'numéro']);
+                const fullName = getValue(normalized, ['execution location', 'client', 'nom', 'nom client']);
+                const zip = getValue(normalized, ['zip', 'npa']);
+                const city = getValue(normalized, ['city', 'ville']);
+                const street = getValue(normalized, ['street', 'adresse']);
+                const phone = phoneFromColumns || getValue(normalized, ['phone', 'telephone', 'téléphone', 'p']) || getValue(normalized, ['mobile', 'q']);
+                const infoSe = getValue(normalized, ['info se', 'infose', 'info']);
+                const email = extractEmail(infoSe);
+                const dateIntervention = parseDate(getValue(normalized, ['app. start', 'app start', 'date', 'date intervention']));
+                const orderType = getValue(normalized, ['order type']);
+                const socketLabel = getValue(normalized, ['socket label']);
+                const bu = getValue(normalized, ['bu']);
+                const region = getValue(normalized, ['region']);
+
+                const notes = [infoSe, orderType ? `Order Type: ${orderType}` : '', socketLabel ? `Socket: ${socketLabel}` : '', bu ? `BU: ${bu}` : '', region ? `Region: ${region}` : '']
+                    .filter(Boolean)
+                    .join(' | ');
+
+                return {
+                    numero_mandat: orderId || `IMPORT-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+                    nom_client: fullName || 'Client',
+                    prenom_client: '',
+                    telephone: phone || '',
+                    email: email || '',
+                    adresse: street || '',
+                    npa: zip || '',
+                    ville: city || '',
+                    type_intervention: typeIntervention,
+                    date_intervention: dateIntervention || null,
+                    notes: notes,
+                    tu: bu || null,
+                    tu_valide: false,
+                    priorite: false,
+                    statut: 'en_attente',
+                    isImported: true
+                };
+            }).filter(m => m.numero_mandat);
+        }
+
+        function normalizeRow(row) {
+            const normalized = {};
+            Object.keys(row || {}).forEach(key => {
+                normalized[key.toString().trim().toLowerCase()] = row[key];
+            });
+            return normalized;
+        }
+
+        function getPhoneFromColumns(row, normalized) {
+            // Cas Excel/CSV : colonnes P ou Q (index 15/16) ou lettres P/Q
+            if (Array.isArray(row)) {
+                const p = row[15];
+                const q = row[16];
+                return String(p || q || '').trim();
+            }
+            const pKey = normalized['p'] || normalized['col p'] || normalized['column p'] || normalized['phone (p)'];
+            const qKey = normalized['q'] || normalized['col q'] || normalized['column q'] || normalized['mobile (q)'];
+            if (pKey || qKey) return String(pKey || qKey || '').trim();
+            return '';
+        }
+
+        function getValue(obj, keys) {
+            for (const k of keys) {
+                const val = obj[k];
+                if (val !== undefined && val !== null && String(val).trim() !== '') {
+                    return String(val).trim();
+                }
+            }
+            return '';
+        }
+
+        function extractEmail(text) {
+            if (!text) return '';
+            const match = String(text).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+            return match ? match[0] : '';
+        }
+
+        function parseDate(value) {
+            if (!value) return '';
+            if (value instanceof Date) {
+                return value.toISOString().split('T')[0];
+            }
+
+            const str = String(value).trim();
+            const match = str.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+            if (match) {
+                const [, dd, mm, yyyy] = match;
+                return `${yyyy}-${mm}-${dd}`;
+            }
+
+            const iso = str.match(/\d{4}-\d{2}-\d{2}/);
+            if (iso) return iso[0];
+
+            return '';
+        }
+
+        async function renderMandatsTable() {
+            console.log('🎨 Rendu de', mandats.length, 'mandats');
+            const tbody = document.getElementById('mandatsTableBody');
+            
+            // Afficher un indicateur de chargement
+            tbody.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">Chargement...</td></tr>';
+
+            if (mandats.length === 0) {
+                console.warn('⚠️ Aucun mandat à afficher');
+                tbody.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">Aucun mandat trouvé</td></tr>';
+                return;
+            }
+            
+            // Charger les dates planifiées depuis appointments
+            let plannedDatesMap = {};
+            try {
+                const mandateNumbers = mandats.map(m => m.numero_mandat);
+                const { data: appointments } = await window.supabase
+                    .from('appointments')
+                    .select('mandate_number, date')
+                    .in('mandate_number', mandateNumbers);
+                
+                if (appointments) {
+                    appointments.forEach(apt => {
+                        if (!plannedDatesMap[apt.mandate_number]) {
+                            plannedDatesMap[apt.mandate_number] = apt.date;
+                        }
+                    });
+                }
+                console.log('✅ Dates planifiées chargées:', Object.keys(plannedDatesMap).length);
+            } catch (error) {
+                console.warn('⚠️ Erreur chargement dates planifiées:', error);
+            }
+
+            // Récupérer toutes les assignations de techniciens en une seule requête
+            const mandatIds = mandats.map(m => m.id);
+            let techCountsMap = {};
+            
+            try {
+                const { data: allAssignments } = await window.supabase
+                    .from('mandat_techniciens')
+                    .select('mandat_id')
+                    .in('mandat_id', mandatIds);
+                
+                // Compter les techniciens par mandat
+                if (allAssignments) {
+                    allAssignments.forEach(assignment => {
+                        techCountsMap[assignment.mandat_id] = (techCountsMap[assignment.mandat_id] || 0) + 1;
+                    });
+                }
+                console.log('✅ Assignations chargées:', Object.keys(techCountsMap).length, 'mandats avec techniciens');
+            } catch (error) {
+                console.warn('⚠️ Erreur chargement assignations:', error);
+                // Continuer même si les assignations ne peuvent pas être chargées
+            }
+
+            // Constantes pour le rendu
+            const statusColors = {
+                'en_attente': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                'assigne': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                'en_cours': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+                'termine': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                'annule': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+            };
+            
+            const statusLabels = {
+                'en_attente': 'En attente',
+                'assigne': 'Assigné',
+                'en_cours': 'En cours',
+                'termine': 'Terminé',
+                'annule': 'Annulé'
+            };
+            
+            const typeLabels = {
+                'swisscom': 'Swisscom',
+                'ftth_fr': 'FTTH FR',
+                'sig': 'SIG',
+                'rea': 'REA',
+                'smartmetering': 'Smart Metering'
+            };
+
+            // Construire toutes les lignes en une seule fois
+            const rowsHTML = mandats.map(mandat => {
+                const techCount = techCountsMap[mandat.id] || 0;
+                const plannedDate = plannedDatesMap[mandat.numero_mandat];
+                // Statut auto: si date planifiée existe, statut devient 'assigne'
+                const actualStatut = plannedDate ? 'assigne' : mandat.statut;
+                
+                // Extraire Order Type des notes
+                const orderTypeMatch = mandat.notes?.match(/Order Type:\s*([^|]+)/);
+                const orderType = orderTypeMatch ? orderTypeMatch[1].trim() : null;
+                
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors mandat-row" 
+                        data-statut="${actualStatut}" 
+                        data-type="${mandat.type_intervention}" 
+                        data-search="${(mandat.numero_mandat + ' ' + mandat.nom_client + ' ' + (mandat.ville || '')).toLowerCase()}">
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            <div class="flex items-center">
+                                ${mandat.priorite ? '<span class="material-symbols-outlined text-red-500 text-sm mr-1">priority_high</span>' : ''}
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">${mandat.numero_mandat}</span>
+                            </div>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            <div class="text-xs font-medium text-gray-900 dark:text-white">${mandat.nom_client}</div>
+                            ${mandat.prenom_client ? `<div class="text-[10px] text-gray-500 dark:text-gray-400">${mandat.prenom_client}</div>` : ''}
+                            ${orderType ? `<div class="text-[10px] text-gray-500 dark:text-gray-400">${orderType}</div>` : ''}
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            ${mandat.telephone ? `<div class="text-xs text-gray-900 dark:text-white">${mandat.telephone}</div>` : ''}
+                            ${mandat.email ? `<div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" style="max-width: 150px;">${mandat.email}</div>` : (mandat.telephone ? '' : '-')}
+                        </td>
+                        <td class="px-3 py-3">
+                            <div class="text-xs text-gray-900 dark:text-white truncate" style="max-width: 180px;">${mandat.adresse || '-'}</div>
+                            ${mandat.npa || mandat.ville ? `<div class="text-[10px] text-gray-500 dark:text-gray-400">${mandat.npa || ''} ${mandat.ville || ''}</div>` : ''}
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                                ${typeLabels[mandat.type_intervention] || mandat.type_intervention}
+                            </span>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                            ${plannedDate ? new Date(plannedDate).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'}) : '-'}
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[actualStatut]}">
+                                ${statusLabels[actualStatut] || actualStatut}
+                            </span>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap text-center">
+                            <div class="flex flex-col items-center gap-1">
+                                ${mandat.tu ? `<span class="text-[10px] text-gray-600 dark:text-gray-400 font-medium truncate" style="max-width: 80px;">${mandat.tu}</span>` : '<span class="text-[10px] text-gray-400">-</span>'}
+                                <div class="flex items-center gap-1">
+                                    <button data-mandat-id="${mandat.id}" 
+                                            data-mandat-number="${mandat.numero_mandat}" 
+                                            data-tu-valide="${mandat.tu_valide || false}"
+                                            data-action="valider"
+                                            onclick="toggleTuValidation(this)"
+                                            class="inline-flex items-center justify-center p-1 ${mandat.tu_valide ? 'text-green-600 bg-green-50 dark:bg-green-900/20' : 'text-gray-300 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'} rounded transition-colors" 
+                                            title="Valider TU">
+                                        <span class="material-symbols-outlined text-base">check_circle</span>
+                                    </button>
+                                    <button data-mandat-id="${mandat.id}" 
+                                            data-mandat-number="${mandat.numero_mandat}" 
+                                            data-tu-valide="${mandat.tu_valide || false}"
+                                            data-action="annuler"
+                                            onclick="toggleTuValidation(this)"
+                                            class="inline-flex items-center justify-center p-1 ${!mandat.tu_valide ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'} rounded transition-colors" 
+                                            title="Annuler TU">
+                                        <span class="material-symbols-outlined text-base">cancel</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap text-right text-xs font-medium">
+                            <button onclick="openAssignTechniciansModal('${mandat.id}', '${mandat.numero_mandat.replace(/'/g, "\\'")}')"
+                                    class="relative inline-flex items-center justify-center p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors" 
+                                    title="Assigner des techniciens">
+                                <span class="material-symbols-outlined text-lg">engineering</span>
+                                ${techCount > 0 ? `<span class="absolute -top-1 -right-1 bg-primary text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">${techCount}</span>` : ''}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Insérer toutes les lignes d'un coup
+            tbody.innerHTML = rowsHTML;
+            console.log('✅ Table rendue avec', mandats.length, 'mandats');
+        }
+
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statutFilter = document.getElementById('statutFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const rows = document.querySelectorAll('.mandat-row');
+
+            rows.forEach(row => {
+                const searchText = row.getAttribute('data-search');
+                const statut = row.getAttribute('data-statut');
+                const type = row.getAttribute('data-type');
+                
+                const matchesSearch = searchText.includes(searchTerm);
+                const matchesStatut = statutFilter === 'All' || statut === statutFilter;
+                const matchesType = typeFilter === 'All' || type === typeFilter;
+                
+                row.style.display = (matchesSearch && matchesStatut && matchesType) ? '' : 'none';
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statutFilter').value = 'All';
+            document.getElementById('typeFilter').value = 'All';
+            filterTable();
+        }
+        
+        // Fonction de validation TU - Toggle entre validé et annulé avec 2 boutons
+        async function toggleTuValidation(button) {
+            const mandatId = button.dataset.mandatId;
+            const mandatNumber = button.dataset.mandatNumber;
+            const currentState = button.dataset.tuValide === 'true';
+            const action = button.dataset.action;
+            
+            // Déterminer le nouvel état selon le bouton cliqué
+            let newState;
+            if (action === 'valider') {
+                newState = true;
+            } else if (action === 'annuler') {
+                newState = false;
+            }
+            
+            // Ne rien faire si on clique sur le bouton déjà actif
+            if (currentState === newState) return;
+            
+            try {
+                const { error } = await window.supabase
+                    .from('mandats')
+                    .update({ 
+                        tu_valide: newState,
+                        tu_date_validation: new Date().toISOString()
+                    })
+                    .eq('id', mandatId);
+                
+                if (error) {
+                    console.error('Détails erreur:', error);
+                    throw error;
+                }
+                
+                // Mettre à jour visuellement les deux boutons (valider et annuler) sans recharger la page
+                const row = button.closest('tr');
+                const validerBtn = row.querySelector('[data-action="valider"]');
+                const annulerBtn = row.querySelector('[data-action="annuler"]');
+                
+                if (validerBtn && annulerBtn) {
+                    // Mettre à jour les data-attributes
+                    validerBtn.dataset.tuValide = newState;
+                    annulerBtn.dataset.tuValide = newState;
+                    
+                    if (newState) {
+                        // État validé
+                        validerBtn.className = 'inline-flex items-center justify-center p-1 text-green-600 bg-green-50 dark:bg-green-900/20 rounded transition-colors';
+                        annulerBtn.className = 'inline-flex items-center justify-center p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors';
+                    } else {
+                        // État annulé
+                        validerBtn.className = 'inline-flex items-center justify-center p-1 text-gray-300 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors';
+                        annulerBtn.className = 'inline-flex items-center justify-center p-1 text-red-500 bg-red-50 dark:bg-red-900/20 rounded transition-colors';
+                    }
+                }
+                
+                const actionText = newState ? 'validé' : 'annulé';
+                showSuccessToast(`Mandat ${mandatNumber} ${actionText} TU !`);
+                
+                // Invalider le cache pour le prochain chargement mais ne pas recharger maintenant
+                invalidateMandatsCache();
+                
+                // Mettre à jour le mandat en mémoire aussi
+                const mandatIndex = mandats.findIndex(m => m.id === mandatId);
+                if (mandatIndex !== -1) {
+                    mandats[mandatIndex].tu_valide = newState;
+                    mandats[mandatIndex].tu_date_validation = new Date().toISOString();
+                }
+            } catch (error) {
+                console.error('Erreur validation TU:', error);
+                showErrorToast('Erreur lors de la validation: ' + error.message);
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        async function addMandat(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const mandatData = {
+                numero_mandat: formData.get('numero_mandat'),
+                nom_client: formData.get('nom_client'),
+                prenom_client: formData.get('prenom_client'),
+                telephone: formData.get('telephone'),
+                email: formData.get('email'),
+                adresse: formData.get('adresse'),
+                npa: formData.get('npa'),
+                ville: formData.get('ville'),
+                type_intervention: formData.get('type_intervention'),
+                date_intervention: formData.get('date_intervention') || null,
+                priorite: formData.get('priorite') === 'on',
+                notes: formData.get('notes'),
+                statut: 'en_attente'
+            };
+            
+            try {
+                const { data, error } = await window.supabase
+                    .from('mandats')
+                    .insert([mandatData])
+                    .select();
+                
+                if (error) throw error;
+                
+                closeModal('addMandatModal');
+                form.reset();
+                invalidateMandatsCache(); // Invalider le cache après ajout
+                await loadMandats(true); // Forcer le rechargement
+                showSuccessToast('Mandat ajouté avec succès !');
+            } catch (error) {
+                console.error('Erreur ajout mandat:', error);
+                showErrorToast('Erreur lors de l\'ajout du mandat: ' + error.message);
+            }
+        }
+
+        async function openAssignTechniciansModal(mandatId, mandatNumber) {
+            currentMandatId = mandatId;
+            document.getElementById('assignMandatNumber').textContent = mandatNumber;
+            
+            // Get currently assigned technicians
+            const { data: assignedTechs } = await window.supabase
+                .from('mandat_techniciens')
+                .select('employee_id')
+                .eq('mandat_id', mandatId);
+            
+            const assignedIds = assignedTechs ? assignedTechs.map(t => t.employee_id) : [];
+            
+            // Render technicians list with checkboxes
+            const list = document.getElementById('techniciansList');
+            list.innerHTML = '';
+            
+            if (employees.length === 0) {
+                list.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Aucun technicien disponible</p>';
+            } else {
+                employees.forEach(emp => {
+                    const isChecked = assignedIds.includes(emp.id);
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors';
+                    div.innerHTML = `
+                        <input type="checkbox" 
+                               id="tech_${emp.id}" 
+                               value="${emp.id}" 
+                               ${isChecked ? 'checked' : ''}
+                               class="rounded border-gray-300 text-primary focus:ring-primary">
+                        <label for="tech_${emp.id}" class="ml-3 flex-1 cursor-pointer">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white">${emp.first_name} ${emp.last_name}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">${emp.role || 'Technicien'}</div>
+                        </label>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+            
+            openModal('assignTechniciansModal');
+        }
+
+        async function saveAssignedTechnicians() {
+            if (!currentMandatId) return;
+            
+            try {
+                // Get all checked technicians
+                const checkboxes = document.querySelectorAll('#techniciansList input[type="checkbox"]');
+                const selectedTechIds = Array.from(checkboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+                
+                // First, delete all existing assignments
+                await window.supabase
+                    .from('mandat_techniciens')
+                    .delete()
+                    .eq('mandat_id', currentMandatId);
+                
+                // Then, insert new assignments
+                if (selectedTechIds.length > 0) {
+                    const assignments = selectedTechIds.map(techId => ({
+                        mandat_id: currentMandatId,
+                        employee_id: techId
+                    }));
+                    
+                    const { error } = await window.supabase
+                        .from('mandat_techniciens')
+                        .insert(assignments);
+                    
+                    if (error) throw error;
+                    
+                    // Update mandat status to "assigne" if technicians are assigned
+                    await window.supabase
+                        .from('mandats')
+                        .update({ statut: 'assigne' })
+                        .eq('id', currentMandatId);
+                } else {
+                    // If no technicians assigned, set status back to "en_attente"
+                    await window.supabase
+                        .from('mandats')
+                        .update({ statut: 'en_attente' })
+                        .eq('id', currentMandatId);
+                }
+                
+                closeModal('assignTechniciansModal');
+                invalidateMandatsCache(); // Invalider le cache après modification
+                await loadMandats(true); // Forcer le rechargement
+                
+                // Compter le nombre de techniciens assignés pour le message
+                const selectedCount = selectedTechIds.length;
+                const message = selectedCount > 0 
+                    ? `${selectedCount} technicien${selectedCount > 1 ? 's' : ''} assigné${selectedCount > 1 ? 's' : ''} avec succès !`
+                    : 'Aucun technicien assigné. Le mandat est revenu en attente.';
+                showSuccessToast(message);
+            } catch (error) {
+                console.error('Erreur assignation techniciens:', error);
+                showErrorToast('Erreur lors de l\'assignation des techniciens: ' + error.message);
+            }
+        }
+        
+        /**
+         * Affiche un toast de succès
+         */
+        function showSuccessToast(message) {
+            const toast = document.getElementById('successToast');
+            const messageEl = document.getElementById('successMessage');
+            messageEl.textContent = message;
+            
+            toast.classList.remove('hidden');
+            toast.classList.add('translate-x-0', 'opacity-100');
+            toast.classList.remove('-translate-x-full', 'opacity-0');
+            
+            // Auto-fermeture après 4 secondes
+            setTimeout(() => {
+                hideSuccessToast();
+            }, 4000);
+        }
+
+        /**
+         * Masque le toast de succès
+         */
+        function hideSuccessToast() {
+            const toast = document.getElementById('successToast');
+            toast.classList.add('-translate-x-full', 'opacity-0');
+            toast.classList.remove('translate-x-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 300);
+        }
+
+        /**
+         * Affiche un toast d'erreur
+         */
+        function showErrorToast(message) {
+            const toast = document.getElementById('errorToast');
+            const messageEl = document.getElementById('errorMessage');
+            messageEl.textContent = message;
+            
+            toast.classList.remove('hidden');
+            toast.classList.add('translate-x-0', 'opacity-100');
+            toast.classList.remove('-translate-x-full', 'opacity-0');
+            
+            // Auto-fermeture après 5 secondes
+            setTimeout(() => {
+                hideErrorToast();
+            }, 5000);
+        }
+
+        /**
+         * Masque le toast d'erreur
+         */
+        function hideErrorToast() {
+            const toast = document.getElementById('errorToast');
+            toast.classList.add('-translate-x-full', 'opacity-0');
+            toast.classList.remove('translate-x-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 300);
+        }
+
+        /**
+         * Affiche l'état du cache dans la console
+         */
+        function showCacheStatus() {
+            const cached = getCachedMandats();
+            if (cached) {
+                const age = Date.now() - cached.timestamp;
+                const ageDays = Math.round(age / (24 * 60 * 60 * 1000));
+                const remainingDays = Math.round((CACHE_DURATION_MS - age) / (24 * 60 * 60 * 1000));
+                console.log('📦 État du cache:');
+                console.log('  - Mandats en cache:', cached.data.length);
+                console.log('  - Âge du cache:', ageDays, 'jours');
+                console.log('  - Cache valide encore:', remainingDays, 'jours');
+                console.log('  - Date de création:', new Date(cached.timestamp).toLocaleString('fr-FR'));
+            } else {
+                console.log('📦 Aucun cache actif');
+            }
+        }
+
+        // Test de diagnostic au chargement
+        window.addEventListener('load', () => {
+            console.log('=== DIAGNOSTIC MANDATS ===');
+            console.log('1. Supabase disponible ?', typeof window.supabase, window.supabase);
+            console.log('2. VeloxAPI disponible ?', typeof window.VeloxAPI);
+            console.log('3. Mandats chargés ?', mandats.length, 'mandats');
+            console.log('4. Employés chargés ?', employees.length, 'techniciens');
+            console.log('5. User connecté ?', currentUser?.email);
+            showCacheStatus();
+            console.log('==========================');
+        });
+    </script>
+</body>
+</html>
