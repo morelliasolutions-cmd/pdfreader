@@ -653,14 +653,18 @@
         }
 
         /**
-         * Charge les mandats depuis Supabase et met à jour le cache
+         * Charge les mandats depuis Supabase (source unique: appointments) et met à jour le cache
          * @param {boolean} silent - Si true, ne met pas à jour l'affichage (rechargement en arrière-plan)
          */
         async function loadMandatsFromSupabase(silent = false) {
             try {
-                const { data, error } = await window.supabase
-                    .from('mandats')
-                    .select('*')
+                // Lire directement depuis appointments qui contient TOUTES les données (PDF + planif)
+                const { data: appointments, error } = await window.supabase
+                    .from('appointments')
+                    .select(`
+                        *,
+                        employee:employees(id, nom, prenom)
+                    `)
                     .order('created_at', { ascending: false });
                 
                 if (error) {
@@ -668,11 +672,81 @@
                     throw error;
                 }
                 
-                console.log('📥 Mandats chargés depuis Supabase:', data?.length || 0);
-                mandats = data || [];
+                console.log('📥 Appointments chargés depuis Supabase:', appointments?.length || 0);
+                
+                // DEBUG: Afficher les 3 premiers appointments pour vérifier les données
+                if (appointments && appointments.length > 0) {
+                    console.log('🔍 DEBUG - Premier appointment:', {
+                        mandate_number: appointments[0].mandate_number,
+                        phone: appointments[0].phone,
+                        email: appointments[0].email,
+                        address: appointments[0].address,
+                        client_name: appointments[0].client_name
+                    });
+                }
+                
+                // Mapper appointments vers le format mandats pour compatibilité affichage
+                mandats = (appointments || []).map(apt => {
+                    // Extraire notes techniques
+                    let notes = [];
+                    if (apt.pto_reference) notes.push(`PTO: ${apt.pto_reference}`);
+                    if (apt.cable_alim) notes.push(`Câble: ${apt.cable_alim}`);
+                    const fibers = [apt.fibre_1, apt.fibre_2, apt.fibre_3, apt.fibre_4]
+                        .filter(f => f)
+                        .map((f, i) => `SP${i+1}:${f}`);
+                    if (fibers.length > 0) notes.push(`Fibres: ${fibers.join(', ')}`);
+                    
+                    // Extraire nom/prénom du client_name
+                    let nom_client = apt.client_name || 'Client ' + apt.mandate_number;
+                    let prenom_client = '';
+                    if (apt.client_name) {
+                        const parts = apt.client_name.trim().split(' ');
+                        if (parts.length >= 2) {
+                            prenom_client = parts[0];
+                            nom_client = parts.slice(1).join(' ');
+                        }
+                    }
+                    
+                    return {
+                        id: apt.id,
+                        numero_mandat: apt.mandate_number,
+                        nom_client: nom_client,
+                        prenom_client: prenom_client,
+                        telephone: apt.phone || '',
+                        email: apt.email || '',
+                        adresse: apt.address || '',
+                        npa: '', // Non disponible dans appointments
+                        ville: '', // Non disponible dans appointments
+                        type_intervention: 'swisscom', // Par défaut
+                        date_intervention: apt.date || null,
+                        notes: notes.join(' | '),
+                        tu: null,
+                        tu_valide: false,
+                        priorite: false,
+                        statut: apt.date ? 'assigne' : 'en_attente',
+                        created_at: apt.created_at,
+                        updated_at: apt.updated_at,
+                        // Données supplémentaires pour l'affichage
+                        _employee_nom: apt.employee?.nom || '',
+                        _employee_prenom: apt.employee?.prenom || ''
+                    };
+                });
+                
+                // DEBUG: Afficher le mapping du premier mandat
+                if (mandats.length > 0) {
+                    console.log('🔍 DEBUG - Premier mandat mappé:', {
+                        numero_mandat: mandats[0].numero_mandat,
+                        telephone: mandats[0].telephone,
+                        email: mandats[0].email,
+                        adresse: mandats[0].adresse,
+                        nom_client: mandats[0].nom_client
+                    });
+                }
                 
                 // Mettre à jour le cache
                 setCachedMandats(mandats);
+                
+                console.log('✅ Mandats mappés:', mandats.length);
                 
                 // Mettre à jour l'affichage si ce n'est pas un rechargement silencieux
                 if (!silent) {
@@ -1042,7 +1116,7 @@
                 // Vérifier si un appointment existe déjà avec ce mandate_number
                 const { data: existing, error: searchError } = await supabase
                     .from('appointments')
-                    .select('id, phone, address, client_name')
+                    .select('*')
                     .eq('mandate_number', mandateNumber)
                     .maybeSingle();
 
@@ -1054,9 +1128,13 @@
 
                 console.log('Résultat recherche:', existing ? `Trouvé (ID: ${existing.id})` : 'Non trouvé');
 
-                // Données techniques du PDF (toujours mises à jour)
+                // Données techniques du PDF
                 const technicalData = {
                     mandate_number: mandateNumber,
+                    phone: pdfData.phone || null,
+                    email: pdfData.email || null,
+                    address: pdfData.address || null,
+                    client_name: pdfData.client_name || null,
                     pto_reference: pdfData.socket_label || null,
                     cable_alim: pdfData.cable || null,
                     fibre_1: pdfData.fiber_1 || null,
@@ -1069,23 +1147,7 @@
                 console.log('💾 Données à sauvegarder:', technicalData);
 
                 if (existing) {
-                    // UPDATE : préserver les valeurs existantes (phone, address, client_name)
-                    // On ne les remplace QUE si elles sont vides/nulles
-                    if (pdfData.phone && (!existing.phone || existing.phone.trim() === '')) {
-                        technicalData.phone = pdfData.phone;
-                        console.log('📞 Ajout téléphone:', pdfData.phone);
-                    }
-                    
-                    if (pdfData.address && (!existing.address || existing.address.trim() === '' || existing.address === 'À compléter')) {
-                        technicalData.address = pdfData.address;
-                        console.log('📍 Ajout adresse (IA):', pdfData.address);
-                    }
-                    
-                    if (pdfData.client_name && (!existing.client_name || existing.client_name.startsWith('Client '))) {
-                        technicalData.client_name = pdfData.client_name;
-                        console.log('👤 Ajout nom client (IA):', pdfData.client_name);
-                    }
-
+                    // UPDATE : toujours mettre à jour avec les nouvelles données PDF
                     console.log('🔄 Mise à jour appointment ID:', existing.id);
                     const { error } = await supabase
                         .from('appointments')
@@ -1101,7 +1163,7 @@
                     }
                 } else {
                     // INSERT : nouveau mandat - récupérer un employee_id par défaut
-                    console.log('➕ Création nouveau appointment - récupération employee_id...');
+                    console.log('➕ Création nouveau appointment');
                     
                     // Récupérer le premier employé disponible
                     const { data: employees, error: empError } = await supabase
@@ -1116,25 +1178,17 @@
                         continue;
                     }
                     
-                    // Ajouter les champs obligatoires avec valeurs par défaut ou données IA
-                    if (pdfData.phone) technicalData.phone = pdfData.phone;
-                    
+                    // Ajouter les champs obligatoires avec valeurs par défaut
                     technicalData.employee_id = employees.id;
-                    technicalData.date = new Date().toISOString().split('T')[0]; // Date du jour
-                    technicalData.start_time = '08:00:00'; // Heure début par défaut
-                    technicalData.end_time = '17:00:00'; // Heure fin par défaut
-                    technicalData.activity = 'Installation FTTH'; // Activité par défaut
+                    technicalData.date = new Date().toISOString().split('T')[0];
+                    technicalData.start_time = '08:00:00';
+                    technicalData.end_time = '17:00:00';
+                    technicalData.activity = 'Installation FTTH';
+                    technicalData.created_at = new Date().toISOString();
                     
-                    // Utiliser les données IA si disponibles, sinon valeurs par défaut
-                    technicalData.address = pdfData.address || 'À compléter';
-                    technicalData.client_name = pdfData.client_name || ('Client ' + mandateNumber);
-                    
-                    if (pdfData.address) {
-                        console.log('📍 Utilisation adresse IA:', pdfData.address);
-                    }
-                    if (pdfData.client_name) {
-                        console.log('👤 Utilisation nom client IA:', pdfData.client_name);
-                    }
+                    // Valeurs par défaut si extraction incomplète
+                    if (!technicalData.address) technicalData.address = 'À compléter';
+                    if (!technicalData.client_name) technicalData.client_name = 'Client ' + mandateNumber;
                     
                     console.log('💾 Données INSERT complètes:', technicalData);
 
@@ -1154,6 +1208,11 @@
             }
 
             console.log(`📊 Résumé: ${createdCount} créés, ${updatedCount} mis à jour, ${errorCount} erreurs`);
+            
+            // Invalider le cache et recharger
+            invalidateMandatsCache();
+            await loadMandats(true);
+            
             return { createdCount, updatedCount };
         }
 
@@ -1582,27 +1641,6 @@
                 tbody.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">Aucun mandat trouvé</td></tr>';
                 return;
             }
-            
-            // Charger les dates planifiées depuis appointments
-            let plannedDatesMap = {};
-            try {
-                const mandateNumbers = mandats.map(m => m.numero_mandat);
-                const { data: appointments } = await window.supabase
-                    .from('appointments')
-                    .select('mandate_number, date')
-                    .in('mandate_number', mandateNumbers);
-                
-                if (appointments) {
-                    appointments.forEach(apt => {
-                        if (!plannedDatesMap[apt.mandate_number]) {
-                            plannedDatesMap[apt.mandate_number] = apt.date;
-                        }
-                    });
-                }
-                console.log('✅ Dates planifiées chargées:', Object.keys(plannedDatesMap).length);
-            } catch (error) {
-                console.warn('⚠️ Erreur chargement dates planifiées:', error);
-            }
 
             // Récupérer toutes les assignations de techniciens en une seule requête
             const mandatIds = mandats.map(m => m.id);
@@ -1654,7 +1692,10 @@
             // Construire toutes les lignes en une seule fois
             const rowsHTML = mandats.map(mandat => {
                 const techCount = techCountsMap[mandat.id] || 0;
-                const plannedDate = plannedDatesMap[mandat.numero_mandat];
+                const plannedDate = mandat.date_intervention;
+                const plannedTech = mandat._employee_prenom && mandat._employee_nom 
+                    ? `${mandat._employee_prenom} ${mandat._employee_nom}`.trim() 
+                    : null;
                 // Statut auto: si date planifiée existe, statut devient 'assigne'
                 const actualStatut = plannedDate ? 'assigne' : mandat.statut;
                 
@@ -1692,7 +1733,12 @@
                             </span>
                         </td>
                         <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
-                            ${plannedDate ? new Date(plannedDate).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'}) : '-'}
+                            ${plannedDate ? `
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="font-medium">${new Date(plannedDate).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'})}</span>
+                                    ${plannedTech ? `<span class="text-[10px] text-gray-400 dark:text-gray-500">${plannedTech}</span>` : ''}
+                                </div>
+                            ` : '-'}
                         </td>
                         <td class="px-3 py-3 whitespace-nowrap">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[actualStatut]}">
