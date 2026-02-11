@@ -232,51 +232,77 @@ def extract_pdf_data(file_path):
         print(f'Erreur extraction PDF: {e}')
         raise
 
-@app.route('/analyze-pdf', methods=['POST', 'OPTIONS'])
+@app.route('/api/analyze-pdf', methods=['POST', 'OPTIONS'])
 def analyze_pdf():
-    """Endpoint principal pour analyser un PDF uploadé"""
+    """Endpoint pour analyser un ou plusieurs PDFs uploadés"""
     if request.method == 'OPTIONS':
         return jsonify({}), 200
     
     try:
-        if 'file' not in request.files:
+        # Accepter 'file' (mode single) ou 'pdfs' (mode batch)
+        files = request.files.getlist('pdfs') or ([request.files['file']] if 'file' in request.files else [])
+        
+        if not files or len(files) == 0:
             return jsonify({'error': 'Aucun fichier fourni'}), 400
         
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'Nom de fichier vide'}), 400
+        # Vérifier que ce sont bien des PDFs
+        for file in files:
+            if file.filename == '':
+                return jsonify({'error': 'Nom de fichier vide'}), 400
+            if not file.filename.lower().endswith('.pdf'):
+                return jsonify({'error': f'{file.filename} doit être un PDF'}), 400
         
-        if not file.filename.lower().endswith('.pdf'):
-            return jsonify({'error': 'Le fichier doit être un PDF'}), 400
-        
-        # Sauvegarder temporairement le fichier
+        # Sauvegarder temporairement les fichiers
         upload_folder = os.path.join(os.getcwd(), 'uploads')
         os.makedirs(upload_folder, exist_ok=True)
         
-        file_path = os.path.join(upload_folder, file.filename)
-        file.save(file_path)
+        results = []
         
-        try:
-            # Extraction structurée
-            data = extract_pdf_data(file_path)
+        for file in files:
+            file_path = os.path.join(upload_folder, file.filename)
             
-            # Nettoyer le fichier temporaire
-            os.remove(file_path)
+            try:
+                file.save(file_path)
+                
+                # Extraction structurée
+                data = extract_pdf_data(file_path)
+                
+                results.append({
+                    'file_name': file.filename,
+                    'success': True,
+                    'data': data,
+                    'confidence': 1.0,
+                    'extraction_sources': {
+                        'traditional': True,
+                        'ai': False,
+                        'ai_contributed': False,
+                        'ai_fields': []
+                    }
+                })
+                
+            except Exception as e:
+                print(f"Erreur extraction {file.filename}: {str(e)}")
+                results.append({
+                    'file_name': file.filename,
+                    'success': False,
+                    'error': str(e),
+                    'confidence': 0.0
+                })
             
-            return jsonify({
-                'success': True,
-                'source': 'structured_extraction',
-                'data': data
-            }), 200
-            
-        except Exception as e:
-            # Nettoyer en cas d'erreur
-            if os.path.exists(file_path):
-                os.remove(file_path)
-            raise e
+            finally:
+                # Nettoyer le fichier temporaire
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+        
+        # Retourner le format attendu par mandats.html
+        return jsonify({
+            'success': True,
+            'count': len(results),
+            'results': results
+        }), 200
             
     except Exception as e:
-        print(f"Erreur lors de l'analyse du PDF: {str(e)}")
+        print(f"Erreur lors de l'analyse des PDFs: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': f"Erreur lors de l'analyse: {str(e)}"}), 500
