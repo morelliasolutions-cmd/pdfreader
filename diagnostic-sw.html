@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Service Worker - ConnectFiber</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #ea2a33; margin-top: 0; }
+        h2 { color: #333; border-bottom: 2px solid #ea2a33; padding-bottom: 10px; }
+        .status { padding: 15px; border-radius: 6px; margin: 15px 0; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #ea2a33;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover { background: #c82229; }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover { background: #5a6268; }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        .step { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-left: 4px solid #ea2a33;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔧 Diagnostic Service Worker</h1>
+        <p>Cette page vous aide à diagnostiquer et résoudre les problèmes avec le Service Worker qui bloque l'upload de PDFs.</p>
+    </div>
+
+    <div class="card">
+        <h2>📊 État actuel</h2>
+        <div id="swStatus"></div>
+        <button onclick="checkSW()">🔄 Vérifier</button>
+        <button onclick="unregisterSW()" class="secondary">❌ Désinscrire SW</button>
+        <button onclick="testAPI()">🧪 Test API</button>
+    </div>
+
+    <div class="card">
+        <h2>🛠️ Solution rapide</h2>
+        
+        <div class="step">
+            <strong>Étape 1 : Forcer le rechargement</strong>
+            <p>Appuyez sur <kbd>Ctrl + Shift + R</kbd> (ou <kbd>Cmd + Shift + R</kbd> sur Mac)</p>
+            <button onclick="hardReload()">🔄 Recharger maintenant</button>
+        </div>
+
+        <div class="step">
+            <strong>Étape 2 : Désinscrire le Service Worker</strong>
+            <p>Cliquez sur le bouton "Désinscrire SW" ci-dessus</p>
+        </div>
+
+        <div class="step">
+            <strong>Étape 3 : Vider le cache</strong>
+            <button onclick="clearCache()">🗑️ Vider le cache</button>
+        </div>
+
+        <div class="step">
+            <strong>Étape 4 : Retourner sur mandats.html</strong>
+            <button onclick="goToMandats()">📄 Aller à Mandats</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔍 Logs de test</h2>
+        <pre id="logs">Cliquez sur "Test API" pour tester...</pre>
+    </div>
+
+    <script>
+        function log(msg) {
+            const logsEl = document.getElementById('logs');
+            logsEl.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        async function checkSW() {
+            const statusEl = document.getElementById('swStatus');
+            
+            if (!('serviceWorker' in navigator)) {
+                statusEl.innerHTML = '<div class="error">❌ Service Worker non supporté</div>';
+                return;
+            }
+
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            
+            if (registrations.length === 0) {
+                statusEl.innerHTML = '<div class="success">✅ Aucun Service Worker enregistré</div>';
+            } else {
+                let html = '<div class="warning">⚠️ Service Workers actifs:</div>';
+                registrations.forEach((reg, i) => {
+                    html += `<pre>SW ${i+1}: ${reg.scope}\nState: ${reg.active?.state || 'N/A'}</pre>`;
+                });
+                statusEl.innerHTML = html;
+            }
+        }
+
+        async function unregisterSW() {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const reg of registrations) {
+                await reg.unregister();
+            }
+            alert('✅ Service Worker(s) désinscrit(s)!\n\nAppuyez sur OK puis rechargez la page.');
+            location.reload();
+        }
+
+        async function clearCache() {
+            if ('caches' in window) {
+                const names = await caches.keys();
+                await Promise.all(names.map(name => caches.delete(name)));
+                alert(`✅ ${names.length} cache(s) supprimé(s)!\n\nAppuyez sur OK puis rechargez.`);
+                location.reload();
+            }
+        }
+
+        function hardReload() {
+            location.reload(true);
+        }
+
+        function goToMandats() {
+            window.location.href = '/mandats.html';
+        }
+
+        async function testAPI() {
+            const logsEl = document.getElementById('logs');
+            logsEl.textContent = '';
+            
+            log('🧪 Test de l\'API d\'analyse PDF...');
+            log('📍 URL: https://velox-pdfswisscom.yhmr4j.easypanel.host');
+            
+            try {
+                log('\n1️⃣ Test Health Check...');
+                const health = await fetch('https://velox-pdfswisscom.yhmr4j.easypanel.host/health');
+                const healthData = await health.json();
+                log(`✅ ${JSON.stringify(healthData)}`);
+                
+                log('\n2️⃣ Test CORS...');
+                const corsTest = await fetch('https://velox-pdfswisscom.yhmr4j.easypanel.host/api/analyze-pdf', {
+                    method: 'OPTIONS'
+                });
+                log(`✅ CORS OK (${corsTest.status})`);
+                
+                log('\n3️⃣ Test POST sans fichier...');
+                const postTest = await fetch('https://velox-pdfswisscom.yhmr4j.easypanel.host/api/analyze-pdf', {
+                    method: 'POST',
+                    body: new FormData()
+                });
+                const postData = await postTest.json();
+                log(`✅ API répond: ${JSON.stringify(postData)}`);
+                
+                log('\n✅ TOUS LES TESTS PASSÉS!');
+                log('💡 L\'API fonctionne. Si l\'upload PDF ne marche pas,');
+                log('   c\'est le Service Worker. Utilisez les boutons ci-dessus.');
+                
+            } catch (error) {
+                log(`\n❌ ERREUR: ${error.message}`);
+                log('🔍 Vérifiez votre connexion internet');
+            }
+        }
+
+        // Auto-check au chargement
+        checkSW();
+    </script>
+</body>
+</html>
