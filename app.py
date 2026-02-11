@@ -1,225 +1,230 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+API Flask pour extraction de données PDF Swisscom
+Extraction structurée par tableaux (sans IA)
+Version production - Février 2026
+"""
+
 import os
-import json
 import pdfplumber
 import re
-import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 app = Flask(__name__)
-# Configuration CORS simple pour tous les endpoints
 CORS(app, origins="*", methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type"])
 
-# Configuration du modèle IA
-OLLAMA_API_URL = "https://agtelecom-ollama.yhmr4j.easypanel.host/api/generate"
-OLLAMA_MODEL = "qwen2.5:1.5b"
+def find_value_after_label(text, label):
+    """Cherche un label dans le texte et retourne la valeur qui suit"""
+    label_escaped = re.escape(label)
+    pattern = label_escaped + r'\s*[:\s]*(.+?)(?:\n|$)'
+    match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
+    return match.group(1).strip() if match else None
+
+def extract_phone_from_header(text):
+    """Extrait le téléphone depuis l'en-tête du document"""
+    header = text[:500]
+    
+    # Pattern 1: Téléphone suivi de +41...
+    pattern1 = r'Téléphone\s*(\+41\d{9,11}|\+41\s*\d{2}\s*\d{3}\s*\d{2}\s*\d{2,3})'
+    match1 = re.search(pattern1, header, re.IGNORECASE)
+    if match1:
+        return re.sub(r'\s+', '', match1.group(1))
+    
+    # Pattern 2: Téléphone suivi de 41... (sans +)
+    pattern2 = r'Téléphone\s*(41\d{9})'
+    match2 = re.search(pattern2, header, re.IGNORECASE)
+    if match2:
+        return '+' + re.sub(r'\s+', '', match2.group(1))
+    
+    # Pattern 3: Téléphone suivi de 0... (format local)
+    pattern3 = r'Téléphone\s*(0\d{9})'
+    match3 = re.search(pattern3, header, re.IGNORECASE)
+    if match3:
+        phone = match3.group(1)
+        if phone.startswith('0'):
+            return '+41' + phone[1:]
+    
+    return None
+
+def extract_email(text):
+    """Extrait l'email du texte"""
+    email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    emails = re.findall(email_pattern, text)
+    return emails[0] if emails else None
+
+def extract_socket_label(text):
+    """
+    Extrait le Socket Label (format B.xxx.xxx.xxx.x où x peut être chiffre ou lettre)
+    """
+    socket_pattern = r'B\.\d{3}\.\d{3}\.\d{3}\.\w'
+    
+    # Pattern 1 : Après "Socket Label:"
+    label_line = find_value_after_label(text, "Socket Label:")
+    if label_line:
+        match = re.search(socket_pattern, label_line)
+        if match:
+            return match.group(0)
+    
+    # Pattern 2 : Recherche globale
+    matches = re.findall(socket_pattern, text)
+    return matches[0] if matches else None
+
+def extract_mandate_number(text):
+    """Extrait le numéro de mandat (8 chiffres)"""
+    mandate_pattern = r'\b\d{8}\b'
+    matches = re.findall(mandate_pattern, text)
+    return matches[0] if matches else None
+
+def extract_from_structured_table(tables):
+    """
+    Extrait câbles et fibres directement depuis les tableaux structurés
+    Gère les cas de multi-câbles (plusieurs lignes de données)
+    """
+    result = {
+        'cables': [],
+        'fibers': {f'fiber_{i}': None for i in range(1, 5)},
+        'cables_details': []
+    }
+    
+    if not tables:
+        return result
+    
+    for table in tables:
+        if not table or len(table) < 2:
+            continue
+        
+        # Chercher la ligne header "Câble:"
+        cable_col_idx = None
+        for row_idx, row in enumerate(table):
+            for col_idx, cell in enumerate(row):
+                if cell and 'Câble:' in str(cell):
+                    cable_col_idx = col_idx
+                    break
+            if cable_col_idx is not None:
+                break
+        
+        # Chercher la ligne avec SP1, SP2, SP3, SP4
+        sp_header_row_idx = None
+        sp_col_indices = {}
+        
+        for row_idx, row in enumerate(table):
+            for col_idx, cell in enumerate(row):
+                if cell:
+                    cell_str = str(cell).strip().upper()
+                    for sp_num in range(1, 5):
+                        if cell_str == f'SP{sp_num}':
+                            if sp_header_row_idx is None:
+                                sp_header_row_idx = row_idx
+                            sp_col_indices[sp_num] = col_idx
+        
+        # Extraire toutes les lignes de données
+        if sp_header_row_idx is not None:
+            data_start_row = sp_header_row_idx + 1
+            
+            for data_row_idx in range(data_start_row, len(table)):
+                data_row = table[data_row_idx]
+                
+                # Vérifier si cette ligne contient des données de câble
+                if cable_col_idx is not None and cable_col_idx < len(data_row):
+                    cable_raw = data_row[cable_col_idx]
+                    
+                    # Si la cellule est vide ou contient un header, arrêter
+                    if not cable_raw or str(cable_raw).strip() in ['', 'Client', 'Interlocuteur']:
+                        break
+                    
+                    # Nettoyer le câble
+                    cable_clean = str(cable_raw).replace('\n', ' ').replace('\r', ' ')
+                    cable_clean = re.sub(r'\s+', ' ', cable_clean).strip()
+                    
+                    # Extraire les fibres pour ce câble
+                    cable_fibers = {}
+                    for sp_num, col_idx in sp_col_indices.items():
+                        if col_idx < len(data_row):
+                            value = data_row[col_idx]
+                            if value and str(value).strip():
+                                fiber_value = str(value).strip()
+                                digit_match = re.search(r'\d+', fiber_value)
+                                if digit_match:
+                                    cable_fibers[f'sp{sp_num}'] = digit_match.group(0)
+                    
+                    # Ajouter ce câble aux résultats
+                    result['cables'].append(cable_clean)
+                    result['cables_details'].append({
+                        'cable': cable_clean,
+                        **{f'sp{i}': cable_fibers.get(f'sp{i}') for i in range(1, 5)}
+                    })
+                    
+                    # Mettre à jour les fibres globales
+                    for sp_num in range(1, 5):
+                        sp_key = f'sp{sp_num}'
+                        if sp_key in cable_fibers:
+                            if result['fibers'][f'fiber_{sp_num}'] is None:
+                                result['fibers'][f'fiber_{sp_num}'] = cable_fibers[sp_key]
+    
+    if not result['cables']:
+        result['cables'] = None
+    
+    return result
 
 def extract_pdf_data(file_path):
-    """Extrait les données du PDF avec pdfplumber (extraction traditionnelle renforcée)"""
+    """Extrait toutes les données du PDF"""
     try:
         with pdfplumber.open(file_path) as pdf:
             if len(pdf.pages) == 0:
                 raise Exception('PDF vide')
             
-            # Extraire tout le texte de toutes les pages
-            full_text = ""
-            for page in pdf.pages:
-                page_text = page.extract_text() or ""
-                full_text += page_text + "\n"
-            
-            page = pdf.pages[0]  # Première page pour tableaux
-            
-            # Extraire avec regex renforcés
-            data = {
-                'mandate_number': None,
-                'socket_label': None,
-                'cable': None,
-                'cables': [],
-                'fibers_by_cable': [],
-                'fiber_1': None,
-                'fiber_2': None,
-                'fiber_3': None,
-                'fiber_4': None,
-                'phone': None,
-                'email': None,
-                'full_text': full_text  # Stocker le texte complet pour l'IA
-            }
-            
-            # Mandate number (Disp ID) - patterns multiples
-            patterns_mandate = [
-                r'Disp\s*ID[:\s]+(\d+)',
-                r'Mandat[:\s]*#?(\d+)',
-                r'Ordre[:\s]*#?(\d+)',
-                r'N°\s*mandat[:\s]*(\d+)',
-                r'Mandate[:\s]*(?:number|#)?[:\s]*(\d+)'
-            ]
-            for pattern in patterns_mandate:
-                match = re.search(pattern, full_text, re.IGNORECASE)
-                if match:
-                    data['mandate_number'] = match.group(1)
-                    break
-            
-            # Socket Label - patterns multiples
-            patterns_socket = [
-                r'Socket\s*Label[:\s]+(B\.\d+\.\d+\.\d+\.\d+)',
-                r'PTO[:\s]+(B\.\d+\.\d+\.\d+\.\d+)',
-                r'Socket[:\s]+(B\.\d+\.\d+\.\d+\.\d+)',
-                r'Prise[:\s]+(B\.\d+\.\d+\.\d+\.\d+)',
-                r'(B\.\d{3,}\.\d{2,}\.\d{2,}\.\d{1,})'
-            ]
-            for pattern in patterns_socket:
-                match = re.search(pattern, full_text, re.IGNORECASE)
-                if match:
-                    data['socket_label'] = match.group(1)
-                    break
-            
-            # Extraire les tableaux pour les câbles et fibres
+            page = pdf.pages[0]
+            full_text = page.extract_text() or ""
             tables = page.extract_tables()
-            cables_found = []
-            fibers_by_cable = []
             
-            if tables:
-                for table in tables:
-                    if not table or len(table) < 2:
-                        continue
-                    
-                    sp_columns = {}
-                    header_row_idx = None
-                    cable_column_idx = None
-                    
-                    # Trouver la ligne d'en-tête avec SP1, SP2, SP3, SP4
-                    for row_idx, row in enumerate(table):
-                        if not row:
-                            continue
-                        for col_idx, cell in enumerate(row):
-                            if cell is None:
-                                continue
-                            cell_str = str(cell).strip()
-                            cell_upper = cell_str.upper()
-                            # Patterns pour les SP avec variantes
-                            if re.search(r'SP\s*1|SPLICE\s*1', cell_upper):
-                                sp_columns['1'] = col_idx
-                                header_row_idx = row_idx
-                            elif re.search(r'SP\s*2|SPLICE\s*2', cell_upper):
-                                sp_columns['2'] = col_idx
-                            elif re.search(r'SP\s*3|SPLICE\s*3', cell_upper):
-                                sp_columns['3'] = col_idx
-                            elif re.search(r'SP\s*4|SPLICE\s*4', cell_upper):
-                                sp_columns['4'] = col_idx
-                            # Supporter plusieurs langues/variantes pour l'en-tête "cable"
-                            if cable_column_idx is None:
-                                if re.search(r'câbl|cabl|kabel|cable', cell_str, re.IGNORECASE) and not re.search(r'long|läng|length', cell_str, re.IGNORECASE):
-                                    cable_column_idx = col_idx
-                        if header_row_idx is not None and (sp_columns or cable_column_idx is not None):
-                            break
-                    
-                    if header_row_idx is None:
-                        continue
-                    
-                    # Parcourir les lignes de données
-                    for data_row_idx in range(header_row_idx + 1, len(table)):
-                        data_row = table[data_row_idx]
-                        if not data_row:
-                            continue
-                        
-                        # Extraire le câble
-                        cable_value = None
-                        if cable_column_idx is not None and cable_column_idx < len(data_row):
-                            cable_cell = data_row[cable_column_idx]
-                            if cable_cell:
-                                cable_text = str(cable_cell).strip()
-                                # Nettoyer et valider le câble
-                                if cable_text and not cable_text.isdigit() and len(cable_text) > 2:
-                                    cable_value = ' '.join(cable_text.split())
-                                    if cable_value and cable_value not in cables_found:
-                                        cables_found.append(cable_value)
-                        
-                        # Extraire les fibres SP1..SP4
-                        row_fibers = {
-                            "cable": cable_value,
-                            "fiber_1": None,
-                            "fiber_2": None,
-                            "fiber_3": None,
-                            "fiber_4": None
-                        }
-                        
-                        for fiber_num, col_idx in sp_columns.items():
-                            if col_idx < len(data_row):
-                                cell_value = str(data_row[col_idx]).strip()
-                                # Accepter nombres et certains patterns alphanumériques
-                                if cell_value and (cell_value.isdigit() or re.match(r'^[A-Z0-9]{1,4}$', cell_value)):
-                                    row_fibers[f"fiber_{fiber_num}"] = cell_value
-                        
-                        # Ajouter si au moins un câble ou une fibre
-                        if cable_value or any(row_fibers[f"fiber_{n}"] for n in ['1','2','3','4']):
-                            fibers_by_cable.append(row_fibers)
-                    
-                    if fibers_by_cable or cables_found:
-                        break
+            # Extraction depuis tableaux structurés
+            structured_data = extract_from_structured_table(tables)
             
-            # Nettoyer les câbles
-            cleaned_cables = []
-            for cable in cables_found:
-                clean = ' '.join(str(cable).split())
-                if clean and clean not in cleaned_cables:
-                    cleaned_cables.append(clean)
+            # Numéro de mandat
+            disp_id = find_value_after_label(full_text, "Disp ID:")
+            if disp_id:
+                mandate_number = extract_mandate_number(disp_id)
+            else:
+                mandate_number = extract_mandate_number(full_text)
             
-            data['cables'] = cleaned_cables
-            if cleaned_cables:
-                data['cable'] = " / ".join(cleaned_cables)
+            # Nom du client
+            client_line = find_value_after_label(full_text, "Adresse:")
+            client_name = None
+            if client_line:
+                client_name = client_line.split('\n')[0].strip()
             
-            # Si une ligne de fibres n'a pas de `cable` mais des valeurs de fibre,
-            # tenter de remplir avec le câble détecté globalement ou le dernier connu.
-            if fibers_by_cable:
-                last_known = None
-                for row in fibers_by_cable:
-                    if row.get('cable'):
-                        last_known = row['cable']
-                    else:
-                        # Si on a un seul câble détecté globalement, l'utiliser
-                        if len(cleaned_cables) == 1:
-                            row['cable'] = cleaned_cables[0]
-                            last_known = row['cable']
-                        elif last_known:
-                            row['cable'] = last_known
-
-            data['fibers_by_cable'] = fibers_by_cable
+            # Téléphone
+            header_phone = extract_phone_from_header(full_text)
+            phone = header_phone
             
-            # Fusionner les fibres (première valeur non nulle par colonne)
-            for n in ['1','2','3','4']:
-                if data[f"fiber_{n}"] is None:
-                    for row in fibers_by_cable:
-                        if row.get(f"fiber_{n}"):
-                            data[f"fiber_{n}"] = row[f"fiber_{n}"]
-                            break
+            # Socket Label
+            socket_label = extract_socket_label(full_text)
             
-            # Phone - patterns multiples renforcés
-            phone_patterns = [
-                r'\+41\s*\d{2}\s*\d{3}\s*\d{2}\s*\d{2}',
-                r'\+41\d{9}',
-                r'0\d{2}\s*\d{3}\s*\d{2}\s*\d{2}',
-                r'Tel[:\s]*\+?41?\s*\d{2}\s*\d{3}\s*\d{2}\s*\d{2}',
-                r'Phone[:\s]*\+?41?\s*\d{2}\s*\d{3}\s*\d{2}\s*\d{2}',
-                r'Tél[:\s]*\+?41?\s*\d{2}\s*\d{3}\s*\d{2}\s*\d{2}'
-            ]
-            for pattern in phone_patterns:
-                match = re.search(pattern, full_text, re.IGNORECASE)
-                if match:
-                    data['phone'] = match.group(0).replace(' ', '')
-                    break
+            # Email
+            email = extract_email(full_text)
             
-            # Email - patterns renforcés
-            email_patterns = [
-                r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-                r'Email[:\s]*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})',
-                r'E-mail[:\s]*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})'
-            ]
-            for pattern in email_patterns:
-                match = re.search(pattern, full_text, re.IGNORECASE)
-                if match:
-                    data['email'] = match.group(1) if match.lastindex else match.group(0)
-                    break
+            # Câbles et fibres
+            cables = structured_data['cables']
+            cable = cables[0] if cables else None
+            
+            # Construire la réponse
+            data = {
+                'mandate_number': mandate_number,
+                'client_name': client_name,
+                'phone': phone,
+                'email': email,
+                'socket_label': socket_label,
+                'cable': cable,
+                'cables': cables,
+                'cables_details': structured_data.get('cables_details', []),
+                'fiber_1': structured_data['fibers'].get('fiber_1'),
+                'fiber_2': structured_data['fibers'].get('fiber_2'),
+                'fiber_3': structured_data['fibers'].get('fiber_3'),
+                'fiber_4': structured_data['fibers'].get('fiber_4'),
+            }
             
             return data
             
@@ -227,257 +232,64 @@ def extract_pdf_data(file_path):
         print(f'Erreur extraction PDF: {e}')
         raise
 
-
-def extract_with_ai(full_text, file_name):
-    """Extrait les données du PDF en utilisant le modèle IA Qwen2.5:1.5b"""
-    try:
-        print(f"🤖 Début extraction IA pour: {file_name}")
-        
-        # Préparer le prompt pour le modèle
-        prompt = f"""Tu es un assistant d'extraction de données de mandats de fibre optique Swisscom. Analyse le texte suivant et extrait les informations structurées.
-
-Texte du document:
-{full_text[:4000]}
-
-Instructions:
-- Extrais UNIQUEMENT les informations présentes dans le texte
-- Ne devine pas, ne fabrique pas de données
-- Retourne un objet JSON valide avec ces champs (null si non trouvé):
-  * mandate_number: numéro du mandat/Disp ID
-  * socket_label: référence PTO/Socket (format B.xxx.xx.xx.x)
-  * cable: nom du câble d'alimentation
-  * fiber_1, fiber_2, fiber_3, fiber_4: numéros de fibres (SP1, SP2, SP3, SP4)
-  * phone: numéro de téléphone (format +41...)
-  * email: adresse email du contact
-  * address: adresse complète du site
-  * client_name: nom du client
-
-Réponds UNIQUEMENT avec le JSON, sans texte supplémentaire."""
-
-        print(f"🔄 Appel API Ollama ({OLLAMA_MODEL})...")
-        
-        # Appeler l'API Ollama
-        response = requests.post(
-            OLLAMA_API_URL,
-            json={
-                "model": OLLAMA_MODEL,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "temperature": 0.1,  # Très déterministe pour extraction
-                    "top_p": 0.9,
-                    "num_predict": 500
-                }
-            },
-            timeout=60
-        )
-        
-        if response.status_code != 200:
-            print(f"❌ Erreur API Ollama: {response.status_code} - {response.text}")
-            return None
-        
-        result = response.json()
-        duration = result.get('total_duration', 0) / 1e9
-        print(f"⏱️ Durée traitement IA: {duration:.2f}s")
-        
-        ai_response = result.get('response', '').strip()
-        print(f"📝 Réponse IA (premiers 200 car): {ai_response[:200]}...")
-        
-        # Extraire le JSON de la réponse
-        # Le modèle peut entourer le JSON avec ```json...``` ou ajouter du texte
-        # Nettoyer d'abord les blocs markdown
-        cleaned_response = re.sub(r'```json\s*', '', ai_response)
-        cleaned_response = re.sub(r'```\s*$', '', cleaned_response)
-        
-        # Chercher le JSON dans la réponse nettoyée
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', cleaned_response, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(0)
-            ai_data = json.loads(json_str)
-            
-            # Nettoyer les valeurs null/vides
-            cleaned_data = {}
-            for key, value in ai_data.items():
-                if value and value != "null" and value != "None":
-                    cleaned_data[key] = value
-            
-            print(f"✅ IA a extrait {len(cleaned_data)} champs: {list(cleaned_data.keys())}")
-            return cleaned_data
-        else:
-            print(f"⚠️ Pas de JSON trouvé dans la réponse IA: {ai_response[:200]}")
-            return None
-            
-    except requests.Timeout:
-        print(f"⏱️ Timeout lors de l'appel à l'API Ollama pour {file_name}")
-        return None
-    except requests.RequestException as e:
-        print(f"🌐 Erreur réseau lors de l'appel à l'API Ollama: {e}")
-        return None
-    except json.JSONDecodeError as e:
-        print(f"📄 Erreur parsing JSON de la réponse IA: {e}")
-        print(f"Réponse brute: {ai_response[:500]}")
-        return None
-    except Exception as e:
-        print(f"❌ Erreur extraction IA: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
-
-
-def merge_extractions(traditional_data, ai_data):
-    """Fusionne intelligemment les résultats de l'extraction traditionnelle et de l'IA"""
-    merged = traditional_data.copy()
-    
-    if not ai_data:
-        merged['ai_contribution'] = False
-        print("ℹ️ Aucune contribution IA (ai_data est None ou vide)")
-        return merged
-    
-    print(f"🔀 Fusion des données - IA a fourni: {list(ai_data.keys())}")
-    ai_filled_fields = []
-    
-    # Liste des champs à fusionner
-    fields = ['mandate_number', 'socket_label', 'cable', 'phone', 'email', 
-              'fiber_1', 'fiber_2', 'fiber_3', 'fiber_4', 'address', 'client_name']
-    
-    for field in fields:
-        ai_value = ai_data.get(field)
-        traditional_value = merged.get(field)
-        
-        # Si l'extraction traditionnelle n'a rien trouvé et l'IA oui
-        if (not traditional_value or traditional_value == '') and ai_value:
-            merged[field] = ai_value
-            ai_filled_fields.append(field)
-            print(f"  ✅ IA complète '{field}': {ai_value}")
-        # Si les deux ont trouvé quelque chose mais que c'est différent
-        # On fait confiance à l'extraction traditionnelle mais on ajoute une note
-        elif traditional_value and ai_value and str(traditional_value) != str(ai_value):
-            # Pour certains champs critiques, on préfère l'extraction traditionnelle
-            if field in ['mandate_number', 'socket_label']:
-                merged[f'{field}_ai_alternative'] = ai_value
-                print(f"  ℹ️ Conflit '{field}': traditionnel={traditional_value}, IA={ai_value} (garde traditionnel)")
-    
-    merged['ai_contribution'] = len(ai_filled_fields) > 0
-    merged['ai_filled_fields'] = ai_filled_fields
-    
-    print(f"📊 Résultat fusion: {len(ai_filled_fields)} champs complétés par IA: {ai_filled_fields}")
-    print(f"   ai_contribution = {merged['ai_contribution']}")
-    
-    return merged
-
-@app.route('/api/analyze-pdf', methods=['POST', 'OPTIONS'])
+@app.route('/analyze-pdf', methods=['POST', 'OPTIONS'])
 def analyze_pdf():
-    """Analyse les PDF envoyés avec double extraction (traditionnelle + IA)"""
+    """Endpoint principal pour analyser un PDF uploadé"""
     if request.method == 'OPTIONS':
-        return '', 204
+        return jsonify({}), 200
     
-    if 'pdfs' not in request.files:
-        return jsonify({'success': False, 'error': 'Aucun fichier envoyé'}), 400
-    
-    files = request.files.getlist('pdfs')
-    if not files:
-        return jsonify({'success': False, 'error': 'Aucun fichier sélectionné'}), 400
-    
-    results = []
-    
-    for file in files:
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'Aucun fichier fourni'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'Nom de fichier vide'}), 400
+        
         if not file.filename.lower().endswith('.pdf'):
-            results.append({
-                'success': False,
-                'file_name': file.filename,
-                'error': 'Fichier invalide (PDF requis)'
-            })
-            continue
+            return jsonify({'error': 'Le fichier doit être un PDF'}), 400
+        
+        # Sauvegarder temporairement le fichier
+        upload_folder = os.path.join(os.getcwd(), 'uploads')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        file_path = os.path.join(upload_folder, file.filename)
+        file.save(file_path)
         
         try:
-            # Sauvegarder temporairement
-            temp_path = f'/tmp/{file.filename}'
-            file.save(temp_path)
+            # Extraction structurée
+            data = extract_pdf_data(file_path)
             
-            print(f"\n{'='*60}")
-            print(f"📄 Traitement: {file.filename}")
-            print(f"{'='*60}")
+            # Nettoyer le fichier temporaire
+            os.remove(file_path)
             
-            # EXTRACTION PARALLÈLE : Traditionnelle + IA
-            print("🚀 Lancement extraction parallèle (Traditionnelle + IA)...")
-            
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                # Lance l'extraction traditionnelle
-                print("  📝 Thread 1: Extraction traditionnelle...")
-                future_traditional = executor.submit(extract_pdf_data, temp_path)
-                
-                # On attend le texte de l'extraction traditionnelle pour l'IA
-                traditional_data = future_traditional.result()
-                print(f"  ✅ Extraction traditionnelle terminée")
-                print(f"     Champs trouvés: {[k for k, v in traditional_data.items() if v and k != 'full_text']}")
-                
-                full_text = traditional_data.get('full_text', '')
-                
-                # Lance l'extraction IA avec le texte
-                print(f"  🤖 Thread 2: Extraction IA (texte: {len(full_text)} caractères)...")
-                future_ai = executor.submit(extract_with_ai, full_text, file.filename)
-                ai_data = future_ai.result()
-                
-                if ai_data:
-                    print(f"  ✅ Extraction IA terminée")
-                    print(f"     Champs trouvés: {list(ai_data.keys())}")
-                else:
-                    print(f"  ⚠️ Extraction IA n'a rien retourné")
-            
-            print("\n🔀 Fusion des extractions...")
-            # Fusionner les deux sources
-            merged_data = merge_extractions(traditional_data, ai_data)
-            
-            # Supprimer le full_text avant d'envoyer au client (trop volumineux)
-            if 'full_text' in merged_data:
-                del merged_data['full_text']
-            
-            # Calculer confiance (améliorée si l'IA a contribué)
-            required_fields = ['mandate_number', 'socket_label', 'cable']
-            missing = [f for f in required_fields if not merged_data.get(f)]
-            confidence = 1.0 - (len(missing) * 0.33)
-            confidence = max(0, confidence)
-            
-            # Bonus de confiance si l'IA a contribué
-            if merged_data.get('ai_contribution'):
-                confidence = min(1.0, confidence + 0.1)
-            
-            results.append({
+            return jsonify({
                 'success': True,
-                'file_name': file.filename,
-                'data': merged_data,
-                'confidence': confidence,
-                'needs_review': len(missing) > 0,
-                'missing_fields': missing,
-                'extraction_sources': {
-                    'traditional': True,
-                    'ai': ai_data is not None,
-                    'ai_contributed': merged_data.get('ai_contribution', False),
-                    'ai_fields': merged_data.get('ai_filled_fields', [])
-                }
-            })
-            
-            # Nettoyer
-            os.remove(temp_path)
+                'source': 'structured_extraction',
+                'data': data
+            }), 200
             
         except Exception as e:
-            results.append({
-                'success': False,
-                'file_name': file.filename,
-                'error': str(e)
-            })
-    
-    return jsonify({
-        'success': True,
-        'count': len([r for r in results if r['success']]),
-        'results': results
-    })
+            # Nettoyer en cas d'erreur
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            raise e
+            
+    except Exception as e:
+        print(f"Erreur lors de l'analyse du PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f"Erreur lors de l'analyse: {str(e)}"}), 500
 
 @app.route('/health', methods=['GET'])
 def health():
-    """Health check"""
-    return jsonify({'status': 'healthy', 'version': '1.0.0'})
+    """Endpoint de santé pour vérifier que l'API fonctionne"""
+    return jsonify({
+        'status': 'ok',
+        'version': '2.0',
+        'extraction_method': 'structured_tables'
+    }), 200
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    port = int(os.environ.get('PORT', 8765))
+    app.run(host='0.0.0.0', port=port, debug=True)
