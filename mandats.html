@@ -681,7 +681,9 @@
                         phone: appointments[0].phone,
                         email: appointments[0].email,
                         address: appointments[0].address,
-                        client_name: appointments[0].client_name
+                        client_name: appointments[0].client_name,
+                        pto_reference: appointments[0].pto_reference,
+                        cable_alim: appointments[0].cable_alim
                     });
                 }
                 
@@ -723,7 +725,7 @@
                         tu: null,
                         tu_valide: false,
                         priorite: false,
-                        statut: apt.date ? 'assigne' : 'en_attente',
+                        statut: apt.date ? 'planifie' : (apt.employee_id ? 'assigne' : 'en_attente'),
                         created_at: apt.created_at,
                         updated_at: apt.updated_at,
                         // Données supplémentaires pour l'affichage
@@ -1103,6 +1105,12 @@
                 const pdfData = result.data;
                 console.log('📄 Données extraites:', pdfData);
                 
+                // Valider le client_name extrait : ne pas utiliser si c'est le numéro de mandat
+                if (pdfData.client_name && pdfData.client_name === pdfData.mandate_number) {
+                    console.warn('⚠️ client_name identique au numéro de mandat, ignoré:', pdfData.client_name);
+                    pdfData.client_name = null;
+                }
+                
                 const mandateNumber = pdfData.mandate_number;
                 
                 if (!mandateNumber) {
@@ -1128,30 +1136,42 @@
 
                 console.log('Résultat recherche:', existing ? `Trouvé (ID: ${existing.id})` : 'Non trouvé');
 
-                // Données techniques du PDF
-                const technicalData = {
-                    mandate_number: mandateNumber,
-                    phone: pdfData.phone || null,
-                    email: pdfData.email || null,
-                    address: pdfData.address || null,
-                    client_name: pdfData.client_name || null,
-                    pto_reference: pdfData.socket_label || null,
-                    cable_alim: pdfData.cable || null,
-                    fibre_1: pdfData.fiber_1 || null,
-                    fibre_2: pdfData.fiber_2 || null,
-                    fibre_3: pdfData.fiber_3 || null,
-                    fibre_4: pdfData.fiber_4 || null,
-                    updated_at: new Date().toISOString()
-                };
-
-                console.log('💾 Données à sauvegarder:', technicalData);
-
                 if (existing) {
-                    // UPDATE : toujours mettre à jour avec les nouvelles données PDF
+                    // UPDATE : MERGE intelligent - ne pas écraser les données existantes
                     console.log('🔄 Mise à jour appointment ID:', existing.id);
+                    
+                    // Construire l'objet de mise à jour en préservant les valeurs existantes
+                    const updateData = {
+                        updated_at: new Date().toISOString()
+                    };
+                    
+                    // TOUJOURS mettre à jour les données techniques (priorité au PDF)
+                    if (pdfData.socket_label) updateData.pto_reference = pdfData.socket_label;
+                    if (pdfData.cable) updateData.cable_alim = pdfData.cable;
+                    if (pdfData.fiber_1) updateData.fibre_1 = pdfData.fiber_1;
+                    if (pdfData.fiber_2) updateData.fibre_2 = pdfData.fiber_2;
+                    if (pdfData.fiber_3) updateData.fibre_3 = pdfData.fiber_3;
+                    if (pdfData.fiber_4) updateData.fibre_4 = pdfData.fiber_4;
+                    
+                    // Ne mettre à jour les données client QUE si vides dans la BDD
+                    if (!existing.client_name && pdfData.client_name) {
+                        updateData.client_name = pdfData.client_name;
+                    }
+                    if (!existing.address && pdfData.address) {
+                        updateData.address = pdfData.address;
+                    }
+                    if (!existing.phone && pdfData.phone) {
+                        updateData.phone = pdfData.phone;
+                    }
+                    if (!existing.email && pdfData.email) {
+                        updateData.email = pdfData.email;
+                    }
+                    
+                    console.log('💾 Données MERGE (ne pas écraser l\'existant):', updateData);
+                    
                     const { error } = await supabase
                         .from('appointments')
-                        .update(technicalData)
+                        .update(updateData)
                         .eq('id', existing.id);
 
                     if (error) {
@@ -1178,23 +1198,34 @@
                         continue;
                     }
                     
-                    // Ajouter les champs obligatoires avec valeurs par défaut
-                    technicalData.employee_id = employees.id;
-                    technicalData.date = new Date().toISOString().split('T')[0];
-                    technicalData.start_time = '08:00:00';
-                    technicalData.end_time = '17:00:00';
-                    technicalData.activity = 'Installation FTTH';
-                    technicalData.created_at = new Date().toISOString();
+                    // Construire les données INSERT
+                    const insertData = {
+                        mandate_number: mandateNumber,
+                        employee_id: employees.id,
+                        date: new Date().toISOString().split('T')[0],
+                        start_time: '08:00:00',
+                        end_time: '17:00:00',
+                        activity: 'Installation FTTH',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        // Données PDF
+                        phone: pdfData.phone || null,
+                        email: pdfData.email || null,
+                        address: pdfData.address || 'À compléter',
+                        client_name: pdfData.client_name || 'Client ' + mandateNumber,
+                        pto_reference: pdfData.socket_label || null,
+                        cable_alim: pdfData.cable || null,
+                        fibre_1: pdfData.fiber_1 || null,
+                        fibre_2: pdfData.fiber_2 || null,
+                        fibre_3: pdfData.fiber_3 || null,
+                        fibre_4: pdfData.fiber_4 || null
+                    };
                     
-                    // Valeurs par défaut si extraction incomplète
-                    if (!technicalData.address) technicalData.address = 'À compléter';
-                    if (!technicalData.client_name) technicalData.client_name = 'Client ' + mandateNumber;
-                    
-                    console.log('💾 Données INSERT complètes:', technicalData);
+                    console.log('💾 Données INSERT complètes:', insertData);
 
                     const { data: inserted, error } = await supabase
                         .from('appointments')
-                        .insert([technicalData])
+                        .insert([insertData])
                         .select();
 
                     if (error) {
@@ -1668,6 +1699,7 @@
             const statusColors = {
                 'en_attente': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
                 'assigne': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                'planifie': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
                 'en_cours': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
                 'termine': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
                 'annule': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
@@ -1676,6 +1708,7 @@
             const statusLabels = {
                 'en_attente': 'En attente',
                 'assigne': 'Assigné',
+                'planifie': 'Planifié',
                 'en_cours': 'En cours',
                 'termine': 'Terminé',
                 'annule': 'Annulé'
@@ -1696,8 +1729,8 @@
                 const plannedTech = mandat._employee_prenom && mandat._employee_nom 
                     ? `${mandat._employee_prenom} ${mandat._employee_nom}`.trim() 
                     : null;
-                // Statut auto: si date planifiée existe, statut devient 'assigne'
-                const actualStatut = plannedDate ? 'assigne' : mandat.statut;
+                // Statut auto: si date planifiée existe, statut devient 'planifie'
+                const actualStatut = plannedDate ? 'planifie' : mandat.statut;
                 
                 // Extraire Order Type des notes
                 const orderTypeMatch = mandat.notes?.match(/Order Type:\s*([^|]+)/);
