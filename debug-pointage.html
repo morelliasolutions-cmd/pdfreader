@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Debug Pointage</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+        }
+        h2 {
+            color: #00ffff;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .error {
+            color: #ff0000;
+        }
+        .success {
+            color: #00ff00;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js"></script>
+    <script src="js/config.js"></script>
+</head>
+<body>
+    <h1>🔍 DEBUG POINTAGE - 11 Février 2026</h1>
+    
+    <div class="section">
+        <h2>1. Configuration Supabase</h2>
+        <pre id="config-result">Chargement...</pre>
+    </div>
+    
+    <div class="section">
+        <h2>2. Employés récupérés</h2>
+        <pre id="employees-result">Chargement...</pre>
+    </div>
+    
+    <div class="section">
+        <h2>3. Pointages du 11 février</h2>
+        <pre id="pointages-result">Chargement...</pre>
+    </div>
+    
+    <div class="section">
+        <h2>4. Matching employés ↔ pointages</h2>
+        <pre id="matching-result">Chargement...</pre>
+    </div>
+
+    <script>
+        async function runDebug() {
+            try {
+                // 1. Config
+                document.getElementById('config-result').innerHTML = 
+                    `<span class="success">✅ Supabase URL: ${window.supabaseUrl || 'NON DÉFINI'}</span>\n` +
+                    `<span class="success">✅ Supabase Key présente: ${window.supabaseAnonKey ? 'OUI' : 'NON'}</span>`;
+                
+                if (!window.supabase) {
+                    if (typeof initSupabase === 'function') {
+                        initSupabase();
+                    } else {
+                        window.supabase = window.supabase.createClient(window.supabaseUrl, window.supabaseAnonKey);
+                    }
+                }
+                
+                // 2. Récupérer les employés
+                const { data: employees, error: empError } = await supabase
+                    .from('employees')
+                    .select('*')
+                    .eq('status', 'Actif')
+                    .order('first_name');
+                
+                if (empError) {
+                    document.getElementById('employees-result').innerHTML = 
+                        `<span class="error">❌ ERREUR: ${empError.message}</span>`;
+                } else {
+                    document.getElementById('employees-result').innerHTML = 
+                        `<span class="success">✅ ${employees.length} employés trouvés</span>\n\n` +
+                        JSON.stringify(employees.map(e => ({
+                            id: e.id,
+                            nom: `${e.first_name} ${e.last_name}`,
+                            type: e.type
+                        })), null, 2);
+                }
+                
+                // 3. Récupérer les pointages du 11 février
+                const { data: timeEntries, error: teError } = await supabase
+                    .from('time_entries')
+                    .select('*')
+                    .eq('date', '2026-02-11');
+                
+                if (teError) {
+                    document.getElementById('pointages-result').innerHTML = 
+                        `<span class="error">❌ ERREUR: ${teError.message}</span>`;
+                } else {
+                    document.getElementById('pointages-result').innerHTML = 
+                        `<span class="success">✅ ${timeEntries.length} pointages trouvés</span>\n\n` +
+                        JSON.stringify(timeEntries, null, 2);
+                }
+                
+                // 4. Matching
+                if (employees && timeEntries) {
+                    const matching = employees.map(emp => {
+                        const timeEntry = timeEntries.find(te => te.employee_id === emp.id);
+                        return {
+                            employé: `${emp.first_name} ${emp.last_name}`,
+                            employee_id: emp.id,
+                            pointage_trouvé: !!timeEntry,
+                            heures: timeEntry ? `${timeEntry.start_time} - ${timeEntry.end_time}` : 'AUCUN'
+                        };
+                    });
+                    
+                    document.getElementById('matching-result').innerHTML = 
+                        JSON.stringify(matching, null, 2);
+                }
+                
+            } catch (error) {
+                console.error('Erreur debug:', error);
+                document.body.innerHTML += `<div class="section"><h2 class="error">ERREUR CRITIQUE</h2><pre>${error.message}\n${error.stack}</pre></div>`;
+            }
+        }
+        
+        // Attendre que config.js soit chargé
+        setTimeout(runDebug, 500);
+    </script>
+</body>
+</html>

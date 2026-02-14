@@ -1,0 +1,28 @@
+{
+  "name": "supabase-postgres-sync",
+  "version": "1.0.0",
+  "description": "Script de synchronisation Supabase vers PostgreSQL privé",
+  "main": "sync-supabase-to-postgres.js",
+  "scripts": {
+    "sync": "node sync-supabase-to-postgres.js",
+    "test": "node -e \"require('dotenv').config(); require('./sync-supabase-to-postgres.js').main()\""
+  },
+  "keywords": [
+    "supabase",
+    "postgresql",
+    "sync",
+    "backup"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@supabase/supabase-js": "^2.90.0",
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3",
+    "ssh2": "^1.17.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="theme-color" content="#F59E0B"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>Détails de l'Installation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+<script src="../../js/config.js?v=7" defer></script>
+<script src="../../js/api.js?v=7" defer></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1c2433",
+                        "text-main-light": "#111318",
+                        "text-main-dark": "#e2e8f0",
+                        "text-sub-light": "#616f89",
+                        "text-sub-dark": "#94a3b8",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#2d3748",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        /* Notification animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+            to {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .animate-fade-out {
+            animation: fadeOut 0.3s ease-in;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main-light dark:text-text-main-dark antialiased selection:bg-primary selection:text-white">
+<!-- Top Navigation -->
+<nav class="sticky top-0 z-50 w-full bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-border-light dark:border-border-dark">
+<div class="flex items-center justify-between px-4 py-3">
+<button onclick="goBack()" class="flex items-center justify-center w-10 h-10 -ml-2 rounded-full active:bg-gray-200 dark:active:bg-gray-800 transition-colors text-text-main-light dark:text-text-main-dark">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h1 class="text-base font-bold text-text-main-light dark:text-text-main-dark flex-1 text-center pr-8">Détails de l'Installation</h1>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex flex-col w-full pb-28">
+<!-- Status & ID Card -->
+<div class="px-4 py-4">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-border-light dark:border-border-dark flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-sm text-text-sub-light dark:text-text-sub-dark font-medium">ID Installation</span>
+<h2 class="text-3xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark" id="installation-id">#---</h2>
+</div>
+<span id="status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800">
+<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                        En attente
+                    </span>
+</div>
+<div class="w-full h-px bg-border-light dark:border-border-dark"></div>
+<div class="flex items-center gap-2 text-sm text-text-sub-light dark:text-text-sub-dark">
+<span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+<span id="installation-date">Chargement...</span>
+</div>
+</div>
+</div>
+<!-- Client Info Section -->
+<section class="mt-2">
+<h3 class="px-4 pb-3 pt-2 text-lg font-bold text-text-main-light dark:text-text-main-dark flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">person</span>
+                Informations Client
+            </h3>
+<div class="bg-surface-light dark:bg-surface-dark border-y border-border-light dark:border-border-dark px-4 py-1">
+<div class="grid grid-cols-[1fr_2fr] gap-4 py-4 border-b border-border-light dark:border-border-dark last:border-0">
+<p class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">Nom</p>
+<p class="text-sm font-medium text-text-main-light dark:text-text-main-dark text-right" id="client-name">Chargement...</p>
+</div>
+<div class="grid grid-cols-[1fr_2fr] gap-4 py-4 border-b border-border-light dark:border-border-dark last:border-0">
+<p class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">Adresse</p>
+<div class="flex justify-end items-start gap-2 text-right">
+<p class="text-sm font-medium text-text-main-light dark:text-text-main-dark" id="client-address">Chargement...</p>
+<span class="material-symbols-outlined text-primary text-sm mt-0.5">map</span>
+</div>
+</div>
+<div class="grid grid-cols-[1fr_2fr] gap-4 py-4 last:border-0">
+<p class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">Contact</p>
+<div class="flex justify-end items-center gap-2">
+<p class="text-sm font-medium text-text-main-light dark:text-text-main-dark" id="client-phone">Chargement...</p>
+<button onclick="callClient()" class="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-[14px]">call</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Technical Data -->
+<section class="mt-6">
+<h3 class="px-4 pb-3 text-lg font-bold text-text-main-light dark:text-text-main-dark flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">router</span>
+                Données Techniques
+            </h3>
+<div class="px-4 space-y-3">
+<!-- Mandat et PTO -->
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface-light dark:bg-surface-dark p-3 rounded-lg border border-border-light dark:border-border-dark">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Numéro de Mandat</p>
+<p class="text-sm font-bold text-text-main-light dark:text-text-main-dark" id="mandate-number">-</p>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark p-3 rounded-lg border border-border-light dark:border-border-dark">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Référence Prise (PTO)</p>
+<p class="text-sm font-bold text-text-main-light dark:text-text-main-dark" id="ref-pto">-</p>
+</div>
+</div>
+<!-- Câble Alim et Fibres -->
+<div class="bg-surface-light dark:bg-surface-dark p-3 rounded-lg border border-border-light dark:border-border-dark">
+<div class="flex items-center justify-between mb-2">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark">Crochets Fibres (BEP)</p>
+<p class="text-sm font-bold text-text-main-light dark:text-text-main-dark text-right" id="cable-alim">-</p>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-2">
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-2">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Fibre 1</p>
+<div class="flex items-center gap-2">
+<div class="relative w-6 h-6 rounded-full border-2 border-dashed border-gray-400 flex-shrink-0" id="fibre-color-1" style="background: transparent;">
+<div id="fibre-mark-1" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-black rounded-full"></div>
+</div>
+<p class="text-sm font-bold text-text-main-light dark:text-text-main-dark" id="fibre-1">-</p>
+</div>
+</div>
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-2">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Fibre 2</p>
+<div class="flex items-center gap-2">
+<div class="relative w-6 h-6 rounded-full border-2 border-dashed border-gray-400 flex-shrink-0" id="fibre-color-2" style="background: transparent;">
+<div id="fibre-mark-2" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-black rounded-full"></div>
+</div>
+<p class="text-sm font-bold text-text-main-light dark:text-text-main-dark" id="fibre-2">-</p>
+</div>
+</div>
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-2">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Fibre 3</p>
+<div class="flex items-center gap-2">
+<div class="relative w-6 h-6 rounded-full border-2 border-dashed border-gray-400 flex-shrink-0" id="fibre-color-3" style="background: transparent;">
+<div id="fibre-mark-3" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-black rounded-full"></div>
+</div>
+<p class="text-sm font-bold text-text-main-light dark:text-text-main-dark" id="fibre-3">-</p>
+</div>
+</div>
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-2">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Fibre 4</p>
+<div class="flex items-center gap-2">
+<div class="relative w-6 h-6 rounded-full border-2 border-dashed border-gray-400 flex-shrink-0" id="fibre-color-4" style="background: transparent;">
+<div id="fibre-mark-4" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-black rounded-full"></div>
+</div>
+<p class="text-sm font-bold text-text-main-light dark:text-text-main-dark" id="fibre-4">-</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Photos Gallery -->
+<section class="mt-8">
+<div class="flex items-center justify-between px-4 pb-3">
+                <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">photo_camera</span>
+                    Photos du technicien
+                </h3>
+                <span class="text-sm font-semibold text-text-main-light dark:text-text-main-dark" id="photos-count">0/11</span>
+</div>
+<div class="flex gap-4 overflow-x-auto px-4 pb-4 no-scrollbar snap-x snap-mandatory" id="photos-container">
+<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark">
+<span class="material-symbols-outlined text-4xl mb-2 opacity-50">photo_camera</span>
+<p class="text-sm">Chargement des photos...</p>
+</div>
+</div>
+</section>
+
+<!-- OTDR Measurements / PDF Documents -->
+<section class="mt-6">
+<div class="flex items-center justify-between px-4 pb-3">
+                <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">description</span>
+                    Mesures OTDR
+                </h3>
+                <span class="text-sm font-semibold text-text-main-light dark:text-text-main-dark" id="pdf-count">0</span>
+</div>
+<div class="flex gap-4 overflow-x-auto px-4 pb-4 no-scrollbar snap-x snap-mandatory" id="pdf-container">
+<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark">
+<span class="material-symbols-outlined text-4xl mb-2 opacity-50">description</span>
+<p class="text-sm">Aucune mesure OTDR</p>
+</div>
+</div>
+</section>
+
+<!-- Materials Used -->
+<section class="mt-4 px-4">
+<h3 class="pb-3 text-lg font-bold text-text-main-light dark:text-text-main-dark flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">inventory_2</span>
+                Matériel Utilisé
+            </h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark overflow-hidden" id="materials-container">
+<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark">
+<span class="material-symbols-outlined text-4xl mb-2 opacity-50">inventory_2</span>
+<p class="text-sm">Chargement du matériel...</p>
+</div>
+</div>
+</section>
+<!-- Technician Notes -->
+<section class="mt-8 px-4 mb-4">
+<h3 class="pb-2 text-sm font-bold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider">
+                Notes du technicien
+            </h3>
+<div class="bg-gray-100 dark:bg-surface-dark p-4 rounded-xl border border-transparent dark:border-border-dark">
+<p class="text-sm text-text-sub-light dark:text-text-sub-dark italic" id="technician-notes">
+                    Chargement...
+                </p>
+</div>
+</section>
+</main>
+<!-- Sticky Footer Actions -->
+<footer class="fixed bottom-0 left-0 w-full bg-surface-light/95 dark:bg-[#102216]/95 backdrop-blur-lg border-t border-border-light dark:border-border-dark p-4 pb-8 z-50">
+<div class="flex gap-3 max-w-md mx-auto">
+<button onclick="rejectIntervention()" class="flex-1 px-4 py-3.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">report_problem</span>
+                Refuser
+            </button>
+<button onclick="validateIntervention()" class="flex-[2] px-4 py-3.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">check</span>
+                Valider l'installation
+            </button>
+</div>
+</footer>
+
+<script>
+// Table des couleurs Swisscom pour fibres FTTH (1-24)
+const SWISSCOM_FIBER_COLORS = {
+    // 1ère douzaine (1-12)
+    1: { color: '#FF0000', name: 'Rouge' },
+    2: { color: '#00FF00', name: 'Vert' },
+    3: { color: '#FFFF00', name: 'Jaune' },
+    4: { color: '#0000FF', name: 'Bleu' },
+    5: { color: '#FFFFFF', name: 'Blanc' },
+    6: { color: '#800080', name: 'Violet' },
+    7: { color: '#FFA500', name: 'Orange' },
+    8: { color: '#000000', name: 'Noir' },
+    9: { color: '#808080', name: 'Gris' },
+    10: { color: '#8B4513', name: 'Marron' },
+    11: { color: '#FFC0CB', name: 'Rose' },
+    12: { color: '#00FFFF', name: 'Cyan' },
+    
+    // 2ème douzaine (13-24) - Mêmes couleurs avec marque noire
+    13: { color: '#FF0000', name: 'Rouge', mark: true },
+    14: { color: '#00FF00', name: 'Vert', mark: true },
+    15: { color: '#FFFF00', name: 'Jaune', mark: true },
+    16: { color: '#0000FF', name: 'Bleu', mark: true },
+    17: { color: '#FFFFFF', name: 'Blanc', mark: true },
+    18: { color: '#800080', name: 'Violet', mark: true },
+    19: { color: '#FFA500', name: 'Orange', mark: true },
+    20: { color: '#000000', name: 'Noir', mark: true },
+    21: { color: '#808080', name: 'Gris', mark: true },
+    22: { color: '#8B4513', name: 'Marron', mark: true },
+    23: { color: '#FFC0CB', name: 'Rose', mark: true },
+    24: { color: '#00FFFF', name: 'Cyan', mark: true }
+};
+
+// Fonction pour appliquer la couleur Swisscom à une fibre
+function applyFiberColor(fiberNumber, value) {
+    // Si pas de valeur, ne rien faire
+    if (!value || value === '-' || value === '') return;
+    
+    const num = parseInt(value);
+    
+    // Si le numéro n'est pas valide, on ne fait rien
+    if (isNaN(num) || num < 1) {
+        return;
+    }
+    
+    // Calculer la position dans le cycle de 24 fibres
+    const cyclePosition = ((num - 1) % 24) + 1;
+    
+    const colorData = SWISSCOM_FIBER_COLORS[cyclePosition];
+    if (!colorData) return;
+    
+    // Appliquer la couleur au cercle indicateur
+    const colorEl = document.getElementById(`fibre-color-${fiberNumber}`);
+    if (colorEl) {
+        colorEl.style.backgroundColor = colorData.color;
+        // Ajouter une bordure pour les couleurs claires
+        if (colorData.color === '#FFFFFF' || colorData.color === '#FFFF00') {
+            colorEl.style.border = '2px solid #999';
+        } else {
+            colorEl.style.border = 'none';
+        }
+    }
+    
+    // Mettre à jour le texte avec le numéro original
+    const textEl = document.getElementById(`fibre-${fiberNumber}`);
+    if (textEl) {
+        textEl.textContent = `${num} - ${colorData.name}`;
+    }
+    
+    // Afficher/masquer le point noir pour la 2ème douzaine
+    const markEl = document.getElementById(`fibre-mark-${fiberNumber}`);
+    if (markEl) {
+        if (colorData.mark) {
+            markEl.classList.remove('hidden');
+        } else {
+            markEl.classList.add('hidden');
+        }
+    }
+}
+
+// ===== STATE =====
+let currentInterventionId = null;
+let currentUserRole = null;
+let canEdit = false;
+
+// ===== CACHE SYSTEM =====
+const CACHE_PREFIX = 'chef_chantier_';
+const CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 jours (1 mois)
+
+// Sauvegarder dans le cache
+function saveToCache(key, data) {
+    try {
+        const cacheData = {
+            data: data,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(cacheData));
+        console.log('Données sauvegardées dans le cache:', key);
+    } catch (error) {
+        console.error('Erreur sauvegarde cache:', error);
+    }
+}
+
+// Charger depuis le cache
+function loadFromCache(key) {
+    try {
+        const cached = localStorage.getItem(CACHE_PREFIX + key);
+        if (!cached) return null;
+        
+        const cacheData = JSON.parse(cached);
+        const age = Date.now() - cacheData.timestamp;
+        
+        // Vérifier si le cache est encore valide (moins de 5 minutes)
+        if (age < CACHE_DURATION) {
+            console.log('Données chargées depuis le cache:', key, '(âge:', Math.round(age/1000), 's)');
+            return cacheData.data;
+        } else {
+            // Cache expiré, le supprimer
+            localStorage.removeItem(CACHE_PREFIX + key);
+            console.log('Cache expiré pour:', key);
+            return null;
+        }
+    } catch (error) {
+        console.error('Erreur chargement cache:', error);
+        return null;
+    }
+}
+
+// Obtenir la clé de cache pour une intervention
+function getInterventionCacheKey(interventionId) {
+    return `intervention_detail_${interventionId}`;
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', async function() {
+    await initializeApp();
+    // Charger d'abord depuis le cache (instantané)
+    loadInterventionDetailsFromCache();
+    // Puis charger depuis Supabase et mettre à jour
+    await loadInterventionDetails();
+});
+
+// ===== INITIALIZATION =====
+async function initializeApp() {
+    // Attendre que la bibliothèque Supabase soit chargée
+    let libAttempts = 0;
+    while ((typeof window.supabase === 'undefined' || typeof window.supabase.createClient === 'undefined') && libAttempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        libAttempts++;
+    }
+    
+    // Si config.js n'a pas encore initialisé, appeler initSupabase manuellement
+    if (window.supabase && typeof window.supabase.createClient === 'function' && typeof window.supabase.auth === 'undefined') {
+        // La bibliothèque est là mais pas encore initialisée comme client
+        if (typeof initSupabase === 'function') {
+            initSupabase();
+        } else {
+            // Initialiser manuellement si initSupabase n'est pas disponible
+            const SupabaseLib = window.supabase;
+            const SUPABASE_URL = 'https://wdurkaelytgjbcsmkzgb.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXJrYWVseXRnamJjc21remdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3ODc0NDksImV4cCI6MjA4MjM2MzQ0OX0.E7R_3Ylk1Tf8FJurHfzhb-QgHokeVORpk99_nukjYZY';
+            window.supabase = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    }
+    
+    // Attendre que le client Supabase soit complètement initialisé
+    let attempts = 0;
+    while ((!window.supabase || typeof window.supabase.auth === 'undefined' || typeof window.supabase.from === 'undefined') && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (!window.supabase || typeof window.supabase.auth === 'undefined' || typeof window.supabase.from === 'undefined') {
+        console.error('Supabase non initialisé après', attempts, 'tentatives');
+        alert('Erreur de connexion. Veuillez recharger la page.');
+        return;
+    }
+    
+    // Vérifier l'authentification
+    const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+    
+    if (authError || !user) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    // Récupérer le rôle
+    const { data: roleData, error: roleError } = await window.supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+    
+    if (roleError || !roleData) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    currentUserRole = roleData.role;
+    canEdit = (currentUserRole === 'admin' || currentUserRole === 'chef_chantier');
+    
+    console.log('👤 Utilisateur connecté:', user.email);
+    console.log('🎭 Rôle:', currentUserRole);
+    console.log('✏️ Peut éditer:', canEdit);
+    
+    // Récupérer l'ID de l'intervention depuis l'URL
+    const params = new URLSearchParams(window.location.search);
+    currentInterventionId = params.get('id');
+    
+    if (!currentInterventionId) {
+        alert('ID d\'intervention manquant');
+        goBack();
+        return;
+    }
+}
+
+// ===== LOAD INTERVENTION DETAILS =====
+// ===== LOAD INTERVENTION DETAILS FROM CACHE (INSTANTANÉ) =====
+function loadInterventionDetailsFromCache() {
+    if (!currentInterventionId) return;
+    
+    const cacheKey = getInterventionCacheKey(currentInterventionId);
+    const cachedData = loadFromCache(cacheKey);
+    
+    if (cachedData) {
+        console.log('Affichage des données en cache (instantané)');
+        populateInterventionDataBasic(cachedData.intervention, cachedData.appointment);
+        if (cachedData.photos) {
+            renderPhotos(cachedData.photos, cachedData.photoValidations || []);
+        }
+    }
+}
+
+// ===== LOAD INTERVENTION DETAILS FROM SUPABASE (MISE À JOUR) =====
+async function loadInterventionDetails() {
+    if (!window.supabase || !currentInterventionId) {
+        // Si pas de Supabase, essayer le cache
+        loadInterventionDetailsFromCache();
+        return;
+    }
+    
+    try {
+        console.log('Chargement des détails pour intervention ID:', currentInterventionId);
+        
+        // Charger toutes les données en parallèle pour optimiser le temps de chargement
+        const [interventionResult, photosResult] = await Promise.all([
+            // Charger l'intervention
+            window.supabase
+                .from('intervention_details')
+                .select('*')
+                .eq('id', currentInterventionId)
+                .single(),
+            // Charger les photos en même temps - IMPORTANT: sélectionner storage_url
+            window.supabase
+                .from('intervention_photos')
+                .select('id, intervention_detail_id, photo_label, storage_path, storage_url, uploaded_at, metadata, ai_score, ai_comment')
+                .eq('intervention_detail_id', currentInterventionId)
+                .order('uploaded_at', { ascending: true })
+        ]);
+        
+        const { data: intervention, error } = interventionResult;
+        const { data: photos, error: photosError } = photosResult;
+        
+        console.log('Photos récupérées:', photos?.length || 0);
+        if (photos && photos.length > 0) {
+            console.log('Première photo:', JSON.stringify(photos[0], null, 2));
+        }
+        if (photosError) {
+            console.error('Erreur chargement photos:', photosError);
+        }
+        
+        if (error || !intervention) {
+            console.error('Erreur chargement intervention:', error);
+            // En cas d'erreur, essayer le cache
+            loadInterventionDetailsFromCache();
+            if (!loadFromCache(getInterventionCacheKey(currentInterventionId))) {
+                alert('Intervention non trouvée');
+                goBack();
+            }
+            return;
+        }
+        
+        // Afficher les données de base immédiatement (sans attendre les photos)
+        const appointmentPromise = intervention.appointment_id 
+            ? window.supabase
+                .from('appointments')
+                .select('*')
+                .eq('id', intervention.appointment_id)
+                .single()
+            : Promise.resolve({ data: null });
+        
+        const { data: appointment } = await appointmentPromise;
+        
+        // Populer les données de base immédiatement
+        populateInterventionDataBasic(intervention, appointment);
+        
+        // Charger les validations IA et afficher les photos en arrière-plan
+        const photoIds = (photos || []).map(p => p.id);
+        
+        let photoValidations = [];
+        if (photoIds.length > 0) {
+            // Charger les validations en parallèle avec le rendu des photos
+            const validationsPromise = window.supabase
+                .from('photo_ai_validations')
+                .select('photo_id, validation_status, ai_comment, ai_score')
+                .in('photo_id', photoIds);
+            
+            // Rendre les photos immédiatement (sans attendre les validations)
+            await renderPhotos(photos || [], []);
+            
+            // Puis mettre à jour avec les validations quand elles arrivent
+            const { data: validations } = await validationsPromise;
+            photoValidations = validations || [];
+            await renderPhotos(photos || [], photoValidations);
+        } else {
+            console.log('Aucune photo à afficher');
+            await renderPhotos([], []);
+        }
+        
+        // Sauvegarder dans le cache
+        const cacheKey = getInterventionCacheKey(currentInterventionId);
+        const cacheData = {
+            intervention: intervention,
+            appointment: appointment,
+            photos: photos || [],
+            photoValidations: photoValidations
+        };
+        saveToCache(cacheKey, cacheData);
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        // En cas d'erreur, essayer le cache
+        loadInterventionDetailsFromCache();
+        if (!loadFromCache(getInterventionCacheKey(currentInterventionId))) {
+            alert('Erreur lors du chargement');
+        }
+    }
+}
+
+// ===== POPULATE DATA BASIC (sans photos) =====
+function populateInterventionDataBasic(intervention, appointment) {
+    // Store globally for modal access
+    window.currentIntervention = intervention;
+    
+    // ID Installation
+    document.getElementById('installation-id').textContent = `#${intervention.mandate_number || intervention.id.substring(0, 8)}`;
+    
+    // Date
+    const date = new Date(intervention.created_at);
+    document.getElementById('installation-date').textContent = 
+        `Installé le ${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    
+    // Statut
+    const statusBadge = document.getElementById('status-badge');
+    if (statusBadge) {
+        if (intervention.status === 'completed' || intervention.status === 'validated') {
+            statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 border border-green-200 dark:border-green-800';
+            statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Validé';
+        } else if (intervention.status === 'rejected') {
+            statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200 border border-red-200 dark:border-red-800';
+            statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>Refusé';
+        } else {
+            statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800';
+            statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>En attente';
+        }
+    }
+    
+    // Client
+    document.getElementById('client-name').textContent = intervention.client_name || appointment?.client_name || '-';
+    const fullAddress = [
+        intervention.address || appointment?.address,
+        intervention.npa || appointment?.npa,
+        intervention.city || appointment?.city
+    ].filter(Boolean).join(', ') || '-';
+    document.getElementById('client-address').textContent = fullAddress;
+    document.getElementById('client-phone').textContent = intervention.phone || appointment?.phone || '-';
+    
+    // Données techniques
+    document.getElementById('mandate-number').textContent = intervention.mandate_number || '-';
+    document.getElementById('ref-pto').textContent = intervention.pto_reference || '-';
+    document.getElementById('cable-alim').textContent = intervention.cable_alim || '-';
+    
+    // Fibres avec couleurs
+    const fibre1 = intervention.fibre_1 || '-';
+    const fibre2 = intervention.fibre_2 || '-';
+    const fibre3 = intervention.fibre_3 || '-';
+    const fibre4 = intervention.fibre_4 || '-';
+    
+    document.getElementById('fibre-1').textContent = fibre1;
+    document.getElementById('fibre-2').textContent = fibre2;
+    document.getElementById('fibre-3').textContent = fibre3;
+    document.getElementById('fibre-4').textContent = fibre4;
+    
+    // Appliquer les couleurs des fibres
+    if (fibre1 !== '-') applyFiberColor(1, fibre1);
+    if (fibre2 !== '-') applyFiberColor(2, fibre2);
+    if (fibre3 !== '-') applyFiberColor(3, fibre3);
+    if (fibre4 !== '-') applyFiberColor(4, fibre4);
+    
+    // Matériel
+    renderMaterials(intervention.materials || []);
+    
+    // Notes
+    document.getElementById('technician-notes').textContent = 
+        intervention.comments || '"Aucune note du technicien"';
+}
+
+
+// ===== RENDER PHOTOS =====
+async function renderPhotos(photos, photoValidations = []) {
+    const photosContainer = document.getElementById('photos-container');
+    const pdfContainer = document.getElementById('pdf-container');
+    
+    console.log('🎨 ===== RENDER PHOTOS =====');
+    console.log('📊 Nombre de photos reçues:', photos?.length || 0);
+    console.log('📋 Liste des photos:', photos);
+    
+    if (!photos || photos.length === 0) {
+        photosContainer.innerHTML = '<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark w-full"><span class="material-symbols-outlined text-4xl mb-2 opacity-50">photo_camera</span><p class="text-sm">Aucune photo</p></div>';
+        pdfContainer.innerHTML = '<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark w-full"><span class="material-symbols-outlined text-4xl mb-2 opacity-50">description</span><p class="text-sm">Aucune mesure OTDR</p></div>';
+        document.querySelector('#photos-count').textContent = '0/11';
+        document.querySelector('#pdf-count').textContent = '0';
+        return;
+    }
+    
+    // Créer le map des validations
+    const validationMap = {};
+    photoValidations.forEach(v => {
+        validationMap[v.photo_id] = v;
+    });
+    
+    // Séparer les photos et les PDFs
+    const imagePhotos = [];
+    const pdfDocuments = [];
+    
+    // Traiter chaque photo pour obtenir une URL valide
+    for (const photo of photos) {
+        let photoUrl = null;
+        const storagePath = photo.storage_path;
+        
+        console.log(`📷 Traitement: ${photo.photo_label} - storage_path: ${storagePath}`);
+        
+        // On ignore photo.storage_url car il contient souvent des URLs signées expirées
+        // On génère toujours une nouvelle URL signée fraîche
+        if (storagePath && window.supabase) {
+            try {
+                let bucketName = 'intervention-photos-private';
+                let cleanPath = storagePath;
+                
+                // Déterminer le bucket et nettoyer le chemin
+                if (storagePath.startsWith('intervention-photos/')) {
+                    // Anciennes photos (migration: on regarde dans le bucket privé sans le préfixe)
+                    cleanPath = storagePath.replace(/^intervention-photos\//, '');
+                    bucketName = 'intervention-photos-private';
+                } else if (storagePath.startsWith('interventions/')) {
+                    // Photos dans private-uploads
+                    bucketName = 'private-uploads';
+                } else {
+                    // Nouvelles photos directes
+                    bucketName = 'intervention-photos-private';
+                }
+                
+                console.log(`🔄 ${photo.photo_label} - Bucket: ${bucketName}, Path: ${cleanPath}`);
+                
+                const { data: signedData, error: signedError } = await window.supabase.storage
+                    .from(bucketName)
+                    .createSignedUrl(cleanPath, 3600);
+                
+                if (signedData?.signedUrl) {
+                    photoUrl = signedData.signedUrl;
+                    console.log(`✅ ${photo.photo_label} - Signed URL créée`);
+                } else {
+                    console.log(`⚠️ ${photo.photo_label} - Fichier introuvable sur le serveur. Essai fallback storage_url?`);
+                    // Fallback ultime : si on a une storage_url en base, on tente de l'utiliser même si on l'avait ignorée
+                    if (photo.storage_url) {
+                         console.log(`↪️ Tentative avec storage_url existante`);
+                         photoUrl = photo.storage_url;
+                    }
+                }
+            } catch (error) {
+                console.log(`⚠️ ${photo.photo_label} - Erreur lors de la récupération`);
+                if (photo.storage_url) photoUrl = photo.storage_url;
+            }
+        } else if (photo.storage_url) {
+            // Si pas de window.supabase ou pas de storagePath, mais une URL existe
+            photoUrl = photo.storage_url;
+        }
+        
+        if (!photoUrl) {
+            console.log(`⏭️ ${photo.photo_label} - Ignorée (URL non générée)`);
+            continue;
+        }
+        
+        const isPdf = (photo.storage_path || '').toLowerCase().endsWith('.pdf');
+        
+        if (isPdf) {
+            pdfDocuments.push({ ...photo, photoUrl, isPdf });
+        } else {
+            imagePhotos.push({ ...photo, photoUrl, isPdf });
+        }
+    }
+    
+    console.log('Résultat - Images:', imagePhotos.length, 'PDFs:', pdfDocuments.length);
+    
+    // Mettre à jour les compteurs
+    document.querySelector('#photos-count').textContent = `${imagePhotos.length}/11`;
+    document.querySelector('#pdf-count').textContent = pdfDocuments.length;
+    
+    // Rendre les photos
+    if (imagePhotos.length === 0) {
+        photosContainer.innerHTML = '<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark w-full"><span class="material-symbols-outlined text-4xl mb-2 opacity-50">photo_camera</span><p class="text-sm">Aucune photo</p></div>';
+    } else {
+        photosContainer.innerHTML = imagePhotos.map(photo => {
+            const validation = validationMap[photo.id];
+            const photoUrl = photo.photoUrl || 'https://via.placeholder.com/160';
+            
+            // CACHE DETAILS FOR MODAL
+            window.photoDetailsCache = window.photoDetailsCache || {};
+            window.photoDetailsCache[photo.id] = {
+                photoId: photo.id,
+                photoLabel: photo.photo_label || 'Photo',
+                photoUrl: photoUrl,
+                aiComment: validation ? (validation.ai_comment || photo.ai_comment || '') : (photo.ai_comment || ''),
+                validationStatus: validation ? (validation.validation_status || '') : '',
+                aiScore: validation ? (validation.ai_score) : (photo.ai_score)
+            };
+            
+            let statusBadge = '';
+            if (validation) {
+                const statusColors = {
+                    'validated': 'bg-green-500',
+                    'partial': 'bg-yellow-500',
+                    'rejected': 'bg-red-500',
+                    'pending': 'bg-gray-500'
+                };
+                const statusIcons = {
+                    'validated': 'check_circle',
+                    'partial': 'warning',
+                    'rejected': 'cancel',
+                    'pending': 'schedule'
+                };
+                const statusColor = statusColors[validation.validation_status] || 'bg-gray-500';
+                const statusIcon = statusIcons[validation.validation_status] || 'info';
+                
+                const escapedComment = (validation.ai_comment || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
+                statusBadge = `
+                    <div class="absolute top-2 right-2 ${statusColor} rounded-full p-1.5 text-white shadow-lg cursor-pointer flex items-center justify-center z-10" 
+                         onclick="event.stopPropagation(); showPhotoDetails('${photo.id}')" 
+                         title="${escapedComment || validation.validation_status}">
+                        <span class="material-symbols-outlined text-[12px]">${statusIcon}</span>
+                    </div>
+                `;
+            }
+            
+            const escapedLabel = (photo.photo_label || 'Photo').replace(/'/g, "\\'");
+            const escapedUrl = photoUrl.replace(/'/g, "\\'");
+            
+            // Determine border color based on AI Score
+            let cardBorderClass = 'border-border-light dark:border-border-dark'; // Default
+            const currentScore = validation ? validation.ai_score : photo.ai_score;
+            
+            if (currentScore !== null && currentScore !== undefined && currentScore !== '') {
+                const scoreNum = parseFloat(currentScore);
+                if (!isNaN(scoreNum)) {
+                    if (scoreNum >= 7) {
+                        // Neon Green
+                        cardBorderClass = 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]';
+                    } else {
+                        // Neon Red
+                        cardBorderClass = 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]';
+                    }
+                }
+            }
+            
+            return `
+                <div class="snap-start shrink-0 relative group rounded-xl overflow-hidden w-40 h-40 bg-gray-100 dark:bg-gray-800 border-2 ${cardBorderClass} cursor-pointer transition-shadow duration-300" 
+                     onclick="showPhotoDetails('${photo.id}')">
+                    <img alt="${escapedLabel}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${escapedUrl}" onerror="this.src='https://via.placeholder.com/160?text=Erreur+Image'"/>
+                    <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+                    <span class="absolute bottom-2 left-2 text-[10px] font-medium text-white bg-black/50 px-2 py-0.5 rounded backdrop-blur-sm">${escapedLabel}</span>
+                    ${statusBadge}
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // Rendre les PDFs
+    if (pdfDocuments.length === 0) {
+        pdfContainer.innerHTML = '<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark w-full"><span class="material-symbols-outlined text-4xl mb-2 opacity-50">description</span><p class="text-sm">Aucune mesure OTDR</p></div>';
+    } else {
+        pdfContainer.innerHTML = pdfDocuments.map(photo => {
+            const escapedLabel = (photo.photo_label || 'Mesure OTDR').replace(/'/g, "\\'");
+            const escapedUrl = photo.photoUrl.replace(/'/g, "\\'");
+            
+            return `
+                <div class="snap-start shrink-0 relative group rounded-xl overflow-hidden w-40 h-40 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-2 border-red-200 dark:border-red-800 cursor-pointer flex flex-col items-center justify-center p-4 hover:shadow-lg hover:scale-105 transition-all" 
+                     onclick="window.open('${escapedUrl}', '_blank');">
+                    <span class="material-symbols-outlined text-6xl text-red-500 mb-2 group-hover:scale-110 transition-transform">picture_as_pdf</span>
+                    <span class="text-xs text-center text-text-main-light dark:text-text-main-dark font-semibold line-clamp-2 w-full mb-1">${escapedLabel}</span>
+                    <div class="flex items-center gap-1 text-[10px] text-primary font-medium">
+                        <span class="material-symbols-outlined text-[12px]">open_in_new</span>
+                        <span>Ouvrir</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+// ===== RENDER MATERIALS =====
+function renderMaterials(materials) {
+    const container = document.getElementById('materials-container');
+    
+    if (!materials || materials.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark"><span class="material-symbols-outlined text-4xl mb-2 opacity-50">inventory_2</span><p class="text-sm">Aucun matériel utilisé</p></div>';
+        return;
+    }
+    
+    container.innerHTML = materials.map((material, index) => `
+        <div class="flex items-center justify-between p-4 ${index < materials.length - 1 ? 'border-b border-border-light dark:border-border-dark' : ''}">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-text-sub-light dark:text-text-sub-dark">${material.quantity || '1'}</div>
+                <span class="text-sm font-medium text-text-main-light dark:text-text-main-dark">${material.name || material.reference || 'Matériel'}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===== ACTIONS =====
+function goBack() {
+    window.location.href = 'chefintervention.html';
+}
+
+// ===== SHOW PHOTO DETAILS =====
+// ===== GLOBALS =====
+window.photoDetailsCache = {};
+
+// ===== SHOW PHOTO DETAILS =====
+function showPhotoDetails(photoId) {
+    const data = window.photoDetailsCache[photoId];
+    if (!data) {
+        console.error('Données photo non trouvées pour ID:', photoId);
+        return;
+    }
+    
+    const { photoLabel, photoUrl, aiComment, validationStatus, aiScore } = data;
+
+    const modal = document.getElementById('photo-modal');
+    if (!modal) return;
+    
+    const modalImg = document.getElementById('modal-image');
+    const modalTitle = document.getElementById('modal-title');
+    const modalInfo = document.getElementById('modal-validation-info');
+    const modalHeaderInfo = document.getElementById('modal-header-info');
+    
+    // Set Image & Reset Zoom
+    modalImg.src = photoUrl;
+    modalImg.className = 'max-h-full max-w-full object-contain cursor-zoom-in transition-all duration-200'; // Reset styling
+    modalTitle.textContent = photoLabel;
+    
+    // Populate Modal Header Info (PTO & Fibres)
+    if (modalHeaderInfo && window.currentIntervention) {
+        const pto = window.currentIntervention.pto_reference || '';
+        const fibres = [
+            window.currentIntervention.fibre_1, 
+            window.currentIntervention.fibre_2, 
+            window.currentIntervention.fibre_3, 
+            window.currentIntervention.fibre_4
+        ].filter(f => f && f !== '-' && f !== '').join(' / ');
+        
+        let headerHtml = '';
+        if (pto) {
+            headerHtml += `<div class="font-mono text-primary font-bold text-xs flex items-center justify-end gap-1"><span class="material-symbols-outlined text-[12px]">router</span>${pto}</div>`;
+        }
+        if (fibres) {
+            headerHtml += `<div class="text-[10px] text-text-sub-light dark:text-text-sub-dark mt-0.5 font-medium"><span class="uppercase">Fibres:</span> <span class="text-text-main-light dark:text-text-main-dark">${fibres}</span></div>`;
+        }
+        
+        modalHeaderInfo.innerHTML = headerHtml;
+        modalHeaderInfo.classList.remove('hidden'); // Ensure visible
+        modalHeaderInfo.className = 'text-right min-w-[80px]'; // Force layout
+    }
+    
+    // Status badges logic
+    const statusText = {
+        'validated': { text: 'Validée', class: 'bg-green-100 text-green-800 border-green-200' },
+        'partial': { text: 'Partiellement validée', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+        'rejected': { text: 'Non validée', class: 'bg-red-100 text-red-800 border-red-200' },
+        'pending': { text: 'En attente', class: 'bg-gray-100 text-gray-800 border-gray-200' }
+    };
+    
+    let infoHtml = '';
+    
+    // Header row
+    infoHtml += `<div class="mb-3 flex items-center justify-between flex-wrap gap-2">`;
+    
+    // Left: Status Badge
+    if (validationStatus) {
+        const style = statusText[validationStatus] || statusText['pending'];
+        infoHtml += `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${style.class}">${style.text}</span>`;
+    } else {
+        infoHtml += `<span></span>`; // Spacer
+    }
+    
+    // Right: Score & Zoom hint
+    infoHtml += `<div class="flex items-center gap-3 text-right">`;
+    
+    // Score
+    if (aiScore !== null && aiScore !== undefined && aiScore !== '') {
+        const scoreNum = parseFloat(aiScore);
+        let scoreColor = 'text-gray-700 dark:text-gray-300';
+        let bgClass = 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+        
+        if (!isNaN(scoreNum)) {
+            if (scoreNum >= 8) {
+                scoreColor = 'text-green-700 dark:text-green-400 font-bold';
+                bgClass = 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+            } else if (scoreNum >= 5) {
+                scoreColor = 'text-yellow-700 dark:text-yellow-400 font-bold';
+                bgClass = 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
+            } else {
+                scoreColor = 'text-red-700 dark:text-red-400 font-bold';
+                bgClass = 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+            }
+        }
+        
+        infoHtml += `<span class="text-sm px-2 py-1 rounded border ${bgClass}">Note IA: <span class="${scoreColor}">${aiScore}/10</span></span>`;
+    }
+    
+    infoHtml += `<span class="text-xs text-gray-400 italic flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">zoom_in</span> Zoom</span>`;
+    infoHtml += `</div></div>`; // End Right div & Header row
+    
+    // Comment Row
+    if (aiComment) {
+         infoHtml += `<div class="text-sm text-gray-700 dark:text-gray-200 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30 flex gap-2">
+            <span class="text-lg">💬</span>
+            <div class="flex-1">
+                <span class="font-semibold text-blue-800 dark:text-blue-300 block mb-1">Commentaire IA:</span>
+                ${aiComment}
+            </div>
+         </div>`;
+    }
+    
+    modalInfo.innerHTML = infoHtml;
+    
+    // Show Modal
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+function toggleZoom(img) {
+    if (img.classList.contains('object-contain')) {
+        // Switch to native size (Zoom In)
+        img.classList.remove('max-h-full', 'max-w-full', 'object-contain', 'cursor-zoom-in');
+        img.classList.add('cursor-zoom-out');
+        //img.style.height = 'auto';
+        //img.style.width = 'auto';
+    } else {
+        // Switch back to fit (Zoom Out)
+        img.classList.add('max-h-full', 'max-w-full', 'object-contain', 'cursor-zoom-in');
+        img.classList.remove('cursor-zoom-out');
+        //img.style.height = '';
+        //img.style.width = '';
+    }
+}
+
+function closePhotoModal() {
+    const modal = document.getElementById('photo-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+}
+
+function callClient() {
+    const phone = document.getElementById('client-phone').textContent;
+    if (phone && phone !== '-' && phone !== 'Chargement...') {
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+        window.location.href = `tel:${cleanPhone}`;
+    }
+}
+
+async function validateIntervention() {
+    if (!canEdit || !currentInterventionId) return;
+    
+    if (!confirm('Valider cette installation ?\n\nCette action confirme que l\'installation est conforme et terminée.')) return;
+    
+    try {
+        const { error } = await window.supabase
+            .from('intervention_details')
+            .update({ 
+                status: 'validated',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', currentInterventionId);
+        
+        if (error) throw error;
+        
+        // Mettre à jour le badge de statut immédiatement
+        const statusBadge = document.getElementById('status-badge');
+        if (statusBadge) {
+            statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 border border-green-200 dark:border-green-800';
+            statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Validé';
+        }
+        
+        // Afficher une notification de succès
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 animate-fade-in';
+        notification.innerHTML = `
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="font-semibold">Installation validée avec succès !</span>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('animate-fade-out');
+            setTimeout(() => {
+                notification.remove();
+                goBack();
+            }, 300);
+        }, 2000);
+    } catch (error) {
+        console.error('Erreur validation:', error);
+        alert('Erreur lors de la validation. Veuillez réessayer.');
+    }
+}
+
+async function rejectIntervention() {
+    if (!canEdit || !currentInterventionId) return;
+    
+    const reason = prompt('Raison du refus / signalement :\n\n(Veuillez indiquer les problèmes constatés)');
+    if (!reason || reason.trim() === '') {
+        return;
+    }
+    
+    try {
+        const currentComments = document.getElementById('technician-notes').textContent || '';
+        const rejectionComment = `\n\n[REFUSÉ PAR ${currentUserRole === 'admin' ? 'ADMIN' : 'CHEF DE CHANTIER'}] ${reason}`;
+        
+        const { error } = await window.supabase
+            .from('intervention_details')
+            .update({ 
+                status: 'rejected',
+                comments: currentComments + rejectionComment,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', currentInterventionId);
+        
+        if (error) throw error;
+        
+        alert('Installation refusée. Le technicien sera notifié.');
+        setTimeout(() => {
+            goBack();
+        }, 1000);
+    } catch (error) {
+        console.error('Erreur refus:', error);
+        alert('Erreur lors du refus. Veuillez réessayer.');
+    }
+}
+</script>
+
+<!-- Photo Modal -->
+<div id="photo-modal" class="fixed inset-0 z-[60] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/95 transition-opacity backdrop-blur-sm" onclick="closePhotoModal()"></div>
+
+    <div class="fixed inset-0 z-10 overflow-hidden pointer-events-none">
+        <div class="flex h-full w-full items-center justify-center pointer-events-auto">
+            
+            <!-- Modal panel -->
+            <div class="relative transform bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full h-full flex flex-col">
+                
+                <!-- Header -->
+                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-10 shrink-0">
+                    <h3 class="text-lg font-semibold leading-6 text-gray-900 dark:text-white truncate pr-2" id="modal-title">Photo</h3>
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- PTO & Fibres (Dynamic) -->
+                        <div id="modal-header-info" class="text-right hidden sm:block"></div>
+                        
+                        <button type="button" class="rounded-full p-2 bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none transition-colors" onclick="closePhotoModal()">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Image container with Scroll -->
+                <div class="relative bg-black flex-1 flex items-center justify-center overflow-auto w-full h-full">
+                    <img id="modal-image" src="" alt="Photo détail" class="max-h-full max-w-full object-contain cursor-zoom-in transition-all duration-200" onclick="toggleZoom(this)">
+                </div>
+                
+                <!-- Footer with details -->
+                <div class="bg-white dark:bg-gray-900 px-4 py-3 border-t border-gray-200 dark:border-gray-800 shrink-0 z-10">
+                    <div id="modal-validation-info" class="text-sm">
+                         <!-- Will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body></html>

@@ -1,0 +1,65 @@
+{
+  "name": "supabase",
+  "project": "veloxnumeric",
+  "type": "compose",
+  "source": {
+    "type": "git",
+    "repository": "https://github.com/supabase/supabase",
+    "branch": "master",
+    "dockerComposePath": "docker/docker-compose.yml",
+    "dockerComposeEnvPath": "docker/.env.example"
+  },
+  "env": {
+    "POSTGRES_PASSWORD": "ae9bf4dcb11e265619953e751be5dfc5007551a1f3538e1987c1dcf8fa935433",
+    "JWT_SECRET": "035f850f68ea09404e714365d937007e021a2f30b31bd4df8b0bbb717307b0998abfba6200ef58e2c748dcb40786d2e33146c7742092b64895bf1eec32677699",
+    "POSTGRES_DB": "postgres",
+    "POSTGRES_USER": "postgres",
+    "API_URL": "",
+    "STUDIO_PASSWORD": "6f5ed2fab24aa774fbf867f466d56ac5aea4e4a41878965a3e6821fdccfc395f",
+    "GOTRUE_JWT_EXP": "3600",
+    "GOTRUE_JWT_DEFAULT_GROUP_NAME": "authenticated",
+    "GOTRUE_JWT_ADMIN_ROLES": "service_role",
+    "GOTRUE_JWT_AUD": "authenticated",
+    "GOTRUE_JWT_SECRET": "035f850f68ea09404e714365d937007e021a2f30b31bd4df8b0bbb717307b0998abfba6200ef58e2c748dcb40786d2e33146c7742092b64895bf1eec32677699",
+    "API_EXTERNAL_URL": "",
+    "DB_PASSWORD": "ae9bf4dcb11e265619953e751be5dfc5007551a1f3538e1987c1dcf8fa935433",
+    "DB_USER": "postgres",
+    "DB_HOST": "db",
+    "DB_NAME": "postgres",
+    "DB_PORT": "5432",
+    "STORAGE_BACKEND": "file",
+    "STORAGE_FILE_SIZE_LIMIT": "52428800",
+    "GOTRUE_API_HOST": "0.0.0.0",
+    "GOTRUE_API_PORT": "9999",
+    "GOTRUE_DB_DRIVER": "postgres",
+    "GOTRUE_DB_DATABASE_URL": "postgres://postgres:ae9bf4dcb11e265619953e751be5dfc5007551a1f3538e1987c1dcf8fa935433@db:5432/postgres",
+    "REALTIME_DB_HOST": "db",
+    "REALTIME_DB_PORT": "5432",
+    "REALTIME_DB_USER": "postgres",
+    "REALTIME_DB_PASSWORD": "ae9bf4dcb11e265619953e751be5dfc5007551a1f3538e1987c1dcf8fa935433",
+    "REALTIME_DB_NAME": "postgres",
+    "REALTIME_DB_AFTER_CONNECT_QUERY": "SET search_path TO _realtime",
+    "REALTIME_DB_ENC_KEY": "c98fcf16303163855d3045af6b6c20b5b15ebd851767c78248af36aacce714ad"
+  },
+  "ports": [
+    {
+      "published": 80,
+      "target": 8000,
+      "protocol": "tcp"
+    }
+  ],
+  "mounts": [
+    {
+      "type": "volume",
+      "name": "supabase-db",
+      "mountPath": "/var/lib/postgresql/data",
+      "targetPath": "/var/lib/postgresql/data"
+    },
+    {
+      "type": "volume",
+      "name": "supabase-storage",
+      "mountPath": "/var/lib/storage",
+      "targetPath": "/var/lib/storage"
+    }
+  ]
+}

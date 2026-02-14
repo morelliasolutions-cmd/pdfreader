@@ -1,0 +1,15 @@
+# ⬇️ COPIER ICI LES AUTRES FICHIERS DE CONFIGURATION ⬇️
+
+# Commandes à exécuter sur le VPS :
+
+# 1. Lister tous les fichiers
+# ls -la volumes/
+
+# 2. Copier les fichiers SQL de la base de données
+# cat volumes/db/*.sql 2>/dev/null
+
+# 3. Copier d'autres fichiers YAML
+# find volumes/ -name "*.yml" -o -name "*.yaml" | xargs cat
+
+# 4. Structure des dossiers
+# tree volumes/ 2>/dev/null || find volumes/ -type f

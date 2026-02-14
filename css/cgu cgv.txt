@@ -1,0 +1,330 @@
+Questionnaire complet pour la rédaction des documents juridiques
+Application SaaS FTTH - Suisse
+
+1. INFORMATIONS GÉNÉRALES SUR L'ENTREPRISE
+Identification
+
+Quel est le nom exact de votre raison individuelle ? Morellia
+Quel est votre numéro IDE (Identification des Entreprises) ? je ne sais pas poûr le moement
+Quelle est votre adresse commerciale complète ? route de st-ignace 29, 1633 Marsens
+Dans quel canton êtes-vous domicilié ? fribourg
+Avez-vous un numéro de TVA (si oui, lequel) ? non affilié
+Qui est le contact principal (vous en tant que propriétaire) ? oui
+Email de contact officiel ? contact@morellia.ch
+Téléphone professionnel ? +41798331163
+Site web de l'entreprise ? www.morellia.ch
+
+Activité
+
+Quel est le nom commercial de votre application SaaS ? connectfiber
+Quelle est la description précise de l'activité de vos clients FTTH (installation, maintenance, gestion de réseau, etc.) ? de la prise de rendez-vous, a l'installation puis a la validation par le chef de projet, a l'analyse de kpi et au suivi de la production et des pointages
+Quelles sont les fonctionnalités principales de votre application ? gestion des rendez-vous / gestion des installation (check qualité photo par ia local)/ gestion des pointages / des stock et des véhicules / analyse des kpi / rangement et stockage des documents.
+Gérez-vous des données de particuliers (clients finaux de vos clients) ou uniquement des données B2B ? oui des données de particulier comme nom/prénom / adresse / telephone /email. je pense les supprimé apres 2semaines des serveur. je les gardes le temps que l'install soit valider et payer pour des fins de sav
+
+
+2. MODÈLE COMMERCIAL ET CONTRACTUEL
+Tarification et engagement
+
+Le prix de 450 CHF/mois est-il fixe ou peut-il varier ? il peux varier
+Y a-t-il des frais d'installation/de mise en service ? oui
+Y a-t-il des frais de résiliation ? non 
+Quel est le délai de préavis pour résilier avant le renouvellement annuel ? 1 mois par courrier recommander
+Proposez-vous différents plans/tiers de service ? non
+Y a-t-il des limites d'utilisation (nombre d'utilisateurs, volume de données, etc.) ? non
+Des frais supplémentaires peuvent-ils s'appliquer (dépassement, options) ? oui pour personnalisation
+Comment gérez-vous les augmentations de prix futures ? je ne sais pas. 
+
+Modalités de paiement
+
+Quelle est la fréquence de facturation (mensuelle malgré l'engagement annuel) ? soit mensuel soit annuel, au choix du client. 
+Quels sont les moyens de paiement acceptés ? qr facture ou virement et ordre permanent
+Quel est le délai de paiement ? 15j
+Que se passe-t-il en cas de retard/défaut de paiement ? 1 er relance gratuite / 2eme majoré
+Appliquez-vous des intérêts de retard (si oui, quel taux) ? 5% si légal sinon 80 chf
+Y a-t-il une suspension automatique du service en cas de non-paiement ? oui après 45j sans paiement.
+
+Période d'essai
+
+Proposez-vous une période d'essai gratuite ou payante ? non
+Quelle en est la durée ?
+Quelles sont les conditions d'annulation pendant l'essai ?
+
+
+3. DONNÉES ET CONFIDENTIALITÉ
+Types de données collectées
+
+Quelles données personnelles collectez-vous sur les utilisateurs de vos clients (noms, emails, téléphones, etc.) ? nom/prénom / adresse / telephone /email
+Collectez-vous des données sur les clients finaux de vos clients ? je les intégres dans les mandats des technicien pour l'intervention uniquement. elle ne sont pas prise en compte pour des analyses
+Collectez-vous des données de localisation ? adresse
+Collectez-vous des données techniques (logs, IP, cookies) ? non
+Collectez-vous des données de paiement (ou via un tiers) ? non 
+Y a-t-il des données sensibles (au sens RGPD) collectées ? je ne crois pas, j'ai répondu au dessus
+
+Utilisation des données
+
+À quelles fins utilisez-vous ces données ?
+Partagez-vous des données avec des tiers (si oui, lesquels et pourquoi) ? non
+Utilisez-vous les données à des fins de marketing ? non
+Utilisez-vous les données pour améliorer l'IA ou les services ? non
+Les données sont-elles anonymisées/pseudonymisées ? non
+
+Localisation et transferts
+
+Où sont hébergées les données précisément (pays, data centers) ? supabase dit centrale europe zurich, puis le client choisi son moyen de stockage. soit cloud de son choix soit local
+Hostinger : quel data center utilisez-vous (Suisse, UE, hors UE) ? il est en allemagne a franckfort mais sert uniquement au html. 
+Supabase : quelle région avez-vous choisie ? zurich
+Votre serveur IA : où est-il localisé physiquement ? a franckfort via serveur hetzner
+Y a-t-il des transferts de données hors Suisse/UE ? non pas de mon fait
+Si oui, quels mécanismes de protection utilisez-vous (clauses contractuelles types, etc.) ?
+
+Sécurité technique
+
+Quelles mesures de chiffrement utilisez-vous (en transit, au repos) ? via supabase (ssl tsl je crois)
+Comment sont gérées les sauvegardes (fréquence, localisation, durée de conservation) ? toutes les 6h
+Avez-vous mis en place une authentification forte (2FA, SSO) ?non
+Comment gérez-vous les accès administrateurs ? j'ai un compte admin
+Avez-vous un plan de reprise après sinistre (DRP) ? non
+Faites-vous des tests de sécurité/pénétration ? oui minime
+Avez-vous un processus de gestion des vulnérabilités ? oui rls et securité serveur hetzner / hostinger / supabase cloud
+
+Conservation et suppression
+
+Quelle est la durée de conservation des données ? le temps de la validation du mandat
+Comment les clients peuvent-ils demander la suppression de leurs données ? elles se font automatiquement au bouts de 2 semaines apres clotures, sinon par email/telephone chez mon clients puis je les supprimes de la table sql
+Quel est votre délai de traitement pour une demande de suppression ? 72h
+Que devient la donnée après résiliation du contrat ? elles sont confier au clients puis la base de donner est supprimé
+Conservez-vous des données pour des obligations légales (comptabilité, etc.) ? elles sont télécharger sur le client via postgresql et sont a sa charge.
+
+
+4. RESPONSABILITÉS ET LIMITATIONS
+Disponibilité du service
+
+Garantissez-vous un SLA (Service Level Agreement) ? je ne sais pas
+Si oui, quel taux de disponibilité (99%, 99.9%, etc.) ? 95% je dirais ?
+Quelles sont les plages de maintenance prévues ? je ne sais pas
+Comment informez-vous les clients des interruptions ? par telephone/email
+Y a-t-il des compensations en cas d'indisponibilité prolongée ? oui 1mois d'abo offert
+
+Obligations du client
+
+Le client doit-il respecter certaines conditions d'utilisation ?a toi de les définir pour me proteger au mieux
+Interdisez-vous certains usages (illégaux, abusifs, etc.) ? a toi de le définir
+Le client est-il responsable de la sécurité de ses accès (mots de passe) ? oui
+Le client doit-il avoir des licences particulières pour utiliser votre service ? non
+
+Limitations de responsabilité
+
+Excluez-vous toute garantie implicite ? oui
+Limitez-vous votre responsabilité à un montant maximum (si oui, lequel) ? oui a 2 mois d'abonnement
+Excluez-vous les dommages indirects, pertes de profits, etc. ? oui
+Dans quels cas votre responsabilité peut-elle être engagée ? en cas de grave manquement j'imagine ?
+Y a-t-il des cas de force majeure définis ? je ne sais pas
+
+Propriété intellectuelle
+
+Qui détient les droits sur l'application et le code ? moi
+Qui détient les droits sur les données saisies par le client ? je ne sais pas
+Le client peut-il exporter ses données ? oui
+Utilisez-vous des composants open source (si oui, lesquels et sous quelles licences) ? oui n8n / cal.com / vlm florence2 base / supabase cloud / metabase / postgresql / llm qwen2.5 / carbone / easypanel
+Y a-t-il des restrictions sur l'utilisation de votre marque ? je ne sais pas 
+
+
+5. GESTION DES INCIDENTS DE SÉCURITÉ
+Procédures
+
+Avez-vous une procédure de notification en cas de fuite de données ? je mettrais en place si necessaire
+Dans quel délai vous engagez-vous à notifier un incident (72h légales) ? au plus vite
+Qui est votre point de contact pour les incidents de sécurité ? je n'ai pas compris
+Avez-vous une assurance cyber-risques prévue à terme ? pas encore, dans le futur
+Travaillez-vous avec des experts en sécurité externes ? non
+
+Communication
+
+Comment communiquez-vous avec vos clients en cas d'incident ? telephone email
+Informez-vous les autorités (PFPDT en Suisse) ? si necessaire
+Avez-vous un plan de communication de crise ? non
+
+
+6. DROITS DES UTILISATEURS (RGPD/nLPD)
+Droits fondamentaux
+
+Comment les utilisateurs peuvent-ils exercer leur droit d'accès ? user / mots de passe
+Comment peuvent-ils rectifier leurs données ? par contact service client
+Comment peuvent-ils demander la suppression (droit à l'oubli) ? oui
+Permettez-vous la portabilité des données (export dans un format standard) ? excel / sql / photo / pdf
+Comment gérez-vous le droit d'opposition au traitement ? je ne sais pas
+Y a-t-il un formulaire ou une procédure spécifique ? non
+Quel est le délai de réponse aux demandes (30 jours légaux) ? je ne sais pas, je pense que c'est au client de gerer sa
+
+Consentement
+
+Comment obtenez-vous le consentement pour le traitement des données ? signature d'un devis avec mention qui sert de bon de commande
+Le consentement est-il libre, spécifique, éclairé et univoque ? je ne sais pas
+Comment les utilisateurs peuvent-ils retirer leur consentement ? je ne comprend pas la question
+
+
+7. SOUS-TRAITANTS ET TIERS
+Services tiers utilisés
+
+Hostinger : quels services précis (hébergement web, DNS, etc.) ? hébergement de mon front end
+Supabase : quels services (base de données, auth, storage, fonctions) ? toutes
+IA locale : quels modèles/services utilisez-vous ? deja dit
+n8n : comment l'utilisez-vous (automatisations, intégrations) ?les 2
+Cal.com : pour quel usage (prise de RDV interne ou client) ? client
+Utilisez-vous des services de paiement (Stripe, PayPal, etc.) ? non 
+Utilisez-vous des outils d'analytics (Google Analytics, etc.) ? non
+Utilisez-vous des services d'emailing (Mailchimp, SendGrid, etc.) ? non
+Autres services tiers ?
+
+Contrats de sous-traitance
+
+Avez-vous des DPA (Data Processing Agreements) avec vos sous-traitants ? je ne sais pas
+Ces sous-traitants sont-ils conformes RGPD/nLPD ? je ne sais pas
+Pouvez-vous partager leurs politiques de confidentialité ? je ne sais pas
+
+
+8. ASPECTS LÉGAUX SPÉCIFIQUES SUISSE
+Conformité locale
+
+Êtes-vous soumis à la nouvelle loi fédérale sur la protection des données (nLPD) entrée en vigueur en septembre 2023 ? je pense que oui
+Avez-vous nommé un conseiller à la protection des données (obligatoire selon taille/risque) ? non
+Êtes-vous enregistré auprès du PFPDT si nécessaire ? non
+Y a-t-il des réglementations spécifiques au secteur FTTH/télécom en Suisse ? je ne sais pas
+
+Juridiction et droit applicable
+
+Quel droit souhaitez-vous appliquer (droit suisse) ?je ne sais pas
+Quel tribunal sera compétent en cas de litige ?
+Acceptez-vous une médiation avant contentieux ? oui
+
+
+9. RÉSILIATION ET FIN DE CONTRAT
+Modalités de résiliation
+
+Comment le client peut-il résilier (email, courrier recommandé, interface) ? courrier recommander 1 mois avant date d'anniversaire minimum
+Comment vous pouvez résilier (faute du client, non-paiement, etc.) ? a toi de definir pour me protéger
+Y a-t-il un remboursement au prorata en cas de résiliation anticipée ? a négocier
+
+Après la résiliation
+
+Quelle est la période de récupération des données après résiliation ? 2 mois
+Les données sont-elles supprimées immédiatement ou après un délai ? a definir avec le client
+Y a-t-il des obligations post-contractuelles (confidentialité, etc.) ? oui a definir
+
+
+10. MODIFICATIONS ET ÉVOLUTIONS
+Modifications du service
+
+Vous réservez-vous le droit de modifier les fonctionnalités ? oui
+Comment informez-vous les clients des changements majeurs ? email / telephone
+Les clients peuvent-ils résilier en cas de modification substantielle ? oui
+
+Modifications des conditions
+
+Comment modifiez-vous les CGU/CGV et politique de confidentialité ? sur mon site web connectfiber.ch
+Quel préavis donnez-vous (30 jours, 60 jours) ? 30j 
+L'utilisation continue du service vaut-elle acceptation ? oui ou manque d'opposition écrite
+Les clients peuvent-ils refuser et résilier sans frais ? oui
+
+
+11. SUPPORT ET ASSISTANCE
+Niveau de support
+
+Quel support proposez-vous (email, téléphone, ticket) ? deja repondu
+Quels sont les horaires de support ? 8/18h lundi/vendredi
+Y a-t-il des niveaux de priorité (critique, urgent, normal) ? a definir
+Quel est le temps de réponse garanti ? 72h
+Le support est-il inclus dans le prix ou en option ? oui il est inclus
+
+Formation et documentation
+
+Fournissez-vous une formation initiale ? oui en présentiel
+Y a-t-il une documentation utilisateur accessible ? a venir
+Proposez-vous des webinaires ou tutoriels ? a venir
+
+
+12. ASPECTS TECHNIQUES SPÉCIFIQUES
+Intégrations
+
+Votre application s'intègre-t-elle avec d'autres systèmes ?
+Proposez-vous une API ? a la demande
+Si oui, quelles sont les conditions d'utilisation de l'API ?
+Y a-t-il des limites de requêtes API ?
+
+Données et export
+
+Dans quel format les données peuvent-elles être exportées (CSV, JSON, etc.) ?
+Y a-t-il des limitations sur l'export ?
+Les clients peuvent-ils faire des sauvegardes automatiques ? oui
+
+Mises à jour
+
+Comment gérez-vous les mises à jour de l'application ? directement
+Les mises à jour sont-elles automatiques ? oui
+Y a-t-il des versions majeures payantes ? a definir
+
+
+13. CLAUSES SPÉCIFIQUES DE PROTECTION
+Exonération de responsabilité
+
+Souhaitez-vous une clause spécifique concernant les pertes de données malgré les sauvegardes ? oui
+Une clause sur l'utilisation correcte des mots de passe par le client ? oui
+Une clause sur la responsabilité du client concernant ses propres obligations légales FTTH ? oui
+Une clause sur les interruptions dues aux fournisseurs tiers (Hostinger, Supabase) ? oui
+
+Clause de non-garantie
+
+Voulez-vous préciser que le service est fourni "en l'état" ? oui
+Souhaitez-vous exclure toute garantie de résultat ? oui
+
+Limitation temporelle
+
+Souhaitez-vous limiter la période pendant laquelle une réclamation peut être faite ? oui minimum legal
+
+
+14. COMMUNICATION ET NOTIFICATIONS
+Moyens de communication
+
+Comment communiquez-vous officiellement avec vos clients (email, interface, etc.) ? email / telephone
+Les clients doivent-ils maintenir leurs coordonnées à jour ? oui a notifier tout changement
+Comment gérez-vous les notifications importantes ?
+
+Marketing
+
+Envoyez-vous des newsletters ou communications marketing ? email informatif 
+Comment les clients peuvent-ils se désinscrire ?
+Utilisez-vous leurs données à des fins promotionnelles ? non
+
+
+15. QUESTIONS COMPLÉMENTAIRES
+Assurances et garanties
+
+Prévoyez-vous de souscrire une RC Pro prochainement ? plus tard
+Avez-vous une assurance responsabilité civile générale ? oui
+Avez-vous une assurance cyber-risques ? plus tard
+
+Évolution de l'entreprise
+
+Prévoyez-vous de passer en société (Sàrl, SA) ? oui
+Prévoyez-vous d'embaucher ou de sous-traiter certaines tâches ? peux etre
+Prévoyez-vous d'étendre vos services à l'international ? peux etre
+
+Particularités sectorielles
+
+Y a-t-il des normes spécifiques au secteur FTTH que vous devez respecter ? je ne sais pas
+Vos clients FTTH ont-ils des obligations réglementaires que votre outil doit aider à respecter ? je ne sais pas
+Gérez-vous des données considérées comme sensibles dans le secteur télécom ? je ne crois pas
+
+Propriété des développements
+
+Si un client demande une fonctionnalité spécifique développée pour lui, qui en détient les droits ? moi
+Les améliorations suggérées par les clients vous appartiennent-elles ? oui
+
+
+16. QUESTIONS FINALES
+
+Y a-t-il des clauses spécifiques que vous souhaitez absolument inclure ? je ne sais pas
+Y a-t-il des situations particulières que vous avez déjà rencontrées et qui mériteraient d'être couvertes ? je ne crois pas
+Avez-vous déjà eu des litiges ou des problèmes avec d'autres clients ? de paiement
+Y a-t-il des concurrents dont vous connaissez les conditions et que vous souhaitez égaler ou dépasser ? non 
+Souhaitez-vous que les documents soient révisés par un avocat spécialisé après rédaction ? oui je le ferais. 

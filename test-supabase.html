@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Connexion Supabase</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #3ECF8E;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+        .loading {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        button {
+            background: #3ECF8E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #35b67d;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .config-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .config-info strong {
+            color: #495057;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Test de Connexion Supabase</h1>
+        
+        <div id="config" class="config-info">
+            <strong>Configuration actuelle:</strong>
+            <div id="configDetails">Chargement...</div>
+        </div>
+
+        <div>
+            <button onclick="testConnection()">🧪 Tester la Connexion</button>
+            <button onclick="testAuth()">🔐 Tester l'Auth</button>
+            <button onclick="clearResults()">🗑️ Effacer</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <!-- Charger Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js"></script>
+    
+    <!-- Charger la configuration -->
+    <script src="js/config.js"></script>
+
+    <script>
+        // Afficher la configuration
+        document.getElementById('configDetails').innerHTML = `
+            <pre>Mode: ${USE_LOCAL_SUPABASE ? '<strong>LOCAL (VPS)</strong>' : '<strong>CLOUD</strong>'}
+URL: ${SUPABASE_URL}
+ANON_KEY: ${SUPABASE_ANON_KEY.substring(0, 50)}...</pre>
+        `;
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testConnection() {
+            clearResults();
+            addResult('⏳ Test de connexion en cours...', 'loading');
+
+            try {
+                // Vérifier que le client est initialisé
+                if (!window.supabase) {
+                    throw new Error('Client Supabase non initialisé');
+                }
+
+                // Test 1: Ping de base (test de santé)
+                addResult('📡 Test 1: Vérification de l\'API...', 'info');
+                
+                const { data, error } = await window.supabase
+                    .from('employees')
+                    .select('count', { count: 'exact', head: true });
+
+                if (error) {
+                    addResult(`❌ Erreur de connexion: ${error.message}`, 'error');
+                    addResult(`Détails: ${JSON.stringify(error, null, 2)}`, 'error');
+                    return;
+                }
+
+                addResult('✅ Connexion réussie!', 'success');
+                addResult(`📊 Table 'employees' accessible`, 'success');
+
+                // Test 2: Vérifier la session
+                const { data: { session } } = await window.supabase.auth.getSession();
+                if (session) {
+                    addResult(`👤 Utilisateur connecté: ${session.user.email}`, 'success');
+                } else {
+                    addResult('ℹ️ Aucune session active (normal si non connecté)', 'info');
+                }
+
+                // Test 3: Informations système
+                addResult(`🌐 URL utilisée: ${SUPABASE_URL}`, 'info');
+                addResult(`🔑 Mode: ${USE_LOCAL_SUPABASE ? 'LOCAL (VPS)' : 'CLOUD'}`, 'info');
+
+            } catch (err) {
+                addResult(`❌ Erreur: ${err.message}`, 'error');
+                console.error('Erreur détaillée:', err);
+            }
+        }
+
+        async function testAuth() {
+            clearResults();
+            addResult('⏳ Test d\'authentification...', 'loading');
+
+            try {
+                // Vérifier la session actuelle
+                const { data: { session }, error } = await window.supabase.auth.getSession();
+
+                if (error) {
+                    addResult(`❌ Erreur: ${error.message}`, 'error');
+                    return;
+                }
+
+                if (session) {
+                    addResult('✅ Session active trouvée!', 'success');
+                    addResult(`👤 Email: ${session.user.email}`, 'info');
+                    addResult(`🆔 User ID: ${session.user.id}`, 'info');
+                    addResult(`⏰ Session expire le: ${new Date(session.expires_at * 1000).toLocaleString('fr-FR')}`, 'info');
+                } else {
+                    addResult('ℹ️ Aucune session active', 'info');
+                    addResult('💡 Connectez-vous via la page de login pour tester l\'authentification', 'info');
+                }
+
+                // Test des méthodes d'auth disponibles
+                addResult('📋 Méthodes d\'authentification configurées:', 'info');
+                addResult('  • Email/Password ✓', 'info');
+                
+            } catch (err) {
+                addResult(`❌ Erreur: ${err.message}`, 'error');
+                console.error('Erreur détaillée:', err);
+            }
+        }
+
+        // Auto-test au chargement
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('✅ Page chargée avec succès', 'success');
+                addResult('💡 Cliquez sur "Tester la Connexion" pour vérifier Supabase', 'info');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

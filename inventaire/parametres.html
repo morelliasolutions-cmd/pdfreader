@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Paramètres - Gestionnaire de Stock</title>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B700%3B900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#137fec",
+          "background-light": "#f6f7f8",
+          "background-dark": "#101922",
+        },
+        fontFamily: {
+          display: ["Inter"],
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      },
+    },
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js?v=7"></script>
+<script src="../js/api.js?v=7"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+<div class="flex flex-col min-h-screen">
+  <!-- Navigation bar horizontale -->
+  <nav class="bg-white dark:bg-background-dark/50 border-b border-gray-200 dark:border-gray-800">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <!-- Logo à gauche -->
+      <div class="flex items-center gap-3">
+        <img id="logo" src="" alt="Logo" class="h-8 w-auto" style="display:none;" onerror="this.style.display='none'" />
+        <span class="text-xl font-bold text-primary">Gestionnaire de Stock</span>
+      </div>
+      
+      <!-- Menu du milieu -->
+      <div class="flex items-center gap-1">
+        <a href="inventaire.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">warehouse</span>
+          <span>Inventaire</span>
+        </a>
+        <a href="technicien.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">group</span>
+          <span>Technicien</span>
+        </a>
+        <a href="vehicule.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span>Véhicule</span>
+        </a>
+        <a href="commandes.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <span>Commandes</span>
+        </a>
+      </div>
+      
+      <!-- Profil utilisateur à droite -->
+      <div class="flex items-center gap-3 relative">
+        <div class="text-right">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">Jean-Christophe Normand</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Administrateur</p>
+        </div>
+        <div id="profile-btn" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-lg transition-shadow">
+          JCN
+        </div>
+        
+        <!-- Menu déroulant -->
+        <div id="profile-menu" class="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-background-dark/50 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 hidden z-50">
+          <a href="parametres.html" class="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 rounded-t-lg flex items-center gap-2 transition-colors bg-primary/10 text-primary font-medium">
+            <span class="material-symbols-outlined text-base">settings</span>
+            <span>Paramètres</span>
+          </a>
+          <div class="border-t border-gray-200 dark:border-gray-700"></div>
+          <button class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-b-lg flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">logout</span>
+            <span>Déconnexion</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <main class="flex-1 p-8">
+    <div class="max-w-2xl">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Paramètres</h1>
+      
+      <div class="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
+        <div class="mb-8">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined">business</span>
+            Personnalisation
+          </h2>
+          
+          <div class="space-y-6">
+            <!-- Logo URL -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">URL du logo de l'entreprise</label>
+              <input type="url" id="logo_url" placeholder="https://example.com/logo.png" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+              <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Entrez l'URL complète d'un logo (PNG, SVG ou JPG recommandé)</p>
+            </div>
+            
+            <!-- Aperçu du logo -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Aperçu</label>
+              <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                <img id="logo_preview" src="" alt="Logo" class="h-12 w-auto" />
+                <p id="preview_text" class="text-sm text-gray-500 dark:text-gray-400 mt-2">Entrez une URL pour voir l'aperçu</p>
+              </div>
+            </div>
+            
+            <!-- Boutons -->
+            <div class="flex gap-3">
+              <button id="save-btn" class="bg-primary text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary/90 flex items-center gap-2">
+                <span class="material-symbols-outlined">save</span>
+                Enregistrer
+              </button>
+              <button id="reset-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2">
+                <span class="material-symbols-outlined">refresh</span>
+                Réinitialiser
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Gestion des dépôts -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-8">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined">warehouse</span>
+            Gestion des dépôts
+          </h2>
+          
+          <div class="space-y-4">
+            <!-- Liste des dépôts -->
+            <div id="depots-list" class="space-y-2">
+              <!-- Les dépôts seront chargés ici -->
+            </div>
+            
+            <!-- Formulaire d'ajout/modification -->
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <h3 id="depot-form-title" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ajouter un dépôt</h3>
+              <form id="depot-form" class="space-y-4">
+                <input type="hidden" id="depot-id" />
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom du dépôt *</label>
+                  <input type="text" id="depot-name" required placeholder="Ex: Dépôt 1, Dépôt 2..." class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (optionnel)</label>
+                  <input type="text" id="depot-description" placeholder="Description du dépôt" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Adresse (optionnel)</label>
+                  <input type="text" id="depot-address" placeholder="Adresse du dépôt" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div class="flex gap-3">
+                  <button type="submit" class="bg-primary text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary/90 flex items-center gap-2">
+                    <span class="material-symbols-outlined">save</span>
+                    Enregistrer
+                  </button>
+                  <button type="button" id="cancel-depot-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2">
+                    <span class="material-symbols-outlined">close</span>
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Informations -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-8">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">À propos</h3>
+          <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <li><strong>Version :</strong> 2.0 (Modulaire)</li>
+            <li><strong>Stockage :</strong> Supabase</li>
+            <li><strong>Plateforme :</strong> Web</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Charger les paramètres
+function loadSettings() {
+  const logoUrl = localStorage.getItem('company_logo_url') || '';
+  document.getElementById('logo_url').value = logoUrl;
+  
+  const logoElement = document.getElementById('logo');
+  if (logoUrl && logoElement) {
+    logoElement.src = logoUrl;
+    logoElement.style.display = 'block';
+  } else if (logoElement) {
+    logoElement.style.display = 'none';
+  }
+  
+  if (logoUrl) {
+    document.getElementById('logo_preview').src = logoUrl;
+    document.getElementById('preview_text').style.display = 'none';
+  }
+}
+
+// Gestion du menu profil
+const profileBtn = document.getElementById('profile-btn');
+const profileMenu = document.getElementById('profile-menu');
+if (profileBtn && profileMenu) {
+  profileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    profileMenu.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!profileMenu.contains(e.target) && e.target !== profileBtn) {
+      profileMenu.classList.add('hidden');
+    }
+  });
+}
+
+// Sauvegarder les paramètres
+document.getElementById('save-btn').addEventListener('click', () => {
+  const logoUrl = document.getElementById('logo_url').value.trim();
+  
+  if (logoUrl) {
+    localStorage.setItem('company_logo_url', logoUrl);
+    alert('Paramètres enregistrés avec succès !');
+    loadSettings();
+  } else {
+    alert('Veuillez entrer une URL valide');
+  }
+});
+
+// Réinitialiser les paramètres
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('Êtes-vous sûr de vouloir réinitialiser tous les paramètres ?')) {
+    localStorage.removeItem('company_logo_url');
+    document.getElementById('logo_url').value = '';
+    document.getElementById('logo_preview').src = '';
+    document.getElementById('preview_text').style.display = 'block';
+    document.getElementById('logo').src = '';
+    alert('Paramètres réinitialisés');
+  }
+});
+
+// Aperçu du logo en temps réel
+document.getElementById('logo_url').addEventListener('input', (e) => {
+  const url = e.target.value.trim();
+  if (url) {
+    document.getElementById('logo_preview').src = url;
+    document.getElementById('preview_text').style.display = 'none';
+    document.getElementById('logo_preview').onerror = function() {
+      document.getElementById('preview_text').textContent = 'URL invalide';
+      document.getElementById('preview_text').style.display = 'block';
+    };
+  } else {
+    document.getElementById('logo_preview').src = '';
+    document.getElementById('preview_text').textContent = 'Entrez une URL pour voir l\'aperçu';
+    document.getElementById('preview_text').style.display = 'block';
+  }
+});
+
+loadSettings();
+
+// ======== GESTION DES DÉPÔTS ========
+let depots = [];
+
+// Charger les dépôts depuis Supabase
+async function loadDepots() {
+  try {
+    const { data, error } = await window.supabase
+      .from('depots')
+      .select('*')
+      .order('name');
+    
+    if (error) throw error;
+    
+    depots = data || [];
+    renderDepotsList();
+  } catch (error) {
+    console.error('Erreur chargement dépôts:', error);
+    alert('Erreur lors du chargement des dépôts');
+  }
+}
+
+// Afficher la liste des dépôts
+function renderDepotsList() {
+  const container = document.getElementById('depots-list');
+  container.innerHTML = '';
+  
+  if (depots.length === 0) {
+    container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Aucun dépôt créé. Ajoutez-en un ci-dessous.</p>';
+    return;
+  }
+  
+  depots.forEach(depot => {
+    const div = document.createElement('div');
+    div.className = 'bg-white dark:bg-background-dark/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 flex items-center justify-between';
+    div.innerHTML = `
+      <div class="flex-1">
+        <h4 class="font-semibold text-gray-900 dark:text-white">${depot.name}</h4>
+        ${depot.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${depot.description}</p>` : ''}
+        ${depot.address ? `<p class="text-xs text-gray-500 dark:text-gray-500 mt-1">📍 ${depot.address}</p>` : ''}
+      </div>
+      <div class="flex gap-2">
+        <button onclick="editDepot('${depot.id}')" class="text-primary hover:text-primary/80 p-2">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button onclick="deleteDepot('${depot.id}')" class="text-red-500 hover:text-red-700 p-2">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// Ajouter/Modifier un dépôt
+document.getElementById('depot-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const id = document.getElementById('depot-id').value;
+  const name = document.getElementById('depot-name').value.trim();
+  const description = document.getElementById('depot-description').value.trim();
+  const address = document.getElementById('depot-address').value.trim();
+  
+  if (!name) {
+    alert('Le nom du dépôt est requis');
+    return;
+  }
+  
+  try {
+    if (id) {
+      // Modifier
+      const { error } = await window.supabase
+        .from('depots')
+        .update({
+          name,
+          description: description || null,
+          address: address || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    } else {
+      // Créer
+      const { error } = await window.supabase
+        .from('depots')
+        .insert({
+          name,
+          description: description || null,
+          address: address || null
+        });
+      
+      if (error) throw error;
+    }
+    
+    // Réinitialiser le formulaire
+    document.getElementById('depot-form').reset();
+    document.getElementById('depot-id').value = '';
+    document.getElementById('depot-form-title').textContent = 'Ajouter un dépôt';
+    
+    // Recharger la liste
+    await loadDepots();
+    
+    alert('Dépôt enregistré avec succès !');
+  } catch (error) {
+    console.error('Erreur sauvegarde dépôt:', error);
+    alert('Erreur lors de la sauvegarde: ' + error.message);
+  }
+});
+
+// Modifier un dépôt
+function editDepot(id) {
+  const depot = depots.find(d => d.id === id);
+  if (!depot) return;
+  
+  document.getElementById('depot-id').value = depot.id;
+  document.getElementById('depot-name').value = depot.name;
+  document.getElementById('depot-description').value = depot.description || '';
+  document.getElementById('depot-address').value = depot.address || '';
+  document.getElementById('depot-form-title').textContent = 'Modifier le dépôt';
+  
+  // Scroller vers le formulaire
+  document.getElementById('depot-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Supprimer un dépôt
+async function deleteDepot(id) {
+  const depot = depots.find(d => d.id === id);
+  if (!depot) return;
+  
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer le dépôt "${depot.name}" ?\n\nAttention : Tous les articles de ce dépôt seront également supprimés.`)) {
+    return;
+  }
+  
+  try {
+    const { error } = await window.supabase
+      .from('depots')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    await loadDepots();
+    alert('Dépôt supprimé avec succès');
+  } catch (error) {
+    console.error('Erreur suppression dépôt:', error);
+    alert('Erreur lors de la suppression: ' + error.message);
+  }
+}
+
+// Annuler l'édition
+document.getElementById('cancel-depot-btn').addEventListener('click', () => {
+  document.getElementById('depot-form').reset();
+  document.getElementById('depot-id').value = '';
+  document.getElementById('depot-form-title').textContent = 'Ajouter un dépôt';
+});
+
+// Initialiser
+document.addEventListener('DOMContentLoaded', async () => {
+  // Vérifier que Supabase est chargé (attendre que config.js l'initialise)
+  let attempts = 0;
+  while ((!window.supabase || typeof window.supabase.from !== 'function') && attempts < 30) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+    
+    // Si la bibliothèque Supabase est chargée mais pas le client, essayer d'initialiser
+    if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function' && typeof window.supabase.from !== 'function') {
+      // Réinitialiser si nécessaire
+      if (window.SUPABASE_CONFIG) {
+        const SupabaseLib = window.supabase;
+        window.supabase = SupabaseLib.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+      }
+    }
+  }
+  
+  if (window.supabase && typeof window.supabase.from === 'function') {
+    await loadDepots();
+  } else {
+    console.error('Supabase non chargé après', attempts, 'tentatives');
+    console.error('window.supabase:', window.supabase);
+  }
+});
+</script>
+
+</body>
+</html>

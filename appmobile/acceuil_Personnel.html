@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="theme-color" content="#135bec"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>Gestion du Véhicule</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#135bec",
+                    "background-light": "#f6f6f8",
+                    "background-dark": "#101622",
+                    "surface-light": "#ffffff",
+                    "surface-dark": "#1c2433",
+                    "card-light": "#ffffff",
+                    "card-dark": "#1c2433",
+                    "text-main-light": "#111318",
+                    "text-main-dark": "#e2e8f0",
+                    "text-sub-light": "#616f89",
+                    "text-sub-dark": "#94a3b8",
+                    "border-light": "#e2e8f0",
+                    "border-dark": "#2d3748"
+                }
+            }
+        }
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/api.js" defer></script>
+<style>
+        body {
+            font-family: 'Inter', "Noto Sans", sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-slate-900 dark:text-white pb-10">
+<!-- Main Container -->
+<div class="relative flex h-auto w-full max-w-md mx-auto flex-col overflow-x-hidden shadow-sm bg-background-light dark:bg-background-dark">
+<!-- TopAppBar -->
+<div class="flex items-center bg-card-light dark:bg-card-dark p-4 pb-2 justify-center sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800">
+<h2 class="text-[#111318] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">
+                Profil
+            </h2>
+</div>
+<!-- Scrollable Content -->
+<div class="flex flex-col gap-6 px-4 pt-6">
+
+<!-- ProfileHeader (Vehicle Card) -->
+<div id="vehicle-card" class="flex flex-col items-center bg-card-light dark:bg-card-dark rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors duration-300">
+    <div class="flex flex-col items-center justify-center w-full pt-2">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="material-symbols-outlined text-primary text-[24px]">local_shipping</span>
+            <p id="vehicle-plate" class="text-[#111318] dark:text-white text-3xl font-bold leading-tight tracking-[-0.015em] text-center">Chargement...</p>
+        </div>
+        <p id="vehicle-model" class="text-[#616f89] dark:text-gray-400 text-base font-medium leading-normal text-center mb-4">Recherche du véhicule...</p>
+        
+        <div class="flex flex-col items-center w-full py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Propriétaire</span>
+            <p id="vehicle-owner" class="text-[#111318] dark:text-white font-bold text-lg">--</p>
+        </div>
+
+        <div id="km-alert" class="hidden mt-3 w-full p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold text-center rounded-lg border border-red-200 dark:border-red-900">
+            ⚠️ Relevé kilométrique requis
+        </div>
+    </div>
+</div>
+
+<!-- Pointage Section (Quick Time Entry) -->
+<div class="flex flex-col bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+        <h3 class="text-[#111318] dark:text-white text-base font-bold leading-tight flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">schedule</span>
+            Pointage du jour
+        </h3>
+        <button id="btn-prev-date" onclick="changeDatePointing(-1)" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
+        </button>
+        <span id="current-date-pointing" class="text-xs text-gray-500 dark:text-gray-400 font-bold">Aujourd'hui</span>
+        <button id="btn-next-date" onclick="changeDatePointing(1)" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </button>
+    </div>
+    <div class="p-5 flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-3">
+            <label class="flex flex-col w-full">
+                <p class="text-[#616f89] dark:text-gray-400 text-xs font-medium uppercase tracking-wider pb-2">🕐 Début</p>
+                <input id="time-start-input" type="time" class="form-input flex w-full rounded-xl text-[#111318] dark:text-white border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] h-12 px-4 text-base font-bold leading-normal focus:border-primary focus:ring-1 focus:ring-primary" placeholder="08:00" />
+            </label>
+            <label class="flex flex-col w-full">
+                <p class="text-[#616f89] dark:text-gray-400 text-xs font-medium uppercase tracking-wider pb-2">🕐 Fin</p>
+                <input id="time-end-input" type="time" class="form-input flex w-full rounded-xl text-[#111318] dark:text-white border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] h-12 px-4 text-base font-bold leading-normal focus:border-primary focus:ring-1 focus:ring-primary" placeholder="17:00" />
+            </label>
+        </div>
+        
+        <div id="time-entry-success" class="hidden p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs font-bold text-center rounded-lg border border-green-200 dark:border-green-900 flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">check_circle</span>
+            <span>Pointage enregistré !</span>
+        </div>
+        
+        <div id="time-entry-error" class="hidden p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold text-center rounded-lg border border-red-200 dark:border-red-900">
+            <!-- Error message will be inserted here -->
+        </div>
+        
+        <button id="submit-time-entry-btn" class="flex w-full cursor-pointer items-center justify-center rounded-xl h-12 px-4 bg-primary hover:bg-blue-700 text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:scale-[0.98]">
+            <span class="material-symbols-outlined mr-2">add_circle</span>
+            <span class="truncate">Ajouter mon pointage</span>
+        </button>
+        <p class="text-xs text-center text-gray-400 dark:text-gray-500">
+            ⚠️ Vous ne pourrez pas modifier ce pointage après l'avoir ajouté
+        </p>
+    </div>
+</div>
+
+<!-- Mileage Section -->
+<div class="flex flex-col bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+        <h3 class="text-[#111318] dark:text-white text-base font-bold leading-tight">Kilométrage</h3>
+        <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">history</span>
+            Dernier: <span id="current-mileage-display">0</span> km
+        </span>
+    </div>
+    <div class="p-5 flex flex-col gap-4">
+        <label class="flex flex-col w-full">
+            <p class="text-[#616f89] dark:text-gray-400 text-xs font-medium uppercase tracking-wider pb-2">Relevé actuel</p>
+            <div class="relative">
+                <input id="mileage-input" class="form-input flex w-full rounded-xl text-[#111318] dark:text-white border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] h-14 pl-4 pr-12 text-xl font-bold leading-normal focus:border-primary focus:ring-1 focus:ring-primary placeholder:font-normal placeholder:text-gray-400 transition-all" inputmode="numeric" pattern="[0-9]*" placeholder="000 000" type="number" />
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">km</span>
+            </div>
+        </label>
+        <button id="update-mileage-btn" class="flex w-full cursor-pointer items-center justify-center rounded-xl h-12 px-4 bg-primary hover:bg-blue-700 text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors shadow-sm active:scale-[0.98]">
+            <span class="truncate">Mettre à jour</span>
+        </button>
+        <p id="update-status" class="text-xs text-center text-gray-400 dark:text-gray-500">
+            Dernière mise à jour : <span id="last-update-date">...</span>
+        </p>
+    </div>
+</div>
+
+<!-- Timesheet Section -->
+<div class="flex flex-col">
+    <div class="flex items-center justify-between px-1 pb-3">
+        <h3 class="text-[#111318] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Pointage Heures</h3>
+    </div>
+    
+    <!-- Summary Card -->
+    <div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 flex flex-col gap-4">
+        <!-- Month Navigation -->
+        <div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
+            <button onclick="changeMonth(-1)" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+            <span class="text-base font-bold capitalize" id="current-month-display">Janvier 2026</span>
+            <button onclick="changeMonth(1)" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Vacation Stats -->
+            <div class="flex flex-col">
+                <span class="text-xs text-gray-500 uppercase tracking-wide">Vacances (Jours : Dispo / Cumul)</span>
+                <div class="flex items-baseline gap-1 mt-1">
+                    <span id="vacation-available" class="text-xl font-bold text-[#111318] dark:text-white">--</span>
+                    <span class="text-sm text-gray-400">/</span>
+                    <span id="vacation-accrued" class="text-sm text-gray-400">--</span>
+                </div>
+            </div>
+            
+            <!-- Signature Status -->
+            <div class="flex flex-col items-end">
+                <span class="text-xs text-gray-500 uppercase tracking-wide">Statut signature</span>
+                <div id="signature-status" class="mt-1 flex items-center gap-1 text-sm font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                    <span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
+                    Chargement...
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Hours & Actions -->
+        <div class="flex justify-between items-center pt-2">
+            <div class="flex flex-col">
+                 <span class="text-xs text-gray-500">Total Mensuel</span>
+                 <span id="total-hours-display" class="text-2xl font-bold text-primary">-- h</span>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="openTimesheetModal()" class="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    Détails
+                </button>
+                <button id="btn-sign" onclick="signTimesheet()" class="px-3 py-2 bg-gray-300 text-gray-500 cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center gap-1 shadow-sm" disabled>
+                    <span class="material-symbols-outlined text-[18px]">draw</span> Signer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Détail des Heures -->
+<div id="modal-timesheet" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal('modal-timesheet')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card-light dark:bg-card-dark rounded-2xl shadow-xl flex flex-col max-h-[85vh]">
+        <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl">
+            <h3 class="font-bold text-lg">Détail des heures</h3>
+            <button onclick="closeModal('modal-timesheet')" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="timesheet-detail-list" class="overflow-y-auto p-0 flex flex-col bg-white dark:bg-[#1c2433] flex-1">
+            <!-- Liste générée par JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Demande de Congés -->
+<div id="modal-leave" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal('modal-leave')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card-light dark:bg-card-dark rounded-2xl shadow-xl flex flex-col max-h-[85vh]">
+        <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl">
+            <h3 class="font-bold text-lg">Nouvelle demande de congés</h3>
+            <button onclick="closeModal('modal-leave')" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+            <!-- Type d'absence supprimé (défaut: Vacances) -->
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                   <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">Début</label>
+                   <input type="date" id="leave-start" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] h-12 px-4 shadow-sm focus:border-primary focus:ring-primary">
+                </div>
+                <div>
+                   <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">Fin</label>
+                   <input type="date" id="leave-end" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] h-12 px-4 shadow-sm focus:border-primary focus:ring-primary">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">Motif / Commentaire</label>
+                <textarea id="leave-note" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] p-4 shadow-sm focus:border-primary focus:ring-primary" placeholder="Note optionnelle..."></textarea>
+            </div>
+
+            <button onclick="submitLeaveRequest()" class="w-full h-12 bg-primary text-white font-bold rounded-xl mt-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30">Envoyer la demande</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Note de Frais -->
+<div id="modal-expense" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal('modal-expense')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card-light dark:bg-card-dark rounded-2xl shadow-xl flex flex-col max-h-[85vh]">
+        <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 rounded-t-2xl">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">receipt_long</span>
+                <h3 class="font-bold text-lg text-primary dark:text-blue-300">Note de frais</h3>
+            </div>
+            <button onclick="closeModal('modal-expense')" class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-full"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+            
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">🎫 Montant (CHF)</label>
+                <input type="number" step="0.05" id="expense-amount" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] h-12 px-4 shadow-sm focus:border-primary focus:ring-primary" placeholder="0.00">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2 text-gray-600 dark:text-gray-300">📸 Justificatif (Max 1)</label>
+                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <input type="file" id="expense-photos" accept="image/*" capture="camera" class="hidden" onchange="onExpensePhotosChange(this)">
+                    <span class="material-symbols-outlined text-4xl text-gray-400 mb-1">add_a_photo</span>
+                    <span class="text-sm text-gray-500">Ajouter la photo du ticket</span>
+                </label>
+                <div id="expense-photos-preview" class="mt-2 grid grid-cols-3 gap-2"></div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">📝 Note / Description</label>
+                <textarea id="expense-note" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] p-4 shadow-sm focus:border-primary focus:ring-primary" placeholder="Restaurant, Essence, Matériel..."></textarea>
+            </div>
+
+            <button onclick="submitExpenseReport()" class="w-full h-12 bg-primary text-white font-bold rounded-xl mt-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30">Envoyer la note</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Signaler un Accident -->
+<div id="modal-accident" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal('modal-accident')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card-light dark:bg-card-dark rounded-2xl shadow-xl flex flex-col max-h-[85vh]">
+        <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-red-50 dark:bg-red-900/20 rounded-t-2xl">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-red-500">car_crash</span>
+                <h3 class="font-bold text-lg text-red-700 dark:text-red-300">Signaler un accident</h3>
+            </div>
+            <button onclick="closeModal('modal-accident')" class="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">📍 Adresse de l'accident</label>
+                <input type="text" id="accident-address" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] h-12 px-4 shadow-sm focus:border-red-500 focus:ring-red-500" placeholder="Ex: Rue de la Gare 15, Lausanne">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2 text-gray-600 dark:text-gray-300">📸 Photos de l'accident (Max 1)</label>
+                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <input type="file" id="accident-photos" accept="image/*" capture="camera" class="hidden" onchange="onAccidentPhotosChange(this)">
+                    <span class="material-symbols-outlined text-4xl text-gray-400 mb-1">add_photo_alternate</span>
+                    <span class="text-sm text-gray-500">Ajouter une photo</span>
+                </label>
+                <div id="accident-photos-preview" class="mt-2 grid grid-cols-3 gap-2"></div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">💬 Commentaire</label>
+                <textarea id="accident-note" rows="3" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] p-4 shadow-sm focus:border-red-500 focus:ring-red-500" placeholder="Décrivez les circonstances..."></textarea>
+            </div>
+
+            <button onclick="submitAccidentReport()" class="w-full h-12 bg-red-500 text-white font-bold rounded-xl mt-2 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30">⚠️ Envoyer le signalement</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Déclarer une Panne -->
+<div id="modal-breakdown" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal('modal-breakdown')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card-light dark:bg-card-dark rounded-2xl shadow-xl flex flex-col max-h-[85vh]">
+        <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-orange-50 dark:bg-orange-900/20 rounded-t-2xl">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-orange-500">build</span>
+                <h3 class="font-bold text-lg text-orange-700 dark:text-orange-300">Déclarer une panne</h3>
+            </div>
+            <button onclick="closeModal('modal-breakdown')" class="p-2 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-full"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">⚙️ Type de panne</label>
+                <select id="breakdown-type" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] h-12 px-4 focus:border-orange-500 focus:ring-orange-500">
+                    <option value="mechanical">Panne mécanique</option>
+                    <option value="electrical">Problème électrique</option>
+                    <option value="tire">Pneu crevé</option>
+                    <option value="battery">Batterie à plat</option>
+                    <option value="other">Autre</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1 text-gray-600 dark:text-gray-300">💬 Description du problème</label>
+                <textarea id="breakdown-message" rows="5" class="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-background-light dark:bg-[#101622] p-4 shadow-sm focus:border-orange-500 focus:ring-orange-500" placeholder="Décrivez le problème rencontré..."></textarea>
+            </div>
+
+            <button onclick="submitBreakdownReport()" class="w-full h-12 bg-orange-500 text-white font-bold rounded-xl mt-2 hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30">🔧 Envoyer la déclaration</button>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Buttons Section (Frais / Congés) -->
+<div class="grid grid-cols-2 gap-3">
+    <button onclick="openExpenseModal()" class="flex flex-col items-center justify-center p-4 bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-primary hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer group transition-all">
+        <span class="material-symbols-outlined text-primary mb-2 group-hover:scale-110 transition-transform">receipt_long</span>
+        <span class="text-xs font-bold text-gray-700 dark:text-gray-200">Note de frais</span>
+    </button>
+    <button onclick="openLeaveModal()" class="flex flex-col items-center justify-center p-4 bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 group transition-all">
+        <span class="material-symbols-outlined text-purple-600 mb-2 group-hover:scale-110 transition-transform">flight_takeoff</span>
+        <span class="text-xs font-bold text-gray-700 dark:text-gray-200">Demande congés</span>
+    </button>
+</div>
+
+<!-- Quick Actions Footer (Accident / Panne) -->
+<div class="grid grid-cols-2 gap-3 mt-0">
+    <!-- Existing Accident/Panne buttons updated slightly -->
+<button onclick="openAccidentModal()" class="flex flex-col items-center justify-center p-4 bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-red-200 dark:hover:border-red-900 group transition-all">
+<span class="material-symbols-outlined text-red-500 mb-2 group-hover:scale-110 transition-transform">car_crash</span>
+<span class="text-xs font-bold text-gray-700 dark:text-gray-200">Signaler un accident</span>
+</button>
+<button onclick="openBreakdownModal()" class="flex flex-col items-center justify-center p-4 bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-orange-200 dark:hover:border-orange-900 group transition-all">
+<span class="material-symbols-outlined text-orange-500 mb-2 group-hover:scale-110 transition-transform">build</span>
+<span class="text-xs font-bold text-gray-700 dark:text-gray-200">Déclarer une panne</span>
+</button>
+</div>
+
+<!-- Emergency Numbers Section -->
+<div class="mt-8 p-3 bg-gray-50 dark:bg-gray-900/20 rounded-xl border border-gray-100 dark:border-gray-800">
+    <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined text-gray-400 text-sm">emergency</span>
+        <h3 class="font-semibold text-sm text-gray-500 dark:text-gray-400">Numéros d'urgence</h3>
+    </div>
+    <div class="grid grid-cols-6 gap-2 text-center">
+        <a href="tel:117" class="p-1.5 bg-white dark:bg-card-dark rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="block text-base font-bold text-gray-700 dark:text-gray-300">117</span>
+            <span class="text-[8px] uppercase font-bold text-gray-400">Police</span>
+        </a>
+        <a href="tel:118" class="p-1.5 bg-white dark:bg-card-dark rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="block text-base font-bold text-gray-700 dark:text-gray-300">118</span>
+            <span class="text-[8px] uppercase font-bold text-gray-400">Feu</span>
+        </a>
+        <a href="tel:144" class="p-1.5 bg-white dark:bg-card-dark rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="block text-base font-bold text-gray-700 dark:text-gray-300">144</span>
+            <span class="text-[8px] uppercase font-bold text-gray-400">Amb.</span>
+        </a>
+        <a href="tel:1414" class="p-1.5 bg-white dark:bg-card-dark rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="block text-sm font-bold text-gray-700 dark:text-gray-300">1414</span>
+            <span class="text-[8px] uppercase font-bold text-gray-400">Rega</span>
+        </a>
+        <a href="tel:145" class="p-1.5 bg-white dark:bg-card-dark rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="block text-base font-bold text-gray-700 dark:text-gray-300">145</span>
+            <span class="text-[8px] uppercase font-bold text-gray-400">Tox</span>
+        </a>
+        <a href="tel:112" class="p-1.5 bg-white dark:bg-card-dark rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="block text-base font-bold text-gray-700 dark:text-gray-300">112</span>
+            <span class="text-[8px] uppercase font-bold text-gray-400">Euro</span>
+        </a>
+    </div>
+</div>
+
+<div class="h-20"></div> <!-- Bottom Spacer for nav -->
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark pb-safe pt-2 px-2 z-30 pb-4">
+<div class="grid grid-cols-4 gap-1">
+<a href="Rendez-vous_technicien.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium mt-1">Agenda</span>
+</a>
+<a href="invetaire_technicien.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-medium mt-1">Stock</span>
+</a>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-primary">
+<span class="material-symbols-outlined filled">person</span>
+<span class="text-[10px] font-medium mt-1">Profil</span>
+</button>
+<button onclick="handleLogout()" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-[10px] font-medium mt-1">Déconnexion</span>
+</button>
+</div>
+
+<!-- Scripts Logic -->
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Initialiser Supabase
+        if (typeof initSupabase === 'function') initSupabase();
+        const api = new VeloxAPI();
+        
+        try {
+            const user = await api.getCurrentUser();
+            if(!user) {
+                 window.startLoginRedirect();
+                 return;
+            }
+            const employeeId = await getEmployeeId(user.email);
+            if (!employeeId) {
+                console.error("Employé non trouvé pour cet email");
+                return;
+            }
+
+            // --- 1. Gestion du Véhicule ---
+            const vehicles = await loadVehicle(user.email);
+            
+            if (vehicles && vehicles.length > 0) {
+                const vehicle = vehicles[0];
+                document.getElementById('vehicle-plate').textContent = vehicle.license_plate;
+                document.getElementById('vehicle-model').textContent = `${vehicle.make.toUpperCase()} ${vehicle.model}`;
+                
+                // Owner logic: User assigned to vehicle
+                document.getElementById('vehicle-owner').textContent = vehicle.assigned_to || user.email;
+
+                document.getElementById('current-mileage-display').textContent = vehicle.mileage ? vehicle.mileage.toLocaleString() : '0';
+                document.getElementById('mileage-input').value = vehicle.mileage || 0;
+                document.getElementById('update-mileage-btn').onclick = () => updateMileage(vehicle.id);
+                
+                if (vehicle.updated_at) {
+                    const lastUpdate = new Date(vehicle.updated_at);
+                    document.getElementById('last-update-date').textContent = lastUpdate.toLocaleDateString() + ' ' + lastUpdate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    // Vérifier si mis à jour ce mois-ci
+                    const now = new Date();
+                    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                    if (lastUpdate < firstOfMonth) {
+                        document.getElementById('km-alert').classList.remove('hidden');
+                        document.getElementById('vehicle-card').classList.add('border-red-500', 'border-2');
+                    }
+                }
+            } else {
+                document.getElementById('vehicle-plate').textContent = "Non assigné";
+                document.getElementById('vehicle-model').textContent = "--";
+                document.getElementById('vehicle-owner').textContent = "Aucun";
+            }
+
+            // --- 2. Chargement des Heures ---
+            loadTimesheet(employeeId);
+
+            // --- 3. Initialisation du Pointage ---
+            updatePointingDateDisplay();
+            document.getElementById('submit-time-entry-btn').addEventListener('click', submitTimeEntry);
+
+        } catch (e) {
+            console.error("Erreur init:", e);
+        }
+    });
+
+    // --- Helpers ---
+    async function getEmployeeId(email) {
+        const { data } = await supabase.from('employees').select('id, first_name, last_name, email').eq('email', email).single();
+        if (data) window.currentEmployee = data; // Stocker pour usage
+        return data ? data.id : null;
+    }
+
+    async function loadVehicle(email) {
+        // 1. Récupérer le nom complet depuis l'employé (stocké précédemment)
+        let fullName = '';
+        if (window.currentEmployee) {
+            fullName = `${window.currentEmployee.first_name} ${window.currentEmployee.last_name}`;
+        } else {
+            // Fallback fetch
+             const { data } = await supabase.from('employees').select('first_name, last_name').eq('email', email).single();
+             if(data) fullName = `${data.first_name} ${data.last_name}`;
+        }
+
+        console.log("Recherche véhicule pour:", fullName);
+
+        // 2. Chercher véhicule assigné à ce nom
+        let { data, error } = await supabase.from('vehicles').select('id, license_plate, assigned_to, mileage, last_maintenance, updated_at').ilike('assigned_to', fullName);
+        
+        return data || [];
+    }
+
+    async function updateMileage(vehicleId) {
+        const newKm = document.getElementById('mileage-input').value;
+        if (!newKm) return;
+        
+        const { error } = await supabase.from('vehicles').update({ 
+            mileage: parseInt(newKm),
+            updated_at: new Date().toISOString()
+        }).eq('id', vehicleId);
+        
+        if (!error) {
+            alert('Kilométrage mis à jour !');
+            location.reload();
+        } else {
+            alert('Erreur lors de la mise à jour: ' + error.message);
+        }
+    }
+
+    // --- Gestion du Pointage Rapide ---
+    let currentPointingDate = new Date();
+
+    function updatePointingDateDisplay() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        currentPointingDate.setHours(0, 0, 0, 0);
+        
+        if (currentPointingDate.getTime() === today.getTime()) {
+            document.getElementById('current-date-pointing').textContent = "Aujourd'hui";
+        } else {
+            document.getElementById('current-date-pointing').textContent = currentPointingDate.toLocaleDateString('fr-FR', { 
+                day: 'numeric', 
+                month: 'short' 
+            });
+        }
+    }
+
+    window.changeDatePointing = function(delta) {
+        currentPointingDate.setDate(currentPointingDate.getDate() + delta);
+        updatePointingDateDisplay();
+    }
+
+    window.submitTimeEntry = async function() {
+        if (!window.currentEmployee) {
+            showTimeEntryError("❌ Employé non identifié");
+            return;
+        }
+
+        const startTime = document.getElementById('time-start-input').value;
+        const endTime = document.getElementById('time-end-input').value;
+
+        if (!startTime || !endTime) {
+            showTimeEntryError("❌ Veuillez remplir les deux heures");
+            return;
+        }
+
+        // Validation: heure de fin après heure de début
+        if (startTime >= endTime) {
+            showTimeEntryError("❌ L'heure de fin doit être après l'heure de début");
+            return;
+        }
+
+        // Calcul automatique des heures
+        const start = new Date(`2000-01-01T${startTime}:00`);
+        const end = new Date(`2000-01-01T${endTime}:00`);
+        const diffMs = end - start;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        
+        // Vérifier si la plage horaire inclut 12h-13h (pause de midi)
+        const noon = new Date(`2000-01-01T12:00:00`);
+        const onepm = new Date(`2000-01-01T13:00:00`);
+        const includesLunchBreak = (start < onepm && end > noon);
+        
+        // Soustraire 1h de pause uniquement si la pause de midi est incluse
+        const breakDuration = includesLunchBreak ? 60 : 0;
+        const totalHours = Math.max(0, diffHours - (breakDuration / 60));
+
+        const dateStr = currentPointingDate.toISOString().split('T')[0];
+
+        try {
+            // Vérifier si un pointage existe déjà pour cette date
+            const { data: existing } = await supabase
+                .from('time_entries')
+                .select('id')
+                .eq('employee_id', window.currentEmployee.id)
+                .eq('date', dateStr)
+                .maybeSingle();
+
+            if (existing) {
+                showTimeEntryError("⚠️ Un pointage existe déjà pour cette date");
+                return;
+            }
+
+            // Insérer le pointage
+            const { error } = await supabase.from('time_entries').insert({
+                employee_id: window.currentEmployee.id,
+                date: dateStr,
+                start_time: startTime,
+                end_time: endTime,
+                break_duration: breakDuration,
+                total_hours: totalHours.toFixed(2),
+                filled_by: 'mobile_app',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
+
+            if (error) {
+                console.error("Erreur insertion pointage:", error);
+                showTimeEntryError("❌ Erreur: " + error.message);
+            } else {
+                // Succès !
+                showTimeEntrySuccess();
+                
+                // Reset les champs
+                document.getElementById('time-start-input').value = '';
+                document.getElementById('time-end-input').value = '';
+                
+                // Recharger le résumé des heures
+                if (window.currentEmployee) {
+                    loadTimesheetSummary(window.currentEmployee.id);
+                }
+
+                // Cacher le message de succès après 3 secondes
+                setTimeout(() => {
+                    document.getElementById('time-entry-success').classList.add('hidden');
+                }, 3000);
+            }
+        } catch (e) {
+            console.error("Erreur submit pointage:", e);
+            showTimeEntryError("❌ Erreur réseau");
+        }
+    }
+
+    function showTimeEntrySuccess() {
+        const successEl = document.getElementById('time-entry-success');
+        const errorEl = document.getElementById('time-entry-error');
+        
+        errorEl.classList.add('hidden');
+        successEl.classList.remove('hidden');
+    }
+
+    function showTimeEntryError(message) {
+        const successEl = document.getElementById('time-entry-success');
+        const errorEl = document.getElementById('time-entry-error');
+        
+        successEl.classList.add('hidden');
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+        
+        // Cacher après 4 secondes
+        setTimeout(() => {
+            errorEl.classList.add('hidden');
+        }, 4000);
+    }
+
+
+    // --- Modal Functions (defined early for onclick handlers) ---
+    window.openTimesheetModal = function() {
+        document.getElementById('modal-timesheet').classList.remove('hidden');
+        loadTimesheetDetails();
+    }
+    
+    window.openExpenseModal = function() {
+        document.getElementById('modal-expense').classList.remove('hidden');
+        // Reset form
+        document.getElementById('expense-amount').value = '';
+        document.getElementById('expense-note').value = '';
+        document.getElementById('expense-photos-preview').innerHTML = '';
+        window.expensePhotos = [];
+    }
+
+    window.openLeaveModal = function() {
+        document.getElementById('modal-leave').classList.remove('hidden');
+    }
+
+    window.openAccidentModal = function() {
+        document.getElementById('modal-accident').classList.remove('hidden');
+        // Reset form
+        document.getElementById('accident-address').value = '';
+        document.getElementById('accident-note').value = '';
+        document.getElementById('accident-photos-preview').innerHTML = '';
+        window.accidentPhotos = [];
+    }
+
+    window.openBreakdownModal = function() {
+        document.getElementById('modal-breakdown').classList.remove('hidden');
+        // Reset form
+        document.getElementById('breakdown-type').value = 'mechanical';
+        document.getElementById('breakdown-message').value = '';
+    }
+
+    window.closeModal = function(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+
+    // --- Gestion des Heures & Absences ---
+    let currentDate = new Date();
+    
+    function changeMonth(delta) {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        if (window.currentEmployee) loadTimesheetSummary(window.currentEmployee.id);
+    }
+
+    async function loadTimesheetSummary(employeeId) {
+        const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+        document.getElementById('current-month-display').textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
+        const startOfYear = new Date(currentDate.getFullYear(), 0, 1).toISOString();
+
+        // 1. Calculer Total Heures
+        const { data: entries } = await supabase.from('time_entries')
+            .select('total_hours')
+            .eq('employee_id', employeeId)
+            .gte('date', startOfMonth)
+            .lte('date', endOfMonth);
+
+        const totalHours = entries ? entries.reduce((acc, curr) => acc + (parseFloat(curr.total_hours) || 0), 0) : 0;
+        document.getElementById('total-hours-display').textContent = formatHoursMinutes(totalHours);
+
+        // 2. Récupérer Vacances (Dynamique via API)
+        try {
+            const api = new VeloxAPI();
+            const stats = await api.getEmployeeStats(employeeId);
+            
+            // Calcul: Disponible = max(0, Cumulé - Pris) pour éviter les négatifs
+            // stats.vacation_days_total contient le montant "acquis/cumulé" au prorata des heures
+            const accrued = stats.vacation_days_total;
+            const taken = stats.vacation_days_used;
+            const available = Math.max(0, accrued - taken); // Ne peut jamais être négatif
+
+            document.getElementById('vacation-available').textContent = available.toFixed(1) + ' j';
+            document.getElementById('vacation-accrued').textContent = accrued.toFixed(1) + ' j';
+        } catch (e) {
+            console.error("Erreur calcul vacances:", e);
+            document.getElementById('vacation-available').textContent = '--';
+            document.getElementById('vacation-accrued').textContent = '--';
+        }
+
+        // 3. Vérifier Signature
+        const monthDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-01`;
+        const { data: signature } = await supabase.from('monthly_signatures')
+            .select('*')
+            .eq('employee_id', employeeId)
+            .eq('month_date', monthDate)
+            .maybeSingle();
+
+        const statusEl = document.getElementById('signature-status');
+        const signBtn = document.getElementById('btn-sign');
+
+        if (signature) {
+            statusEl.innerHTML = '<span class="material-symbols-outlined text-[16px]">verified</span> Signé';
+            statusEl.className = "mt-1 flex items-center gap-1 text-sm font-bold text-green-600 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded-lg";
+            
+            signBtn.disabled = true;
+            signBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check_circle</span> Signé';
+            // UPDATE: Keep Blue (bg-primary) even when signed
+            signBtn.className = "px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-1 shadow-sm opacity-70 cursor-default";
+        } else {
+            statusEl.innerHTML = '<span class="material-symbols-outlined text-red-500 text-[16px]">pending</span> Non signé';
+            statusEl.className = "mt-1 flex items-center gap-1 text-sm font-bold text-orange-600 bg-orange-100 dark:bg-orange-900/20 px-2 py-1 rounded-lg";
+            
+            signBtn.disabled = false;
+            signBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">draw</span> Signer';
+            signBtn.className = "px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1 shadow-sm cursor-pointer";
+        }
+    }
+
+    // Helper: Convertir heures décimales en format HHhMM
+    function formatHoursMinutes(decimalHours) {
+        const hours = Math.floor(decimalHours);
+        const minutes = Math.round((decimalHours - hours) * 60);
+        
+        if (minutes === 0) {
+            return `${hours}h`;
+        }
+        return `${hours}h${String(minutes).padStart(2, '0')}`;
+    }
+
+    async function loadTimesheetDetails() {
+        if (!window.currentEmployee) return;
+        const employeeId = window.currentEmployee.id;
+        const list = document.getElementById('timesheet-detail-list');
+        list.innerHTML = '<div class="p-4 text-center text-gray-500">Chargement...</div>';
+        
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
+
+        const { data: entries } = await supabase.from('time_entries')
+            .select('*')
+            .eq('employee_id', employeeId)
+            .gte('date', startOfMonth)
+            .lte('date', endOfMonth)
+            .order('date', { ascending: true });
+
+        let html = '';
+        if (entries && entries.length > 0) {
+            entries.forEach(entry => {
+                const hours = parseFloat(entry.total_hours || 0);
+                const dateObj = new Date(entry.date);
+                const formattedHours = formatHoursMinutes(hours);
+                const breakInfo = entry.break_duration === 60 ? ' (pause 1h)' : '';
+                html += `
+                <div class="px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-[#111318] dark:text-white capitalize">
+                            ${dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}
+                        </span>
+                        <span class="text-xs text-gray-500">${entry.start_time ? entry.start_time.slice(0,5) : '--:--'} - ${entry.end_time ? entry.end_time.slice(0,5) : '--:--'}${breakInfo}</span>
+                    </div>
+                    <span class="font-mono text-sm font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-primary">
+                        ${formattedHours}
+                    </span>
+                </div>`;
+            });
+        } else {
+            html = '<div class="p-8 text-center text-gray-400 text-sm flex flex-col items-center"><span class="material-symbols-outlined mb-2 text-3xl opacity-50">event_busy</span>Aucun pointage pour ce mois</div>';
+        }
+        list.innerHTML = html;
+    }
+
+    async function signTimesheet() {
+        if (!window.currentEmployee) return;
+        const employeeId = window.currentEmployee.id;
+        const monthDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-01`;
+
+        if(confirm(`Je certifie l'exactitude des heures saisies pour ${document.getElementById('current-month-display').textContent}.\n\nConfirmer la signature ?`)) {
+            
+            const { error } = await supabase.from('monthly_signatures').insert({
+                employee_id: employeeId,
+                month_date: monthDate,
+                status: 'signed',
+                signed_at: new Date().toISOString()
+            });
+
+            if (error) {
+                if (error.code === '23505') { // Unique violation
+                    alert("Déjà signé pour ce mois.");
+                } else {
+                    alert("Erreur lors de la signature: " + error.message);
+                }
+            } else {
+                alert("Signature enregistrée avec succès.");
+                loadTimesheetSummary(employeeId); // Refresh UI
+            }
+        }
+    }
+
+    // --- Leave Request ---
+    window.submitLeaveRequest = async function() {
+        if (!window.currentEmployee) return;
+        const type = 'vacation'; // Défaut suite à suppression du selecteur
+        const start = document.getElementById('leave-start').value;
+        const end = document.getElementById('leave-end').value;
+        const note = document.getElementById('leave-note').value;
+
+        if (!start || !end) {
+            alert("Veuillez sélectionner les dates de début et de fin.");
+            return;
+        }
+
+        // Créer une seule entrée 'event' par période pour simplifier (ou une entrée par jour)
+        // Ici on crée une entrée simple type 'vacation' pour le premier jour ou on pourrait créer un range.
+        // La table events a 'date'. Si c'est une période, on devrait créer N entrées.
+        // Pour l'instant, on va créer une entrée par jour dans la période.
+        
+        let currentDateLoop = new Date(start);
+        const endDateLoop = new Date(end);
+        const inserts = [];
+
+        while (currentDateLoop <= endDateLoop) {
+             const dayOfWeek = currentDateLoop.getDay();
+             if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Ignorer weekend
+                inserts.push({
+                    employee_id: window.currentEmployee.id,
+                    date: currentDateLoop.toISOString().split('T')[0],
+                    type: type,
+                    note: note
+                });
+             }
+             currentDateLoop.setDate(currentDateLoop.getDate() + 1);
+        }
+
+        if (inserts.length === 0) {
+            alert("Aucun jour ouvrable sélectionné.");
+            return;
+        }
+
+        const { error } = await supabase.from('events').insert(inserts);
+
+        if (error) {
+            alert("Erreur lors de la demande: " + error.message);
+        } else {
+            // Trigger N8N Event for Leave Request
+            await triggerWebhookDB('leave_request', {
+                leave_type: type,
+                start_date: start,
+                end_date: end,
+                total_days: inserts.length,
+                note: note
+            }, []);
+
+            alert("Demande de congés envoyée avec succès !");
+            closeModal('modal-leave');
+            loadTimesheetSummary(window.currentEmployee.id); // Refresh stats
+        }
+    }
+
+    window.startLoginRedirect = function() {
+        window.location.href = 'index.html';
+    }
+
+    window.handleLogout = async function() {
+        if(confirm('Voulez-vous vraiment vous déconnecter ?')) {
+            const api = new VeloxAPI();
+            await api.signOut();
+            window.startLoginRedirect();
+        }
+    }
+
+    // Helper: Upload vers Supabase Storage (Privé)
+    async function uploadToSupabase(file, folder = 'misc') {
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `${folder}/${fileName}`;
+
+            // Upload Private
+            const { data, error } = await supabase.storage
+                .from('private-uploads')
+                .upload(filePath, file);
+
+            if (error) {
+                console.error("Upload failed", error);
+                throw error;
+            }
+            
+            return filePath; // Return path, not URL
+        } catch (e) {
+            console.error("Upload error helper:", e);
+            throw e;
+        }
+    }
+
+    // TRIGGER via DB INSERT (N8N détecte l'insertion)
+    window.triggerWebhookDB = async function(type, payload, storagePaths = []) {
+        console.log(`Triggering DB Event: ${type}`, payload);
+        
+        let relatedId = null; 
+        let technicianName = "Inconnu";
+
+        if(window.currentEmployee) {
+            relatedId = window.currentEmployee.id;
+            technicianName = `${window.currentEmployee.first_name} ${window.currentEmployee.last_name}`;
+        }
+
+        const record = {
+            type: type, // 'expense_receipt', 'accident_report', 'leave_request', 'breakdown_report'
+            storage_path: storagePaths.length > 0 ? storagePaths[0] : 'no_file_attached', // Handle text-only events
+            bucket_id: 'private-uploads', 
+            related_id: relatedId,
+            metadata: {
+                ...payload,
+                technician_name: technicianName,
+                all_files: storagePaths
+            }
+        };
+
+        const { error } = await supabase.from('upload_events').insert(record);
+
+        if (error) {
+            console.error('Error inserting upload event:', error);
+            alert("Erreur lors de l'enregistrement de l'événement.");
+        } else {
+             if(type === 'expense_receipt') alert("✅ Note de frais enregistrée (Traitement IA en cours)");
+             if(type === 'accident_report') alert("✅ Rapport accident enregistré (Traitement en cours)");
+             // Pour les autres types (leave/breakdown), l'alert est gérée par l'appelant ou ici si besoin
+        }
+    }
+
+    // --- EXPENSE LOGIC ---
+    window.expensePhotos = [];
+
+    window.onExpensePhotosChange = function(input) {
+        if (input.files && input.files.length > 0) {
+            // Remplace l'ancienne photo : on garde seulement la nouvelle
+            const files = Array.from(input.files).slice(0, 1);
+            window.expensePhotos = files;
+            
+            const previewContainer = document.getElementById('expense-photos-preview');
+            previewContainer.innerHTML = ''; // Clear previous
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = "relative h-20 w-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm";
+                    div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+            input.value = '';
+        }
+    };
+
+    window.submitExpenseReport = async function() {
+        const amount = document.getElementById('expense-amount').value;
+        const note = document.getElementById('expense-note').value;
+        
+        if (window.expensePhotos.length === 0) {
+            alert("Veuillez ajouter au moins une photo du justificatif.");
+            return;
+        }
+
+        try {
+            // 1. Upload
+            const storagePaths = [];
+            for(const file of window.expensePhotos) {
+                const path = await uploadToSupabase(file, 'expenses');
+                storagePaths.push(path);
+            }
+
+            // 2. Trigger DB Event
+            await triggerWebhookDB('expense_receipt', {
+                amount: amount,
+                note: note,
+                photos_count: window.expensePhotos.length
+            }, storagePaths);
+
+            closeModal('modal-expense');
+            // Reset is done in openExpenseModal, but good practice to clear memory
+            window.expensePhotos = [];
+
+        } catch (e) {
+            console.error("Erreur Expense:", e);
+            alert("Erreur lors de l'envoi de la note de frais.");
+        }
+    };
+
+    window.accidentPhotos = [];
+    
+    window.onAccidentPhotosChange = function(input) {
+        if (input.files && input.files.length > 0) {
+            // Remplace l'ancienne photo : on garde seulement la nouvelle
+            const files = Array.from(input.files).slice(0, 1);
+            window.accidentPhotos = files;
+            
+            // Mettre à jour l'aperçu
+            const previewContainer = document.getElementById('accident-photos-preview');
+            previewContainer.innerHTML = ''; // Clear previous
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = "relative h-20 w-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm";
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/10"></div>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Reset input pour permettre de resélectionner si besoin
+            input.value = '';
+        }
+    };
+
+    window.submitAccidentReport = async function() {
+        const address = document.getElementById('accident-address').value;
+        const note = document.getElementById('accident-note').value;
+        
+        if (!address) {
+            alert('Veuillez indiquer l\'adresse de l\'accident.');
+            return;
+        }
+
+        try {
+            // 1. Upload All Photos
+            const storagePaths = [];
+            for(const file of window.accidentPhotos) {
+                const path = await uploadToSupabase(file, 'accidents');
+                storagePaths.push(path);
+            }
+
+            const payload = {
+                address: address,
+                note: note,
+                photos_count: window.accidentPhotos.length
+            };
+
+            // 2. Insert DB Record
+            await triggerWebhookDB('accident_report', payload, storagePaths);
+            
+            closeModal('modal-accident');
+            // Reset
+            window.accidentPhotos = [];
+            document.getElementById('accident-photos-preview').innerHTML = '';
+            document.getElementById('accident-address').value = '';
+            document.getElementById('accident-note').value = '';
+
+        } catch(e) {
+            console.error("Erreur Accident:", e);
+            alert("Erreur lors de l'envoi du rapport.");
+        }
+    };
+
+    window.submitBreakdownReport = async function() {
+        const type = document.getElementById('breakdown-type').value;
+        const message = document.getElementById('breakdown-message').value;
+        
+        if (!message) {
+            alert('Veuillez décrire le problème.');
+            return;
+        }
+
+        const payload = {
+            breakdown_type: type,
+            message: message
+        };
+
+        // Utiliser triggerWebhookDB même sans fichier (le type 'breakdown_report' sera géré par n8n)
+        await triggerWebhookDB('breakdown_report', payload, []);
+        
+        closeModal('modal-breakdown');
+        alert("✅ Déclaration de panne envoyée !");
+        
+        // Reset
+        document.getElementById('breakdown-type').value = 'mechanical';
+        document.getElementById('breakdown-message').value = '';
+    };
+    
+    // Alias pour compatibilité init
+    async function loadTimesheet(employeeId) {
+        loadTimesheetSummary(employeeId);
+    }
+</script>
+</body></html>

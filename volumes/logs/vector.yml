@@ -1,0 +1,18 @@
+sources:
+  docker_logs:
+    type: docker_logs
+    docker_host: unix:///var/run/docker.sock
+    include_containers:
+      - supabase-*
+
+sinks:
+  logflare:
+    type: http
+    inputs:
+      - docker_logs
+    uri: http://analytics:4000/api/logs
+    method: post
+    encoding:
+      codec: json
+    headers:
+      X-API-KEY: ${LOGFLARE_PUBLIC_ACCESS_TOKEN}

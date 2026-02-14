@@ -1,0 +1,9 @@
+{
+  "hostname": "78.47.97.137",
+  "user": "root",
+  "port": 22,
+  "privateKeyPath": "C:\\Users\\etien\\.ssh\\id_rsa",
+  "usePassword": false,
+  "password": "PEFMWUFa7VVT",
+  "connectionTimeout": 10000
+}

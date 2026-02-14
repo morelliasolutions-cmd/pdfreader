@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestionnaire de Stock - Accueil</title>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B700%3B900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#137fec",
+          "background-light": "#f6f7f8",
+          "background-dark": "#101922",
+        },
+        fontFamily: {
+          display: ["Inter"],
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      },
+    },
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+<div class="flex items-center justify-center min-h-screen p-8">
+  <div class="max-w-6xl w-full">
+    <div class="text-center mb-12">
+      <div class="flex items-center justify-center mb-6">
+        <img id="company-logo" src="" alt="Logo" class="h-20 w-auto" style="display:none;" onerror="this.style.display='none'" />
+      </div>
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Gestionnaire de Stock</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">Gérez efficacement votre inventaire, vos techniciens et vos véhicules</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <a href="inventaire.html" class="bg-white dark:bg-background-dark/50 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group">
+        <div class="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+          <span class="material-symbols-outlined text-primary text-4xl">warehouse</span>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Inventaire</h2>
+        <p class="text-gray-600 dark:text-gray-400">Gérez vos stocks, suivez les quantités et recevez des alertes de réapprovisionnement.</p>
+      </a>
+      
+      <a href="collaborateurs.html" class="bg-white dark:bg-background-dark/50 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group">
+        <div class="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+          <span class="material-symbols-outlined text-primary text-4xl">groups</span>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Collaborateurs</h2>
+        <p class="text-gray-600 dark:text-gray-400">Gérez vos collaborateurs et assignez-leur du matériel avec feuille de signature.</p>
+      </a>
+      
+      <a href="vehicule.html" class="bg-white dark:bg-background-dark/50 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group">
+        <div class="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+          <span class="material-symbols-outlined text-primary text-4xl">local_shipping</span>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Véhicules</h2>
+        <p class="text-gray-600 dark:text-gray-400">Gérez votre flotte de véhicules, suivez les kilométrages et les affectations.</p>
+      </a>
+      
+      <a href="commandes.html" class="bg-white dark:bg-background-dark/50 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 group">
+        <div class="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+          <span class="material-symbols-outlined text-primary text-4xl">shopping_cart</span>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Commandes</h2>
+        <p class="text-gray-600 dark:text-gray-400">Suivez vos commandes passées, gérez les factures et archivez les documents PDF.</p>
+      </a>
+    </div>
+    
+    <div class="mt-12 text-center">
+      <p class="text-sm text-gray-500 dark:text-gray-500 mb-2">
+        Version optimisée - Chargement rapide de chaque module
+      </p>
+      <p class="text-xs text-gray-400 dark:text-gray-600">
+        Créé par <a href="https://morellia.ch" target="_blank" class="text-primary hover:underline font-medium">Morellia.ch</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Charger le logo de l'entreprise
+function loadCompanyLogo() {
+  const logoUrl = localStorage.getItem('company_logo_url') || '';
+  const logoElement = document.getElementById('company-logo');
+  if (logoUrl && logoElement) {
+    logoElement.src = logoUrl;
+    logoElement.style.display = 'block';
+  }
+}
+
+loadCompanyLogo();
+</script>
+
+</body>
+</html>

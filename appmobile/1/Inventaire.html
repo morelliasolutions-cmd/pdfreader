@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="theme-color" content="#F59E0B"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>Gestion Stock Matériel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+<script src="../../js/config.js?v=7" defer></script>
+<script src="../../js/api.js?v=7" defer></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1c2433",
+                        "text-main-light": "#111318",
+                        "text-main-dark": "#e2e8f0",
+                        "text-sub-light": "#616f89",
+                        "text-sub-dark": "#94a3b8",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#2d3748"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.375rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark antialiased selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-xl overflow-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur-md border-b border-border-light dark:border-border-dark px-4 pt-12 pb-4 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<button type="button" onclick="handleLogout()" class="p-2 rounded-full hover:bg-background-light dark:hover:bg-background-dark text-text-main-light dark:text-text-main-dark transition-colors" title="Déconnexion">
+<span class="material-symbols-outlined">logout</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight">Gestion Stock</h1>
+<div class="w-10"></div>
+</div>
+<!-- Tabs -->
+<div class="flex gap-2 bg-background-light dark:bg-background-dark rounded-xl p-1">
+<button type="button" id="tab-reception" onclick="switchTab('reception')" class="flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all bg-surface-light dark:bg-surface-dark shadow-sm text-primary">
+<span class="material-symbols-outlined text-sm align-middle">inventory</span>
+Réception
+</button>
+<button type="button" id="tab-controle" onclick="switchTab('controle')" class="flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all text-text-sub-light dark:text-text-sub-dark">
+<span class="material-symbols-outlined text-sm align-middle">fact_check</span>
+Contrôle
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto pb-32 px-4 pt-6">
+
+<!-- ONGLET RÉCEPTION -->
+<div id="content-reception" class="space-y-4">
+<!-- Scanner -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-4 border border-border-light dark:border-border-dark shadow-sm">
+<h2 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-3">📦 Scanner Code-Barres</h2>
+<p class="text-sm text-text-sub-light dark:text-text-sub-dark mb-4">Scanne le code-barre du matériel reçu</p>
+
+<div id="reader-reception" class="rounded-xl overflow-hidden mb-4"></div>
+
+<button type="button" id="startBtn-reception" onclick="startScanning('reception')" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+Démarrer le scan
+</button>
+
+<button type="button" id="stopBtn-reception" onclick="stopScanning('reception')" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">stop_circle</span>
+Arrêter le scan
+</button>
+
+<div id="error-reception" class="hidden mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm"></div>
+
+<div id="tips-reception" class="hidden mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-4 py-3 rounded-xl text-sm">
+<strong class="block mb-2">⚡ Conseils :</strong>
+<ul class="ml-5 space-y-1 text-xs">
+<li>Tiens le code bien droit face à la caméra</li>
+<li>Assure-toi d'avoir un bon éclairage</li>
+<li>Évite les reflets sur le code-barre</li>
+</ul>
+</div>
+</div>
+
+<!-- Dernier scan -->
+<div id="resultCard-reception" class="hidden bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 border-2 border-green-300 dark:border-green-700">
+<div class="text-center">
+<div class="text-green-700 dark:text-green-400 font-bold text-sm mb-2">✅ Code scanné :</div>
+<div id="scannedCode-reception" class="text-2xl font-bold font-mono text-text-main-light dark:text-text-main-dark tracking-wider"></div>
+</div>
+</div>
+
+<!-- Formulaire ajout quantité -->
+<div id="addForm-reception" class="hidden bg-surface-light dark:bg-surface-dark rounded-2xl p-4 border border-border-light dark:border-border-dark shadow-sm space-y-4">
+<h3 class="font-bold text-text-main-light dark:text-text-main-dark">Ajouter au stock</h3>
+
+<div>
+<label class="block text-sm font-medium text-text-main-light dark:text-text-main-dark mb-2">Code produit</label>
+<input id="input-code-reception" type="text" placeholder="Entrer ou scanner le code" class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-xl px-4 py-2.5 text-text-main-light dark:text-text-main-dark font-mono">
+</div>
+
+<div>
+<label class="block text-sm font-medium text-text-main-light dark:text-text-main-dark mb-2">Nom du matériel</label>
+<input id="input-name-reception" type="text" placeholder="Ex: Câble fibre optique 100m" class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-xl px-4 py-2.5 text-text-main-light dark:text-text-main-dark">
+</div>
+
+<div>
+<label class="block text-sm font-medium text-text-main-light dark:text-text-main-dark mb-2">Quantité reçue</label>
+<input id="input-quantity-reception" type="number" min="1" placeholder="0" class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-xl px-4 py-2.5 text-text-main-light dark:text-text-main-dark text-2xl font-bold text-center">
+</div>
+
+<div>
+<label class="block text-sm font-medium text-text-main-light dark:text-text-main-dark mb-2">Dépôt <span class="text-red-500">*</span></label>
+<select id="input-depot-reception" required onchange="saveDepotToCache()" class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-xl px-4 py-2.5 text-text-main-light dark:text-text-main-dark">
+<option value="principal">Dépôt Principal</option>
+<option value="secondaire">Dépôt Secondaire</option>
+<option value="camion1">Camion 1</option>
+<option value="camion2">Camion 2</option>
+</select>
+</div>
+
+<button type="button" onclick="addToStock()" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add_circle</span>
+Ajouter au stock
+</button>
+</div>
+</div>
+
+<!-- ONGLET CONTRÔLE -->
+<div id="content-controle" class="hidden space-y-4">
+<!-- Scanner -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-4 border border-border-light dark:border-border-dark shadow-sm">
+<h2 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-3">🔍 Contrôle Inventaire</h2>
+<p class="text-sm text-text-sub-light dark:text-text-sub-dark mb-4">Scanne pour vérifier les stocks</p>
+
+<div id="reader-controle" class="rounded-xl overflow-hidden mb-4"></div>
+
+<button type="button" id="startBtn-controle" onclick="startScanning('controle')" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+Démarrer le scan
+</button>
+
+<button type="button" id="stopBtn-controle" onclick="stopScanning('controle')" class="hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">stop_circle</span>
+Arrêter le scan
+</button>
+
+<div id="error-controle" class="hidden mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm"></div>
+
+<div id="tips-controle" class="hidden mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-4 py-3 rounded-xl text-sm">
+<strong class="block mb-2">⚡ Conseils :</strong>
+<ul class="ml-5 space-y-1 text-xs">
+<li>Scanne chaque article individuellement</li>
+<li>Compare avec le stock numérique</li>
+<li>Ajuste les quantités si nécessaire</li>
+</ul>
+</div>
+</div>
+
+<!-- Dernier scan -->
+<div id="resultCard-controle" class="hidden bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 border-2 border-blue-300 dark:border-blue-700">
+<div class="text-center">
+<div class="text-blue-700 dark:text-blue-400 font-bold text-sm mb-2">📊 Article trouvé :</div>
+<div id="scannedCode-controle" class="text-2xl font-bold font-mono text-text-main-light dark:text-text-main-dark tracking-wider"></div>
+</div>
+</div>
+
+<!-- Formulaire contrôle -->
+<div id="controlForm-controle" class="hidden bg-surface-light dark:bg-surface-dark rounded-2xl p-4 border border-border-light dark:border-border-dark shadow-sm space-y-4">
+<h3 class="font-bold text-text-main-light dark:text-text-main-dark">Vérification Stock</h3>
+
+<div class="bg-background-light dark:bg-background-dark rounded-xl p-4">
+<div class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Nom du matériel</div>
+<div id="control-name" class="font-bold text-text-main-light dark:text-text-main-dark">---</div>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+<div class="text-xs text-blue-700 dark:text-blue-400 mb-1">Stock numérique</div>
+<div id="control-stock-digital" class="text-3xl font-bold text-blue-700 dark:text-blue-400">0</div>
+</div>
+<div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
+<div class="text-xs text-green-700 dark:text-green-400 mb-1">Stock physique</div>
+<input id="control-stock-physical" type="number" min="0" placeholder="0" class="w-full bg-white dark:bg-background-dark border-0 rounded-lg px-2 py-1 text-3xl font-bold text-green-700 dark:text-green-400 text-center">
+</div>
+</div>
+
+<div id="control-diff" class="hidden rounded-xl p-4">
+<div class="text-sm font-medium mb-2">Écart détecté :</div>
+<div id="control-diff-value" class="text-2xl font-bold">0</div>
+</div>
+
+<button type="button" onclick="updateStock()" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">sync</span>
+Mettre à jour le stock
+</button>
+</div>
+
+<!-- Historique contrôles -->
+<div id="historyCard-controle" class="hidden bg-surface-light dark:bg-surface-dark rounded-2xl p-4 border border-border-light dark:border-border-dark shadow-sm">
+<h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-3">Historique des contrôles</h3>
+<div id="history-controle" class="space-y-2"></div>
+</div>
+</div>
+
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark pb-safe pt-2 px-2 z-30 pb-4">
+<div class="grid grid-cols-4 gap-1">
+<a href="carte-interventions.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">map</span>
+<span class="text-[10px] font-medium mt-1">Carte</span>
+</a>
+<a href="chefintervention.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-primary bg-primary/10">
+<span class="material-symbols-outlined filled">inventory_2</span>
+<span class="text-[10px] font-medium mt-1">Stock</span>
+</a>
+<a href="verification-inventaire.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">assignment</span>
+<span class="text-[10px] font-medium mt-1">Interventions</span>
+</a>
+<a href="on-hold.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">report_problem</span>
+<span class="text-[10px] font-medium mt-1">On Hold</span>
+</a>
+</div>
+</nav>
+</div>
+
+<script>
+// ===== STATE =====
+let currentTab = 'reception';
+let currentUserRole = null;
+let currentUserId = null;
+let html5QrCodeReception = null;
+let html5QrCodeControle = null;
+let scanningReception = false;
+let scanningControle = false;
+let controlHistory = [];
+let currentScannedData = {};
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', async function() {
+    await initializeApp();
+    restoreDepotFromCache();
+    switchTab('reception');
+});
+
+// ===== INITIALIZATION =====
+async function initializeApp() {
+    // Attendre que la bibliothèque Supabase soit chargée
+    let libAttempts = 0;
+    while ((typeof window.supabase === 'undefined' || typeof window.supabase.createClient === 'undefined') && libAttempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        libAttempts++;
+    }
+    
+    // Si config.js n'a pas encore initialisé, appeler initSupabase manuellement
+    if (window.supabase && typeof window.supabase.createClient === 'function' && typeof window.supabase.auth === 'undefined') {
+        if (typeof initSupabase === 'function') {
+            initSupabase();
+        } else {
+            const SupabaseLib = window.supabase;
+            const SUPABASE_URL = 'https://wdurkaelytgjbcsmkzgb.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXJrYWVseXRnamJjc21remdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3ODc0NDksImV4cCI6MjA4MjM2MzQ0OX0.E7R_3Ylk1Tf8FJurHfzhb-QgHokeVORpk99_nukjYZY';
+            window.supabase = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    }
+    
+    // Attendre que le client Supabase soit complètement initialisé
+    let attempts = 0;
+    while ((!window.supabase || typeof window.supabase.auth === 'undefined' || typeof window.supabase.from === 'undefined') && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (!window.supabase || typeof window.supabase.auth === 'undefined' || typeof window.supabase.from === 'undefined') {
+        console.error('Supabase non initialisé après', attempts, 'tentatives');
+        alert('Erreur de connexion. Veuillez recharger la page.');
+        return;
+    }
+    
+    // Vérifier l'authentification
+    const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+    
+    if (authError || !user) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    currentUserId = user.id;
+    
+    // Récupérer le rôle de l'utilisateur
+    const { data: roleData, error: roleError } = await window.supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+    
+    if (roleError || !roleData) {
+        console.error('Rôle non trouvé');
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    currentUserRole = roleData.role;
+    
+    // Vérifier les permissions (chef_chantier ou admin)
+    if (currentUserRole !== 'admin' && currentUserRole !== 'chef_chantier') {
+        window.location.href = 'index.html';
+        return;
+    }
+}
+
+// ===== TAB SWITCHING =====
+function switchTab(tab) {
+    currentTab = tab;
+    
+    // Arrêter tous les scans
+    if (scanningReception) stopScanning('reception');
+    if (scanningControle) stopScanning('controle');
+    
+    // Mettre à jour les boutons d'onglets
+    const tabReception = document.getElementById('tab-reception');
+    const tabControle = document.getElementById('tab-controle');
+    
+    if (tab === 'reception') {
+        tabReception.classList.add('bg-surface-light', 'dark:bg-surface-dark', 'shadow-sm', 'text-primary');
+        tabReception.classList.remove('text-text-sub-light', 'dark:text-text-sub-dark');
+        tabControle.classList.remove('bg-surface-light', 'dark:bg-surface-dark', 'shadow-sm', 'text-primary');
+        tabControle.classList.add('text-text-sub-light', 'dark:text-text-sub-dark');
+        
+        document.getElementById('content-reception').classList.remove('hidden');
+        document.getElementById('content-controle').classList.add('hidden');
+    } else {
+        tabControle.classList.add('bg-surface-light', 'dark:bg-surface-dark', 'shadow-sm', 'text-primary');
+        tabControle.classList.remove('text-text-sub-light', 'dark:text-text-sub-dark');
+        tabReception.classList.remove('bg-surface-light', 'dark:bg-surface-dark', 'shadow-sm', 'text-primary');
+        tabReception.classList.add('text-text-sub-light', 'dark:text-text-sub-dark');
+        
+        document.getElementById('content-controle').classList.remove('hidden');
+        document.getElementById('content-reception').classList.add('hidden');
+    }
+}
+
+// ===== SCANNER FUNCTIONS =====
+async function startScanning(type) {
+    try {
+        document.getElementById(`error-${type}`).classList.add('hidden');
+        
+        const devices = await Html5Qrcode.getCameras();
+        
+        if (devices && devices.length > 0) {
+            const backCamera = devices.find(device => 
+                device.label.toLowerCase().includes('back') || 
+                device.label.toLowerCase().includes('arrière') ||
+                device.label.toLowerCase().includes('rear')
+            );
+            const selectedCamera = backCamera || devices[devices.length - 1];
+
+            const html5QrCode = new Html5Qrcode(`reader-${type}`);
+
+            const config = {
+                fps: 10,
+                qrbox: { width: 300, height: 150 },
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                ],
+                aspectRatio: 2.0,
+            };
+
+            await html5QrCode.start(
+                selectedCamera.id,
+                config,
+                (decodedText, decodedResult) => onScanSuccess(decodedText, decodedResult, type),
+                (errorMessage) => {} // Ignorer les erreurs de scan
+            );
+
+            if (type === 'reception') {
+                html5QrCodeReception = html5QrCode;
+                scanningReception = true;
+            } else {
+                html5QrCodeControle = html5QrCode;
+                scanningControle = true;
+            }
+            
+            document.getElementById(`startBtn-${type}`).classList.add('hidden');
+            document.getElementById(`stopBtn-${type}`).classList.remove('hidden');
+            document.getElementById(`tips-${type}`).classList.remove('hidden');
+        } else {
+            showError(type, 'Aucune caméra détectée sur cet appareil');
+        }
+    } catch (err) {
+        console.error('Erreur:', err);
+        showError(type, 'Erreur: ' + err.message + '. Assure-toi d\'autoriser l\'accès à la caméra.');
+    }
+}
+
+async function stopScanning(type) {
+    try {
+        const html5QrCode = type === 'reception' ? html5QrCodeReception : html5QrCodeControle;
+        
+        if (html5QrCode) {
+            await html5QrCode.stop();
+            if (type === 'reception') {
+                html5QrCodeReception = null;
+                scanningReception = false;
+            } else {
+                html5QrCodeControle = null;
+                scanningControle = false;
+            }
+        }
+        
+        document.getElementById(`startBtn-${type}`).classList.remove('hidden');
+        document.getElementById(`stopBtn-${type}`).classList.add('hidden');
+        document.getElementById(`tips-${type}`).classList.add('hidden');
+    } catch (err) {
+        console.error('Erreur arrêt:', err);
+    }
+}
+
+async function onScanSuccess(decodedText, decodedResult, type) {
+    console.log('Code scanné:', decodedText, 'Type:', type);
+    
+    // Vibration
+    if (navigator.vibrate) {
+        navigator.vibrate(100);
+    }
+    
+    // Arrêter le scan automatiquement
+    await stopScanning(type);
+    
+    // Afficher le résultat
+    document.getElementById(`scannedCode-${type}`).textContent = decodedText;
+    document.getElementById(`resultCard-${type}`).classList.remove('hidden');
+    
+    if (type === 'reception') {
+        // Afficher le formulaire d'ajout
+        document.getElementById('input-code-reception').value = decodedText;
+        document.getElementById('addForm-reception').classList.remove('hidden');
+        document.getElementById('input-name-reception').focus();
+    } else {
+        // Charger les données du stock pour ce code
+        await loadStockData(decodedText);
+    }
+}
+
+function showError(type, message) {
+    const errorDiv = document.getElementById(`error-${type}`);
+    errorDiv.textContent = message;
+    errorDiv.classList.remove('hidden');
+}
+
+// ===== STOCK MANAGEMENT =====
+async function addToStock() {
+    const code = document.getElementById('input-code-reception').value.trim();
+    const name = document.getElementById('input-name-reception').value.trim();
+    const quantity = parseInt(document.getElementById('input-quantity-reception').value);
+    let depot = document.getElementById('input-depot-reception').value;
+    
+    // Validation complète des champs
+    if (!code) {
+        alert('⚠️ Veuillez entrer un code produit');
+        document.getElementById('input-code-reception').focus();
+        return;
+    }
+    
+    if (!name) {
+        alert('⚠️ Veuillez entrer le nom du matériel');
+        document.getElementById('input-name-reception').focus();
+        return;
+    }
+    
+    if (!quantity || quantity <= 0) {
+        alert('⚠️ Veuillez entrer une quantité valide');
+        document.getElementById('input-quantity-reception').focus();
+        return;
+    }
+    
+    // Si aucun dépt n'est sélectionné, on prend le principal par défaut
+    if (!depot) {
+        depot = 'principal';
+    }
+    
+    try {
+        // Vérifier si l'article existe déjà
+        const { data: existing, error: searchError } = await window.supabase
+            .from('inventory')
+            .select('*')
+            .eq('barcode', code)
+            .eq('depot', depot)
+            .single();
+        
+        if (existing) {
+            // Mettre à jour la quantité
+            const { error: updateError } = await window.supabase
+                .from('inventory')
+                .update({ 
+                    quantity: existing.quantity + quantity,
+                    updated_at: new Date().toISOString(),
+                    updated_by: currentUserId
+                })
+                .eq('id', existing.id);
+            
+            if (updateError) throw updateError;
+            
+            alert(`✅ ${quantity} unitéscode-reception').value = '';
+        document.getElementById('input-name-reception').value = '';
+        document.getElementById('input-quantity-reception').value = '';
+        document.getElementById('input-depot
+            // Créer un nouvel article
+            const { error: insertError } = await window.supabase
+                .from('inventory')
+                .insert({
+                    barcode: code,
+                    name: name,
+                    quantity: quantity,
+                    depot: depot,
+                    created_by: currentUserId,
+                    updated_by: currentUserId
+                });
+            
+            if (insertError) throw insertError;
+            
+            alert(`✅ Nouvel article ajouté au stock : ${name} (${quantity} unités)`);
+        }
+        
+        // Réinitialiser le formulaire
+        document.getElementById('input-name-reception').value = '';
+        document.getElementById('input-quantity-reception').value = '';
+        document.getElementById('resultCard-reception').classList.add('hidden');
+        document.getElementById('addForm-reception').classList.add('hidden');
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('❌ Erreur lors de l\'ajout au stock : ' + error.message);
+    }
+}
+
+async function loadStockData(code) {
+    try {
+        // Chercher dans l'inventaire
+        const { data: item, error } = await window.supabase
+            .from('inventory')
+            .select('*')
+            .eq('barcode', code)
+            .single();
+        
+        if (error || !item) {
+            // Article non trouvé
+            document.getElementById('control-name').textContent = 'Article non trouvé';
+            document.getElementById('control-stock-digital').textContent = '0';
+            document.getElementById('control-stock-physical').value = '';
+            document.getElementById('control-diff').classList.add('hidden');
+            currentScannedData = { code: code, item: null };
+        } else {
+            // Article trouvé
+            document.getElementById('control-name').textContent = item.name;
+            document.getElementById('control-stock-digital').textContent = item.quantity;
+            document.getElementById('control-stock-physical').value = '';
+            currentScannedData = { code: code, item: item };
+        }
+        
+        document.getElementById('controlForm-controle').classList.remove('hidden');
+        
+        // Observer les changements de quantité physique
+        const physicalInput = document.getElementById('control-stock-physical');
+        physicalInput.oninput = function() {
+            const digital = parseInt(document.getElementById('control-stock-digital').textContent);
+            const physical = parseInt(this.value) || 0;
+            const diff = physical - digital;
+            
+            const diffDiv = document.getElementById('control-diff');
+            const diffValue = document.getElementById('control-diff-value');
+            
+            if (diff !== 0 && this.value !== '') {
+                diffDiv.classList.remove('hidden');
+                diffValue.textContent = diff > 0 ? `+${diff}` : diff;
+                
+                if (diff > 0) {
+                    diffDiv.className = 'bg-green-50 dark:bg-green-900/20 rounded-xl p-4';
+                    diffValue.className = 'text-2xl font-bold text-green-700 dark:text-green-400';
+                } else {
+                    diffDiv.className = 'bg-red-50 dark:bg-red-900/20 rounded-xl p-4';
+                    diffValue.className = 'text-2xl font-bold text-red-700 dark:text-red-400';
+                }
+            } else {
+                diffDiv.classList.add('hidden');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        showError('controle', 'Erreur lors du chargement des données');
+    }
+}
+
+async function updateStock() {
+    const physical = parseInt(document.getElementById('control-stock-physical').value);
+    
+    if (isNaN(physical) || physical < 0) {
+        alert('Veuillez entrer une quantité physique valide');
+        return;
+    }
+    
+    if (!currentScannedData.item) {
+        alert('❌ Article non trouvé dans l\'inventaire. Ajoutez-le d\'abord via l\'onglet Réception.');
+        return;
+    }
+    
+    try {
+        const digital = currentScannedData.item.quantity;
+        const diff = physical - digital;
+        
+        // Mettre à jour le stock
+        const { error } = await window.supabase
+            .from('inventory')
+            .update({ 
+                quantity: physical,
+                updated_at: new Date().toISOString(),
+                updated_by: currentUserId
+            })
+            .eq('id', currentScannedData.item.id);
+        
+        if (error) throw error;
+        
+        // Ajouter à l'historique
+        const historyItem = {
+            name: currentScannedData.item.name,
+            code: currentScannedData.code,
+            digital: digital,
+            physical: physical,
+            diff: diff,
+            time: new Date().toLocaleTimeString('fr-FR')
+        };
+        
+        controlHistory.unshift(historyItem);
+        if (controlHistory.length > 10) controlHistory.pop();
+        
+        updateHistoryDisplay();
+        
+        alert(`✅ Stock mis à jour : ${currentScannedData.item.name}\n${digital} → ${physical} (${diff > 0 ? '+' : ''}${diff})`);
+        
+        // Réinitialiser
+        document.getElementById('resultCard-controle').classList.add('hidden');
+        document.getElementById('controlForm-controle').classList.add('hidden');
+        currentScannedData = {};
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('❌ Erreur lors de la mise à jour : ' + error.message);
+    }
+}
+
+function updateHistoryDisplay() {
+    const historyDiv = document.getElementById('history-controle');
+    const historyCard = document.getElementById('historyCard-controle');
+    
+    if (controlHistory.length === 0) {
+        historyCard.classList.add('hidden');
+        return;
+    }
+    
+    historyCard.classList.remove('hidden');
+    historyDiv.innerHTML = controlHistory.map(item => {
+        const diffColor = item.diff > 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400';
+        return `
+            <div class="bg-background-light dark:bg-background-dark rounded-lg p-3 flex justify-between items-center">
+                <div class="flex-1">
+                    <div class="font-mono font-bold text-sm text-text-main-light dark:text-text-main-dark">${item.code}</div>
+                    <div class="text-xs text-text-sub-light dark:text-text-sub-dark">${item.name}</div>
+                    <div class="text-xs text-text-sub-light dark:text-text-sub-dark mt-1">${item.digital} → ${item.physical}</div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold ${diffColor}">${item.diff > 0 ? '+' : ''}${item.diff}</div>
+                    <div class="text-xs text-text-sub-light dark:text-text-sub-dark">${item.time}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ===== LOGOUT =====
+async function handleLogout() {
+    if (window.supabase) {
+        await window.supabase.auth.signOut();
+    }
+    window.location.href = 'index.html';
+
+// ===== CACHE DEPOT =====
+function saveDepotToCache() {
+    const depot = document.getElementById('input-depot-reception').value;
+    if (depot) {
+        localStorage.setItem('inventaire_depot_selected', depot);
+        console.log('Dépôt sauvegardé dans le cache:', depot);
+    }
+}
+
+function restoreDepotFromCache() {
+    const savedDepot = localStorage.getItem('inventaire_depot_selected');
+    const depotSelect = document.getElementById('input-depot-reception');
+    
+    if (savedDepot && depotSelect) {
+        // Vérifier si la valeur existe dans les options
+        const optionExists = Array.from(depotSelect.options).some(option => option.value === savedDepot);
+        if (optionExists) {
+            depotSelect.value = savedDepot;
+            console.log('Dépôt restauré depuis le cache:', savedDepot);
+        } else {
+            // Si l'option n'existe pas, sélectionner le premier
+            depotSelect.value = 'principal';
+            localStorage.setItem('inventaire_depot_selected', 'principal');
+        }
+    } else {
+        // Première utilisation : sélectionner le premier dépôt
+        if (depotSelect) {
+            depotSelect.value = 'principal';
+            localStorage.setItem('inventaire_depot_selected', 'principal');
+        }
+    }
+}
+}
+</script>
+
+</body></html>

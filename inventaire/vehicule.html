@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Véhicules - Gestionnaire de Stock</title>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B700%3B900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js?v=8"></script>
+<script src="../js/api.js?v=8"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#137fec",
+          "background-light": "#f6f7f8",
+          "background-dark": "#101922",
+        },
+        fontFamily: {
+          display: ["Inter"],
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      },
+    },
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+<div id="loading"></div>
+
+<div id="main-content" style="display: none;" class="flex flex-col min-h-screen">
+  <!-- Navigation bar horizontale -->
+  <nav class="bg-white dark:bg-background-dark/50 border-b border-gray-200 dark:border-gray-800">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <!-- Logo à gauche -->
+      <div class="flex items-center gap-3">
+        <img id="logo" src="" alt="Logo" class="h-8 w-auto" style="display:none;" onerror="this.style.display='none'" />
+        <span class="text-xl font-bold text-primary">Gestionnaire de Stock</span>
+      </div>
+      
+      <!-- Menu du milieu -->
+      <div class="flex items-center gap-1">
+        <a href="inventaire.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">warehouse</span>
+          <span>Inventaire</span>
+        </a>
+        <a href="technicien.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">group</span>
+          <span>Technicien</span>
+        </a>
+        <a href="vehicule.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span>Véhicules</span>
+        </a>
+        <a href="commandes.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <span>Commandes</span>
+        </a>
+      </div>
+      
+      <!-- Profil utilisateur à droite -->
+      <div class="flex items-center gap-3 relative">
+        <div class="text-right">
+          <p id="user-name" class="text-sm font-medium text-gray-900 dark:text-white">Chargement...</p>
+          <p id="user-role" class="text-xs text-gray-500 dark:text-gray-400">Utilisateur</p>
+        </div>
+        <div id="profile-btn" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-lg transition-shadow">
+          <span id="user-initials">...</span>
+        </div>
+        
+        <!-- Menu déroulant -->
+        <div id="profile-menu" class="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-background-dark/50 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 hidden z-50">
+          <a href="parametres.html" class="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 rounded-t-lg flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">settings</span>
+            <span>Paramètres</span>
+          </a>
+          <div class="border-t border-gray-200 dark:border-gray-700"></div>
+          <button class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-b-lg flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">logout</span>
+            <span>Déconnexion</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <main class="flex-1 p-8">
+    <header class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Véhicules</h1>
+      <button id="add-btn" class="bg-primary text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+        <span class="material-symbols-outlined">add</span>
+        Ajouter un véhicule
+      </button>
+    </header>
+    
+    <div class="mb-6">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+        <input id="search-input" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 dark:text-white" placeholder="Rechercher un véhicule..." type="text"/>
+      </div>
+    </div>
+    
+    <div class="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+          <thead class="text-xs text-gray-700 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50">
+            <tr>
+              <th class="px-6 py-3" scope="col">Marque</th>
+              <th class="px-6 py-3" scope="col">Modèle</th>
+              <th class="px-6 py-3" scope="col">Année</th>
+              <th class="px-6 py-3" scope="col">Plaque</th>
+              <th class="px-6 py-3" scope="col">Kilométrage</th>
+              <th class="px-6 py-3" scope="col">Type de pneu</th>
+              <th class="px-6 py-3" scope="col">Statut</th>
+              <th class="px-6 py-3" scope="col">Assigné à</th>
+              <th class="px-6 py-3" scope="col">Propriétaire</th>
+              <th class="px-6 py-3 text-right" scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal véhicule -->
+<div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-background-dark rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-6">
+      <h2 id="modal-title" class="text-2xl font-bold text-gray-900 dark:text-white">Ajouter un véhicule</h2>
+      <button id="close-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form id="item-form" class="space-y-4">
+      <input type="hidden" id="item-id" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Marque *</label>
+          <input type="text" id="make" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Modèle *</label>
+          <input type="text" id="model" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Année *</label>
+          <input type="number" id="year" required min="1900" max="2030" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Plaque *</label>
+          <input type="text" id="license_plate" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kilométrage *</label>
+          <input type="number" id="mileage" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type de pneu *</label>
+          <select id="tire_type" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="Été">Été</option>
+            <option value="Hiver">Hiver</option>
+            <option value="Toutes saisons">Toutes saisons</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Statut *</label>
+          <select id="assignment_status" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="Available">Disponible</option>
+            <option value="Assigned">Assigné</option>
+            <option value="Maintenance">En maintenance</option>
+            <option value="Out of Service">Hors service</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assigné à</label>
+          <select id="assigned_to" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="">Aucun</option>
+            <!-- Les employés seront chargés dynamiquement -->
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Propriétaire</label>
+        <input type="text" id="owner" placeholder="Ex: Entreprise, Location, Autre..." class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
+        <textarea id="notes" rows="3" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="submit" class="flex-1 bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary/90">Enregistrer</button>
+        <button type="button" id="cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Variables globales
+let allVehicles = [];
+let allEmployees = [];
+
+// Fonctions de cache localStorage
+const CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 jours en millisecondes
+const CACHE_PREFIX = 'vehicule_';
+
+function saveToCache(key, data) {
+  try {
+    const cacheData = {
+      data: data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(cacheData));
+    console.log('💾 Données sauvegardées dans le cache:', key);
+  } catch (error) {
+    console.error('Erreur sauvegarde cache:', error);
+  }
+}
+
+function loadFromCache(key) {
+  try {
+    const cached = localStorage.getItem(CACHE_PREFIX + key);
+    if (!cached) return null;
+    
+    const cacheData = JSON.parse(cached);
+    const age = Date.now() - cacheData.timestamp;
+    
+    // Vérifier si le cache est encore valide
+    if (age < CACHE_DURATION) {
+      console.log('📦 Chargé depuis le cache:', key);
+      return cacheData.data;
+    } else {
+      // Cache expiré, le supprimer
+      localStorage.removeItem(CACHE_PREFIX + key);
+      console.log('🗑️ Cache expiré supprimé:', key);
+      return null;
+    }
+  } catch (error) {
+    console.error('Erreur chargement cache:', error);
+    return null;
+  }
+}
+
+// Fonctions de chargement
+function showLoading(message = 'Chargement...') {
+  const loadingDiv = document.getElementById('loading');
+  const mainContent = document.getElementById('main-content');
+  if (loadingDiv) {
+    loadingDiv.innerHTML = `
+      <div class="flex items-center justify-center min-h-screen bg-background-light dark:bg-background-dark">
+        <div class="text-center">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <p class="text-gray-600 dark:text-gray-400">${message}</p>
+        </div>
+      </div>
+    `;
+    loadingDiv.style.display = 'block';
+  }
+  if (mainContent) {
+    mainContent.style.display = 'none';
+  }
+}
+
+function hideLoading() {
+  const loadingDiv = document.getElementById('loading');
+  const mainContent = document.getElementById('main-content');
+  if (loadingDiv) {
+    loadingDiv.style.display = 'none';
+  }
+  if (mainContent) {
+    mainContent.style.display = 'block';
+  }
+}
+
+// Charger les employés pour le select
+async function loadEmployees() {
+  // Essayer le cache en premier
+  const cachedEmployees = loadFromCache('employees');
+  if (cachedEmployees) {
+    allEmployees = cachedEmployees;
+    populateEmployeeSelector();
+  }
+
+  try {
+    if (!window.supabase || typeof window.supabase.from !== 'function') {
+      if (cachedEmployees) return; // Mode offline silencieux
+      return;
+    }
+    
+    const { data, error } = await window.supabase
+      .from('employees')
+      .select('id, first_name, last_name, type, status')
+      .eq('status', 'Actif')
+      .order('last_name');
+    
+    if (error) throw error;
+    
+    allEmployees = data || [];
+    saveToCache('employees', allEmployees);
+    populateEmployeeSelector();
+  } catch (error) {
+    console.error('Erreur chargement employés:', error);
+    // Ne pas relancer l'erreur, utiliser le cache si disponible
+    if (!cachedEmployees) {
+      console.warn('Aucune donnée employés disponible (ni serveur ni cache)');
+    }
+  }
+}
+
+function populateEmployeeSelector() {
+  const select = document.getElementById('assigned_to');
+  if (select) {
+    select.innerHTML = '<option value="">Aucun</option>';
+    
+    allEmployees.forEach(emp => {
+      const option = document.createElement('option');
+      option.value = `${emp.first_name} ${emp.last_name}`;
+      option.textContent = `${emp.first_name} ${emp.last_name} (${emp.type})`;
+      select.appendChild(option);
+    });
+  }
+}
+
+// Charger les véhicules depuis Supabase
+async function loadData() {
+  // Essayer le cache en premier
+  const cachedVehicles = loadFromCache('vehicles');
+  if (cachedVehicles) {
+    allVehicles = cachedVehicles;
+    renderTable(allVehicles);
+  }
+
+  if (!window.supabase || typeof window.supabase.from !== 'function') {
+    if (cachedVehicles) return; // Mode offline silencieux
+    console.error('Supabase non initialisé');
+    return;
+  }
+  
+  try {
+    const { data, error } = await window.supabase
+      .from('vehicles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    allVehicles = (data || []).map(item => ({
+      id: item.id,
+      make: item.make,
+      model: item.model,
+      year: item.year,
+      license_plate: item.license_plate,
+      mileage: parseInt(item.mileage) || 0,
+      tire_type: item.tire_type || 'Été',
+      assignment_status: item.assignment_status || 'Available',
+      assigned_to: item.assigned_to || '',
+      owner: item.owner || '',
+      notes: item.notes || ''
+    }));
+    
+    saveToCache('vehicles', allVehicles);
+    renderTable(allVehicles);
+  } catch (error) {
+    console.error('Erreur chargement véhicules:', error);
+    if (!cachedVehicles) {
+      alert('Erreur lors du chargement des véhicules: ' + error.message);
+    }
+  }
+}
+
+function getStatusColor(status) {
+  const colors = {
+    'Available': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+    'Assigned': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+    'Maintenance': 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
+    'Out of Service': 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+  };
+  return colors[status] || colors['Available'];
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    'Available': 'Disponible',
+    'Assigned': 'Assigné',
+    'Maintenance': 'En maintenance',
+    'Out of Service': 'Hors service'
+  };
+  return labels[status] || status;
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  
+  if (data.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="10" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Aucun véhicule trouvé.</td></tr>
+    `;
+    return;
+  }
+  
+  data.forEach(item => {
+    const statusColor = getStatusColor(item.assignment_status);
+    const tr = document.createElement('tr');
+    tr.className = 'border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50';
+    tr.innerHTML = `
+      <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">${item.make}</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.model}</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.year}</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">${item.license_plate}</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.mileage.toLocaleString()} km</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.tire_type}</td>
+      <td class="px-6 py-4">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}">
+          ${getStatusLabel(item.assignment_status)}
+        </span>
+      </td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.assigned_to || '-'}</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.owner || '-'}</td>
+      <td class="px-6 py-4 text-right space-x-2">
+        <button onclick="editItem('${item.id}')" class="text-primary hover:underline">
+          <span class="material-symbols-outlined text-base align-middle">edit</span>
+        </button>
+        <button onclick="deleteItem('${item.id}')" class="text-red-500 hover:text-red-700">
+          <span class="material-symbols-outlined text-base align-middle">delete</span>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+const modal = document.getElementById('modal');
+document.getElementById('add-btn').addEventListener('click', () => {
+  document.getElementById('modal-title').textContent = 'Ajouter un véhicule';
+  document.getElementById('item-form').reset();
+  document.getElementById('item-id').value = '';
+  modal.classList.remove('hidden');
+});
+document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+document.getElementById('cancel-btn').addEventListener('click', () => modal.classList.add('hidden'));
+
+document.getElementById('item-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  if (!window.supabase || typeof window.supabase.from !== 'function') {
+    alert('Erreur: Supabase non initialisé');
+    return;
+  }
+  
+  const data = {
+    make: document.getElementById('make').value.trim(),
+    model: document.getElementById('model').value.trim(),
+    year: parseInt(document.getElementById('year').value),
+    license_plate: document.getElementById('license_plate').value.trim(),
+    mileage: parseInt(document.getElementById('mileage').value),
+    tire_type: document.getElementById('tire_type').value,
+    assignment_status: document.getElementById('assignment_status').value,
+    assigned_to: document.getElementById('assigned_to').value.trim() || null,
+    owner: document.getElementById('owner').value.trim() || null,
+    notes: document.getElementById('notes').value.trim() || null
+  };
+  
+  const id = document.getElementById('item-id').value;
+  
+  try {
+    if (id) {
+      // Modifier
+      const { error } = await window.supabase
+        .from('vehicles')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
+    } else {
+      // Créer
+      const { error } = await window.supabase
+        .from('vehicles')
+        .insert(data);
+      
+      if (error) throw error;
+    }
+    
+    await loadData();
+    modal.classList.add('hidden');
+  } catch (error) {
+    console.error('Erreur sauvegarde:', error);
+    alert('Erreur: ' + error.message);
+  }
+});
+
+async function editItem(id) {
+  try {
+    const item = allVehicles.find(v => v.id === id);
+    if (!item) {
+      alert('Véhicule non trouvé');
+      return;
+    }
+    
+    document.getElementById('modal-title').textContent = 'Modifier le véhicule';
+    document.getElementById('item-id').value = item.id;
+    document.getElementById('make').value = item.make;
+    document.getElementById('model').value = item.model;
+    document.getElementById('year').value = item.year;
+    document.getElementById('license_plate').value = item.license_plate;
+    document.getElementById('mileage').value = item.mileage;
+    document.getElementById('tire_type').value = item.tire_type;
+    document.getElementById('assignment_status').value = item.assignment_status;
+    document.getElementById('assigned_to').value = item.assigned_to || '';
+    document.getElementById('owner').value = item.owner || '';
+    document.getElementById('notes').value = item.notes || '';
+    modal.classList.remove('hidden');
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur lors de la modification: ' + error.message);
+  }
+}
+
+async function deleteItem(id) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce véhicule ?')) {
+    return;
+  }
+  
+  if (!window.supabase || typeof window.supabase.from !== 'function') {
+    alert('Erreur: Supabase non initialisé');
+    return;
+  }
+  
+  try {
+    const { error } = await window.supabase
+      .from('vehicles')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    await loadData();
+  } catch (error) {
+    console.error('Erreur suppression:', error);
+    alert('Erreur lors de la suppression: ' + error.message);
+  }
+}
+
+document.getElementById('search-input').addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  
+  const filtered = allVehicles.filter(item =>
+    item.make.toLowerCase().includes(term) ||
+    item.model.toLowerCase().includes(term) ||
+    item.license_plate.toLowerCase().includes(term) ||
+    (item.assigned_to && item.assigned_to.toLowerCase().includes(term)) ||
+    (item.owner && item.owner.toLowerCase().includes(term))
+  );
+  
+  renderTable(filtered);
+});
+
+// Activer le lien actif dans la navbar
+function activateNavLink() {
+  const currentPage = window.location.pathname.split('/').pop() || 'vehicule.html';
+  document.querySelectorAll('.nav-link').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href === currentPage) {
+      link.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+    } else {
+      link.classList.remove('bg-primary/10', 'text-primary', 'font-medium');
+    }
+  });
+}
+
+// Charger le logo depuis localStorage
+function loadLogo() {
+  const logoUrl = localStorage.getItem('company_logo_url') || '';
+  const logoElement = document.getElementById('logo');
+  if (logoUrl && logoElement) {
+    logoElement.src = logoUrl;
+    logoElement.style.display = 'block';
+  } else if (logoElement) {
+    logoElement.style.display = 'none';
+  }
+}
+
+// Gestion du menu profil
+document.getElementById('profile-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('profile-menu');
+  menu.classList.toggle('hidden');
+});
+
+// Fermer le menu si on clique ailleurs
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('profile-menu');
+  const profileBtn = document.getElementById('profile-btn');
+  if (!menu.contains(e.target) && e.target !== profileBtn) {
+    menu.classList.add('hidden');
+  }
+});
+
+loadLogo();
+activateNavLink();
+
+// Initialiser Supabase et charger les données
+document.addEventListener('DOMContentLoaded', async () => {
+  showLoading('Initialisation de Supabase...');
+  
+  // Vérifier que Supabase est chargé
+  let attempts = 0;
+  while ((!window.supabase || typeof window.supabase.from !== 'function') && attempts < 30) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+    
+    if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function' && typeof window.supabase.from !== 'function') {
+      if (window.SUPABASE_CONFIG) {
+        const SupabaseLib = window.supabase;
+        window.supabase = SupabaseLib.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+      }
+    }
+  }
+  
+  if (window.supabase && typeof window.supabase.from === 'function') {
+    console.log('✅ Supabase initialisé avec succès');
+    
+    // Vérifier l'authentification avant de charger les données
+    try {
+      const { data: { session }, error: sessionError } = await window.supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.warn('⚠️ Utilisateur non connecté, redirection vers la page de connexion');
+        hideLoading();
+        alert('Vous devez être connecté pour accéder à cette page.\n\nRedirection vers la page de connexion...');
+        // Rediriger vers la page de connexion appropriée
+        if (window.location.pathname.includes('/inventaire/')) {
+          window.location.href = '../index.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+        return;
+      }
+      
+      console.log('✅ Utilisateur authentifié:', session.user.email);
+      
+      // Afficher le nom de l'utilisateur
+      const userNameElement = document.getElementById('user-name');
+      const userRoleElement = document.getElementById('user-role');
+      const userInitialsElement = document.getElementById('user-initials');
+      
+      if (userNameElement) {
+        // Utiliser l'email ou le nom complet si disponible
+        const displayName = session.user.user_metadata?.full_name || 
+                            session.user.user_metadata?.name || 
+                            session.user.email.split('@')[0];
+        userNameElement.textContent = displayName;
+        
+        // Mettre à jour les initiales
+        if (userInitialsElement) {
+          const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 
+                          session.user.email[0].toUpperCase();
+          userInitialsElement.textContent = initials;
+        }
+      }
+      
+      // Récupérer le rôle de l'utilisateur
+      if (userRoleElement && window.supabase) {
+        try {
+          const { data: roleData } = await window.supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (roleData && roleData.role) {
+            const roleNames = {
+              'admin': 'Administrateur',
+              'direction': 'Direction',
+              'chef_chantier': 'Chef de chantier',
+              'dispatcher': 'Dispatcher',
+              'technicien': 'Technicien'
+            };
+            userRoleElement.textContent = roleNames[roleData.role] || roleData.role;
+          }
+        } catch (error) {
+          console.warn('Erreur lors de la récupération du rôle:', error);
+        }
+      }
+
+      hideLoading();
+      
+      // Charger les données avec gestion d'erreur individuelle
+      try {
+        await loadEmployees();
+      } catch (empError) {
+        console.error('⚠️ Erreur chargement employés:', empError);
+      }
+      
+      try {
+        await loadData();
+      } catch (dataError) {
+        console.error('⚠️ Erreur chargement véhicules:', dataError);
+      }
+      
+    } catch (authError) {
+      console.error('❌ Erreur lors de la vérification de l\'authentification:', authError?.message || authError);
+      hideLoading();
+      alert('Erreur d\'authentification. Veuillez vous reconnecter.');
+      if (window.location.pathname.includes('/inventaire/')) {
+        window.location.href = '../index.html';
+      } else {
+        window.location.href = 'index.html';
+      }
+    }
+  } else {
+    console.error('❌ Supabase non chargé');
+    hideLoading();
+    alert('Erreur: Supabase non chargé. Veuillez recharger la page.');
+  }
+});
+</script>
+
+</body>
+</html>
+

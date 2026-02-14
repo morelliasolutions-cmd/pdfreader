@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<meta name="theme-color" content="#135bec"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>Sortie de Matériel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+<script src="../js/config.js?v=7" defer></script>
+<script src="../js/api.js?v=7" defer></script>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#135bec",
+                    "background-light": "#f6f6f8",
+                    "background-dark": "#101622",
+                    "surface-light": "#ffffff",
+                    "surface-dark": "#1c2433",
+                    "text-main-light": "#111318",
+                    "text-main-dark": "#e2e8f0",
+                    "text-sub-light": "#616f89",
+                    "text-sub-dark": "#94a3b8",
+                    "border-light": "#e2e8f0",
+                    "border-dark": "#2d3748"
+                },
+                fontFamily: {
+                    "display": ["Inter", "sans-serif"]
+                },
+                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+        },
+    }
+</script>
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    body { min-height: max(884px, 100dvh); }
+    #scanner-view { width: 100%; }
+    #scanner-view video { width: 100%; border-radius: 12px; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main-light dark:text-text-main-dark antialiased selection:bg-primary/30">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-2xl">
+
+<!-- Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur-md px-4 py-3 border-b border-border-light dark:border-border-dark shadow-sm">
+    <a href="Rendez-vous_technicien.html" class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors text-slate-900 dark:text-white">
+        <span class="material-symbols-outlined text-2xl">arrow_back_ios_new</span>
+    </a>
+    <h1 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-slate-900 dark:text-white">
+        Sortie de Matériel
+    </h1>
+    <!-- three-dots menu removed per request -->
+</header>
+
+<!-- Main Content -->
+<main class="flex-1 flex flex-col p-4 gap-6 pb-24">
+
+    <!-- Scanner Section -->
+    <section class="flex flex-col gap-3">
+        <button onclick="toggleScanner()" id="scan-btn" class="group relative flex w-full flex-col items-center justify-center gap-4 rounded-xl bg-primary hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/20 py-8 px-6 overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')]"></div>
+            <div class="rounded-full bg-white/20 p-4 backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
+                <span class="material-symbols-outlined text-5xl text-white">barcode_scanner</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 z-10">
+                <span class="text-white text-xl font-bold tracking-tight">Scanner le code-barres</span>
+                <span class="text-blue-100 text-sm font-medium text-center">Appuyez pour activer la caméra</span>
+            </div>
+        </button>
+
+        <!-- Scanner View (Embedded) -->
+        <div id="scanner-container" class="hidden rounded-xl overflow-hidden border-2 border-primary bg-black relative aspect-square shadow-lg">
+            <div id="scanner-view" class="w-full h-full"></div>
+            <button onclick="stopScanner()" class="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 pointer-events-auto z-10">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Scanner Result -->
+        <div id="scan-result" class="hidden bg-white dark:bg-[#1A2332] rounded-xl p-4 shadow-sm border border-primary">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="material-symbols-outlined text-primary">check_circle</span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Code scanné</h3>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg font-mono text-center text-lg mb-3" id="scanned-code"></div>
+            <div id="product-found" class="hidden">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Produit trouvé dans l'inventaire :</p>
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-3">
+                    <h4 class="font-bold text-slate-900 dark:text-white" id="found-product-name"></h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Stock disponible : <span id="found-product-qty" class="font-bold text-primary"></span></p>
+                </div>
+            </div>
+            <div id="product-not-found" class="hidden">
+                <p class="text-sm text-orange-600 dark:text-orange-400 mb-3">⚠️ Produit non trouvé dans l'inventaire</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Manual Entry Section -->
+    <section class="flex flex-col gap-4 bg-white dark:bg-[#1A2332] rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+        <div class="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700/50">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">keyboard</span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Saisie Manuelle</h3>
+            </div>
+            <select id="depot-selector" onchange="loadGeneralInventory()" class="text-xs border-none bg-gray-100 dark:bg-gray-800 rounded-lg px-2 py-1.5 text-slate-700 dark:text-gray-300 focus:ring-0 cursor-pointer max-w-[120px] truncate">
+                <option value="">Chargement...</option>
+            </select>
+        </div>
+
+        <!-- Code Input -->
+        <label class="flex flex-col w-full gap-2">
+            <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Rechercher un produit</span>
+            <div class="relative flex items-center">
+                <input id="manual-code" list="product-suggestions" class="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 pr-12 text-base text-slate-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all outline-none" placeholder="Nom ou code-barres..." type="text"/>
+                <datalist id="product-suggestions">
+                    <!-- Suggestions populated by JS -->
+                </datalist>
+                <button onclick="searchManual()" class="absolute right-2 p-2 text-gray-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">search</span>
+                </button>
+            </div>
+        </label>
+
+        <!-- Quantity Stepper -->
+        <div class="flex flex-col gap-2">
+            <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Quantité à sortir</span>
+            <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-2 border border-gray-200 dark:border-gray-700">
+                <button onclick="adjustQty(-1)" class="flex size-12 items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-slate-900 dark:text-white shadow-sm border border-gray-200 dark:border-gray-600 active:bg-gray-100 dark:active:bg-gray-600 transition-colors">
+                    <span class="material-symbols-outlined">remove</span>
+                </button>
+                <input id="quantity-input" class="w-20 bg-transparent text-center text-2xl font-bold text-slate-900 dark:text-white border-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" type="number" value="1" min="1"/>
+                <button onclick="adjustQty(1)" class="flex size-12 items-center justify-center rounded-lg bg-primary text-white shadow-sm shadow-blue-500/30 active:bg-blue-700 transition-colors">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
+        </div>
+
+        <button onclick="addToList()" class="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 dark:bg-white h-12 text-white dark:text-slate-900 font-bold text-sm hover:opacity-90 transition-opacity">
+            <span class="material-symbols-outlined text-[20px]">output</span>
+            <span>Sortir du stock</span>
+        </button>
+    </section>
+
+    <!-- Current List Section -->
+    <section class="flex flex-col gap-3">
+        <div class="flex items-center justify-between px-1">
+            <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">Matériel Sorti</h3>
+            <span id="list-count" class="bg-primary/10 text-primary text-xs font-bold px-2.5 py-1 rounded-full">0 article</span>
+        </div>
+        
+        <div id="material-list" class="flex flex-col gap-3">
+            <!-- Items will be added here -->
+        </div>
+
+        <div id="empty-state" class="flex flex-col items-center justify-center py-12 text-center">
+            <span class="material-symbols-outlined text-6xl text-border-light dark:text-border-dark mb-3">inventory_2</span>
+            <p class="text-text-sub-light dark:text-text-sub-dark text-sm">Aucun article sorti pour le moment</p>
+        </div>
+    </section>
+
+    <!-- Summary & Action (Static) -->
+    <section class="mt-auto bg-surface-light dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-border-light dark:border-border-dark flex flex-col gap-4">
+        <div class="flex justify-between items-center border-b border-border-light dark:border-border-dark pb-3">
+            <span class="text-base text-text-sub-light dark:text-text-sub-dark font-medium">Total Articles</span>
+            <span id="total-count" class="text-2xl font-bold text-text-main-light dark:text-text-main-dark">0</span>
+        </div>
+        <button onclick="confirmExit()" class="w-full h-14 rounded-xl bg-primary hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-lg shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
+            <span>Confirmer la sortie</span>
+            <span class="material-symbols-outlined text-[24px]">check_circle</span>
+        </button>
+    </section>
+
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark pb-safe pt-2 px-2 z-30 pb-4">
+    <div class="grid grid-cols-4 gap-1">
+        <button onclick="window.location.href='Rendez-vous_technicien.html'" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+            <span class="material-symbols-outlined">calendar_today</span>
+            <span class="text-[10px] font-medium mt-1">Agenda</span>
+        </button>
+        <button class="flex flex-col items-center justify-center p-2 rounded-xl text-primary">
+            <span class="material-symbols-outlined filled">inventory_2</span>
+            <span class="text-[10px] font-medium mt-1">Stock</span>
+        </button>
+        <button onclick="window.location.href='acceuil_Personnel.html'" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+            <span class="material-symbols-outlined">person</span>
+            <span class="text-[10px] font-medium mt-1">Profil</span>
+        </button>
+        <button onclick="handleLogout()" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+            <span class="material-symbols-outlined">logout</span>
+            <span class="text-[10px] font-medium mt-1">Déconnexion</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-lg shadow-lg z-50 hidden transition-all">
+    <span id="toast-message"></span>
+</div>
+
+</div>
+
+<!-- zxing-js library -->
+<script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
+
+<script>
+// ===== STATE =====
+let scanner = null;
+let currentProduct = null;
+let exitList = [];
+let inventory = []; // Stock général (inventory_items)
+let technicianInventory = []; // Inventaire du technicien (employee_equipment)
+let currentEmployeeId = null;
+let currentUserId = null;
+
+// ===== INIT =====
+window.onload = async () => {
+    await initializeApp();
+    renderList();
+    
+    // Manual code input enter key
+    document.getElementById('manual-code').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchManual();
+    });
+};
+
+// ===== INITIALIZATION =====
+async function initializeApp() {
+    // Attendre que Supabase soit initialisé
+    let attempts = 0;
+    while ((!window.supabase || typeof window.supabase.auth === 'undefined') && attempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (!window.supabase) {
+        console.error('Supabase non initialisé');
+        showToast('⚠️ Erreur de connexion');
+        return;
+    }
+    
+    // Vérifier l'authentification
+    const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+    
+    if (authError || !user) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    currentUserId = user.id;
+    
+    // Récupérer l'employee_id
+    const { data: roleData, error: roleError } = await window.supabase
+        .from('user_roles')
+        .select('employee_id, role')
+        .eq('user_id', user.id)
+        .single();
+    
+    if (roleError || !roleData || !roleData.employee_id) {
+        console.error('Employee ID non trouvé');
+        showToast('⚠️ Profil technicien non trouvé');
+        return;
+    }
+    
+    currentEmployeeId = roleData.employee_id;
+    
+    // Charger les dépôts (pour le filtre)
+    await loadDepots();
+
+    // Charger l'inventaire du technicien
+    await loadTechnicianInventory();
+    
+    // Charger le stock général (pour recherche)
+    await loadGeneralInventory();
+}
+
+// ===== LOAD DATA =====
+async function loadTechnicianInventory() {
+    if (!currentEmployeeId || !window.supabase) return;
+    
+    try {
+        const { data, error } = await window.supabase
+            .from('employee_equipment')
+            .select('id, employee_id, equipment_name, quantity, created_at, returned')
+            .eq('employee_id', currentEmployeeId)
+            .eq('returned', false)
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error('Erreur chargement inventaire technicien:', error);
+            return;
+        }
+        
+        technicianInventory = data || [];
+        console.log('Inventaire technicien chargé:', technicianInventory.length, 'articles');
+    } catch (error) {
+        console.error('Erreur:', error);
+    }
+}
+
+async function loadDepots() {
+    if (!window.supabase) return;
+    try {
+        const { data, error } = await window.supabase
+            .from('depots')
+            .select('id, name')
+            .order('name');
+            
+        const selector = document.getElementById('depot-selector');
+        if (error || !data) {
+            console.error('Erreur chargement depôts:', error);
+            // Don't break UI, just leave default
+            return;
+        }
+
+        const currentVal = selector.value;
+        selector.innerHTML = '<option value="">Tous les dépôts</option>' + 
+            data.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+            
+        // Restore selection if precise match exists
+        if (currentVal && Array.from(selector.options).some(o => o.value === currentVal)) {
+            selector.value = currentVal;
+        }
+    } catch (e) {
+        console.error('Exception chargement depots:', e);
+    }
+}
+
+async function loadGeneralInventory() {
+    if (!window.supabase) return;
+    
+    // Get Depot Filter
+    const depotSelector = document.getElementById('depot-selector');
+    const depotId = depotSelector ? depotSelector.value : null;
+
+    try {
+        // Charger tous les articles du stock général
+        let query = window.supabase
+                .from('inventory_items')
+                .select('*')
+                .gt('quantity', 0) // Seulement ceux en stock
+                .order('name', { ascending: true });
+        
+        if (depotId) {
+            query = query.eq('depot_id', depotId);
+        }
+
+        const { data, error } = await query;
+        
+        if (error) {
+            console.error('Erreur chargement stock général:', error);
+            return;
+        }
+        
+        // Convertir en format compatible avec le code existant
+        inventory = (data || []).map(item => ({
+            id: item.id,
+            name: item.name,
+            barcode: item.reference, // Utiliser reference comme code-barres
+            quantity: item.quantity,
+            category: item.category || 'Outils',
+            inventory_item_id: item.id,
+            depot_id: item.depot_id
+        }));
+        
+        // Update suggestions datalist
+        const datalist = document.getElementById('product-suggestions');
+        if (datalist) {
+            datalist.innerHTML = inventory.map(item => 
+                `<option value="${item.name}">${item.barcode || ''} (Stock: ${item.quantity})</option>`
+            ).join('');
+        }
+
+        console.log('Stock général chargé:', inventory.length, 'articles');
+    } catch (error) {
+        console.error('Erreur:', error);
+    }
+}
+
+// ===== SCANNER =====
+let html5QrCode = null;
+
+function toggleScanner() {
+    const container = document.getElementById('scanner-container');
+    if (container.classList.contains('hidden')) {
+        startScanner();
+    } else {
+        stopScanner();
+    }
+}
+
+async function startScanner() {
+    const btn = document.getElementById('scan-btn');
+    const container = document.getElementById('scanner-container');
+    
+    if (typeof Html5Qrcode === 'undefined') {
+        showToast('⚠️ Scanner non chargé (html5-qrcode)');
+        return;
+    }
+
+    try {
+        // UI Switch
+        btn.classList.add('hidden');
+        container.classList.remove('hidden');
+
+        // Obtenir les caméras disponibles
+        const devices = await Html5Qrcode.getCameras();
+        
+        if (!devices || devices.length === 0) {
+            showToast('⚠️ Aucune caméra détectée');
+            stopScanner();
+            return;
+        }
+        
+        // Préférer la caméra arrière
+        const backCamera = devices.find(device => 
+            device.label.toLowerCase().includes('back') || 
+            device.label.toLowerCase().includes('arrière') ||
+            device.label.toLowerCase().includes('rear')
+        );
+        const selectedCamera = backCamera || devices[devices.length - 1];
+        
+        console.log('📷 Caméra sélectionnée:', selectedCamera.label);
+        
+        // Créer l'instance du scanner
+        html5QrCode = new Html5Qrcode("scanner-view");
+        
+        // Configuration pour les codes-barres
+        const config = {
+            fps: 10,
+            qrbox: { width: 300, height: 150 },
+            aspectRatio: 1.0,
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+            ]
+        };
+        
+        // Démarrer le scan
+        await html5QrCode.start(
+            selectedCamera.id,
+            config,
+            (decodedText, decodedResult) => {
+                console.log('✅ Code détecté:', decodedText);
+                if (navigator.vibrate) navigator.vibrate(100);
+                stopScanner();
+                handleScan(decodedText);
+            },
+            (errorMessage) => {
+                // Ne rien faire - c'est normal d'avoir des erreurs pendant le scan
+            }
+        );
+        
+        console.log('✅ Scanner démarré');
+
+    } catch (err) {
+        console.error(err);
+        showToast('⚠️ Impossible de démarrer le scanner');
+        stopScanner();
+    }
+}
+
+async function stopScanner() {
+    const btn = document.getElementById('scan-btn');
+    const container = document.getElementById('scanner-container');
+    
+    try {
+        if (html5QrCode) {
+            await html5QrCode.stop();
+            html5QrCode.clear();
+            html5QrCode = null;
+        }
+    } catch (error) {
+        console.error('Erreur arrêt scanner:', error);
+    }
+    
+    container.classList.add('hidden');
+    btn.classList.remove('hidden');
+}
+
+async function handleScan(code) {
+    const resultDiv = document.getElementById('scan-result');
+    const foundDiv = document.getElementById('product-found');
+    const notFoundDiv = document.getElementById('product-not-found');
+    
+    document.getElementById('scanned-code').textContent = code;
+    document.getElementById('manual-code').value = code;
+    
+    // Rechercher dans le stock général (inventory_items)
+    // Recherche par Barcode, Reference OU Nom (insensible à la casse)
+    let product = inventory.find(p => 
+        p.barcode === code || 
+        p.reference === code || 
+        (p.name && p.name.toLowerCase() === code.toLowerCase())
+    );
+    
+    // Si pas trouvé, chercher dans Supabase par référence
+    if (!product && window.supabase) {
+        try {
+            const { data, error } = await window.supabase
+                .from('inventory_items')
+                .select('*')
+                .or(`reference.eq.${code},reference.ilike.%${code}%`)
+                .gt('quantity', 0)
+                .limit(1)
+                .single();
+            
+            if (!error && data) {
+                product = {
+                    id: data.id,
+                    name: data.name,
+                    barcode: data.reference,
+                    quantity: data.quantity,
+                    category: data.category || 'Outils',
+                    inventory_item_id: data.id,
+                    depot_id: data.depot_id
+                };
+                // Ajouter à la liste locale
+                inventory.push(product);
+            }
+        } catch (error) {
+            console.error('Erreur recherche produit:', error);
+        }
+    }
+    
+    if (product) {
+        currentProduct = product;
+        document.getElementById('found-product-name').textContent = product.name;
+        document.getElementById('found-product-qty').textContent = product.quantity + ' unités disponibles';
+        foundDiv.classList.remove('hidden');
+        notFoundDiv.classList.add('hidden');
+        showToast('✓ Produit trouvé: ' + product.name);
+    } else {
+        currentProduct = null;
+        foundDiv.classList.add('hidden');
+        notFoundDiv.classList.remove('hidden');
+        showToast('⚠️ Produit non trouvé dans le stock général');
+    }
+    
+    resultDiv.classList.remove('hidden');
+}
+
+function searchManual() {
+    const code = document.getElementById('manual-code').value.trim();
+    if (code) {
+        handleScan(code);
+    }
+}
+
+// ===== QUANTITY =====
+function adjustQty(delta) {
+    const input = document.getElementById('quantity-input');
+    const val = Math.max(1, parseInt(input.value || 1) + delta);
+    input.value = val;
+}
+
+// ===== LIST MANAGEMENT =====
+async function addToList() {
+    const code = document.getElementById('manual-code').value.trim();
+    const qty = parseInt(document.getElementById('quantity-input').value);
+    
+    if (!code) {
+        showToast('⚠️ Veuillez scanner ou saisir un code');
+        return;
+    }
+    
+    if (!currentProduct) {
+        // Essayer de trouver le produit
+        await handleScan(code);
+        if (!currentProduct) {
+            showToast('⚠️ Produit non trouvé dans le stock général');
+            return;
+        }
+    }
+    
+    const product = currentProduct;
+    
+    if (product.quantity < qty) {
+        showToast('⚠️ Stock insuffisant (disponible: ' + product.quantity + ')');
+        return;
+    }
+    
+    // Add to exit list
+    const existing = exitList.find(item => item.barcode === code || item.reference === code);
+    if (existing) {
+        existing.quantity += qty;
+    } else {
+        exitList.push({
+            id: product.id,
+            inventory_item_id: product.inventory_item_id,
+            name: product.name,
+            barcode: product.barcode || product.reference,
+            reference: product.barcode || product.reference,
+            quantity: qty,
+            category: product.category,
+            depot_id: product.depot_id
+        });
+    }
+    
+    // Update local inventory
+    product.quantity -= qty;
+    
+    // Reset form
+    document.getElementById('manual-code').value = '';
+    document.getElementById('quantity-input').value = '1';
+    document.getElementById('scan-result').classList.add('hidden');
+    currentProduct = null;
+    
+    renderList();
+    showToast('✓ ' + qty + ' × ' + product.name + ' ajouté à la liste');
+}
+
+function removeFromList(index) {
+    const item = exitList[index];
+    
+    // Return to local inventory
+    const product = inventory.find(p => p.id === item.id || p.inventory_item_id === item.inventory_item_id);
+    if (product) {
+        product.quantity += item.quantity;
+    }
+    
+    exitList.splice(index, 1);
+    renderList();
+    showToast('Article retiré de la liste');
+}
+
+function renderList() {
+    const container = document.getElementById('material-list');
+    const emptyState = document.getElementById('empty-state');
+    const listCount = document.getElementById('list-count');
+    const totalCount = document.getElementById('total-count');
+    
+    if (exitList.length === 0) {
+        container.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        listCount.textContent = '0 article';
+        totalCount.textContent = '0';
+        return;
+    }
+    
+    container.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    
+    const totalItems = exitList.reduce((sum, item) => sum + item.quantity, 0);
+    listCount.textContent = exitList.length + ' article' + (exitList.length > 1 ? 's' : '');
+    totalCount.textContent = totalItems;
+    
+    container.innerHTML = exitList.map((item, index) => `
+        <div class="group flex items-center gap-4 rounded-xl bg-surface-light dark:bg-surface-dark p-3 shadow-sm border border-border-light dark:border-border-dark">
+            <div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary text-3xl">inventory_2</span>
+            </div>
+            <div class="flex flex-1 flex-col justify-center min-w-0">
+                <h4 class="truncate text-base font-bold text-text-main-light dark:text-text-main-dark leading-tight">${item.name}</h4>
+                <p class="truncate text-sm text-text-sub-light dark:text-text-sub-dark mt-0.5">Code: ${item.barcode}</p>
+            </div>
+            <div class="flex items-center gap-3 pr-1">
+                <span class="text-lg font-bold text-text-main-light dark:text-text-main-dark">×${item.quantity}</span>
+                <button onclick="removeFromList(${index})" class="text-text-sub-light dark:text-text-sub-dark hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===== CONFIRM EXIT =====
+async function confirmExit() {
+    if (exitList.length === 0) {
+        showToast('⚠️ Aucun article à confirmer');
+        return;
+    }
+    
+    if (!currentEmployeeId || !window.supabase) {
+        showToast('⚠️ Erreur: technicien non identifié');
+        return;
+    }
+    
+    const totalItems = exitList.reduce((sum, item) => sum + item.quantity, 0);
+    
+    if (!confirm(`Confirmer l'ajout de ${totalItems} article(s) à votre inventaire ?`)) {
+        return;
+    }
+    
+    try {
+        // Récupérer l'email de l'utilisateur
+        const { data: { user } } = await window.supabase.auth.getUser();
+        const userEmail = user?.email || 'technicien@morellia.ch';
+        
+        // Pour chaque article, créer un enregistrement dans employee_equipment et déduire du stock
+        for (const item of exitList) {
+            // 1. Créer l'enregistrement dans employee_equipment
+            const { error: equipError } = await window.supabase
+                .from('employee_equipment')
+                .insert({
+                    employee_id: currentEmployeeId,
+                    inventory_item_id: item.inventory_item_id || null,
+                    reference: item.reference || item.barcode,
+                    name: item.name,
+                    category: item.category || 'Outils',
+                    quantity: item.quantity,
+                    scanned_at: new Date().toISOString(),
+                    scanned_by: userEmail,
+                    returned: false,
+                    depot_id: item.depot_id || null
+                });
+            
+            if (equipError) {
+                console.error('Erreur ajout équipement:', equipError);
+                showToast('⚠️ Erreur lors de l\'ajout de ' + item.name);
+                continue;
+            }
+            
+            // 2. Déduire du stock général (inventory_items)
+            if (item.inventory_item_id) {
+                const { error: stockError } = await window.supabase.rpc('decrement_inventory', {
+                    item_id: item.inventory_item_id,
+                    quantity_to_remove: item.quantity
+                });
+                
+                // Si la fonction RPC n'existe pas, utiliser update direct
+                if (stockError && stockError.message.includes('function') || stockError.message.includes('does not exist')) {
+                    // Récupérer la quantité actuelle
+                    const { data: currentItem, error: fetchError } = await window.supabase
+                        .from('inventory_items')
+                        .select('quantity')
+                        .eq('id', item.inventory_item_id)
+                        .single();
+                    
+                    if (!fetchError && currentItem) {
+                        const newQuantity = Math.max(0, currentItem.quantity - item.quantity);
+                        await window.supabase
+                            .from('inventory_items')
+                            .update({ quantity: newQuantity })
+                            .eq('id', item.inventory_item_id);
+                    }
+                } else if (stockError) {
+                    console.error('Erreur déduction stock:', stockError);
+                }
+            }
+        }
+        
+        // Recharger les inventaires
+        await loadTechnicianInventory();
+        await loadGeneralInventory();
+        
+        // Clear list
+        exitList = [];
+        renderList();
+        
+        showToast('✓ ' + totalItems + ' article(s) ajouté(s) à votre inventaire !');
+        
+    } catch (error) {
+        console.error('Erreur confirmation:', error);
+        showToast('⚠️ Erreur lors de la confirmation');
+    }
+}
+
+// ===== MENU =====
+function showMenu() {
+    alert('Menu : Configuration, Export, etc.');
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    const message = document.getElementById('toast-message');
+    message.textContent = msg;
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 3000);
+}
+</script>
+
+</body>
+</html>

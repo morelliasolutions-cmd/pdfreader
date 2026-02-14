@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Code-Barres FTTH</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        #reader {
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-start {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-start:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-stop {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-stop:hover {
+            background: #dc2626;
+        }
+        
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .tips {
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+            color: #075985;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        
+        .tips strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .tips ul {
+            margin-left: 20px;
+        }
+        
+        .tips li {
+            margin-bottom: 5px;
+        }
+        
+        .result {
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .result-label {
+            color: #16a34a;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .result-code {
+            font-size: 32px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #333;
+            letter-spacing: 2px;
+        }
+        
+        .history-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-code {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .history-format {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .history-time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête -->
+        <div class="card">
+            <h1>📦 Scanner Matériel FTTH</h1>
+            <p class="subtitle">Scanne les codes-barres de tes matériaux Sonepar, Rexel, etc.</p>
+        </div>
+
+        <!-- Zone de scan -->
+        <div class="card">
+            <div id="reader"></div>
+            
+            <button id="startBtn" class="btn-start" onclick="startScanning()">
+                📷 Démarrer le scan
+            </button>
+            
+            <button id="stopBtn" class="btn-stop hidden" onclick="stopScanning()">
+                ⏹️ Arrêter le scan
+            </button>
+            
+            <div id="error" class="error hidden"></div>
+            
+            <div id="tips" class="tips hidden">
+                <strong>⚡ Conseils pour un bon scan :</strong>
+                <ul>
+                    <li>Tiens le code-barre bien droit face à la caméra</li>
+                    <li>Assure-toi d'avoir un bon éclairage</li>
+                    <li>Le code doit remplir environ 70% de la zone</li>
+                    <li>Évite les reflets sur le code-barre</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Dernier scan -->
+        <div id="resultCard" class="card hidden">
+            <div class="result">
+                <div class="result-label">✅ Dernier code scanné :</div>
+                <div id="scannedCode" class="result-code"></div>
+            </div>
+        </div>
+
+        <!-- Historique -->
+        <div id="historyCard" class="card hidden">
+            <h2 style="margin-bottom: 15px; color: #333;">Historique</h2>
+            <div id="history"></div>
+        </div>
+    </div>
+
+    <script>
+        let html5QrCode = null;
+        let scanning = false;
+        let history = [];
+
+        async function startScanning() {
+            try {
+                document.getElementById('error').classList.add('hidden');
+                
+                // Obtenir les caméras disponibles
+                const devices = await Html5Qrcode.getCameras();
+                
+                if (devices && devices.length > 0) {
+                    // Préférer la caméra arrière
+                    const backCamera = devices.find(device => 
+                        device.label.toLowerCase().includes('back') || 
+                        device.label.toLowerCase().includes('arrière') ||
+                        device.label.toLowerCase().includes('rear')
+                    );
+                    const selectedCamera = backCamera || devices[devices.length - 1];
+
+                    // Créer l'instance du scanner
+                    html5QrCode = new Html5Qrcode("reader");
+
+                    // Configuration pour les codes-barres
+                    const config = {
+                        fps: 10,
+                        qrbox: { width: 300, height: 150 },
+                        formatsToSupport: [
+                            Html5QrcodeSupportedFormats.EAN_13,
+                            Html5QrcodeSupportedFormats.EAN_8,
+                            Html5QrcodeSupportedFormats.CODE_128,
+                            Html5QrcodeSupportedFormats.CODE_39,
+                            Html5QrcodeSupportedFormats.UPC_A,
+                            Html5QrcodeSupportedFormats.UPC_E,
+                        ],
+                        aspectRatio: 2.0,
+                    };
+
+                    // Démarrer le scan
+                    await html5QrCode.start(
+                        selectedCamera.id,
+                        config,
+                        onScanSuccess,
+                        onScanError
+                    );
+
+                    scanning = true;
+                    document.getElementById('startBtn').classList.add('hidden');
+                    document.getElementById('stopBtn').classList.remove('hidden');
+                    document.getElementById('tips').classList.remove('hidden');
+                } else {
+                    showError('Aucune caméra détectée sur cet appareil');
+                }
+            } catch (err) {
+                console.error('Erreur:', err);
+                showError('Erreur: ' + err.message + '. Assure-toi d\'autoriser l\'accès à la caméra et d\'être en HTTPS.');
+            }
+        }
+
+        async function stopScanning() {
+            try {
+                if (html5QrCode) {
+                    await html5QrCode.stop();
+                    html5QrCode = null;
+                }
+                scanning = false;
+                document.getElementById('startBtn').classList.remove('hidden');
+                document.getElementById('stopBtn').classList.add('hidden');
+                document.getElementById('tips').classList.add('hidden');
+            } catch (err) {
+                console.error('Erreur arrêt:', err);
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log('Code scanné:', decodedText);
+            
+            // Afficher le résultat
+            document.getElementById('scannedCode').textContent = decodedText;
+            document.getElementById('resultCard').classList.remove('hidden');
+            
+            // Ajouter à l'historique
+            const scan = {
+                code: decodedText,
+                format: decodedResult.result.format.formatName,
+                time: new Date().toLocaleTimeString('fr-FR')
+            };
+            
+            history.unshift(scan);
+            if (history.length > 10) history.pop();
+            
+            updateHistory();
+            
+            // Vibration
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+        }
+
+        function onScanError(errorMessage) {
+            // Ne rien faire - c'est normal d'avoir des erreurs pendant le scan
+        }
+
+        function updateHistory() {
+            const historyDiv = document.getElementById('history');
+            const historyCard = document.getElementById('historyCard');
+            
+            if (history.length === 0) {
+                historyCard.classList.add('hidden');
+                return;
+            }
+            
+            historyCard.classList.remove('hidden');
+            historyDiv.innerHTML = history.map(scan => `
+                <div class="history-item">
+                    <div>
+                        <div class="history-code">${scan.code}</div>
+                        <div class="history-format">${scan.format}</div>
+                    </div>
+                    <div class="history-time">${scan.time}</div>
+                </div>
+            `).join('');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+===========================================
+COMMANDES EXPORT VPS → LOCAL
+===========================================
+Copiez-collez ces commandes dans votre terminal SSH connecté au VPS
+
+===========================================
+1. EXPORT COMPLET (RECOMMANDÉ)
+===========================================
+
+# Créer le dossier
+mkdir -p /tmp/vps-export && cd /tmp/vps-export
+
+# Export complet (structure + données)
+docker exec supabase-db pg_dump -U postgres --no-owner --no-acl postgres | gzip > supabase-full-export.sql.gz
+
+# Vérifier la taille
+ls -lh supabase-full-export.sql.gz
+
+===========================================
+2. EXPORT PAR ÉTAPES (si le complet est trop gros)
+===========================================
+
+# Structure seulement
+docker exec supabase-db pg_dump -U postgres --schema-only --no-owner --no-acl postgres > schema.sql
+
+# Données seulement
+docker exec supabase-db pg_dump -U postgres --data-only --no-owner --no-acl postgres > data.sql
+
+# Tables importantes
+docker exec supabase-db pg_dump -U postgres --table=public.employees --data-only --no-owner --no-acl postgres > employees.sql
+docker exec supabase-db pg_dump -U postgres --table=public.user_roles --data-only --no-owner --no-acl postgres > user_roles.sql
+docker exec supabase-db pg_dump -U postgres --table=public.interventions --data-only --no-owner --no-acl postgres > interventions.sql
+
+===========================================
+3. TÉLÉCHARGER SUR VOTRE PC
+===========================================
+
+# Dans PowerShell sur votre PC Windows:
+scp root@76.13.133.147:/tmp/vps-export/supabase-full-export.sql.gz .\vps-export\
+
+# Ou pour les fichiers individuels:
+scp root@76.13.133.147:/tmp/vps-export/*.sql .\vps-export\
+
+===========================================
+4. IMPORTER EN LOCAL
+===========================================
+
+# S'assurer que Supabase local est démarré
+docker-compose -f docker-compose.local.yml up -d
+
+# Importer le dump complet (décompressé)
+gunzip -c vps-export\supabase-full-export.sql.gz | docker exec -i supabase-db-local psql -U postgres
+
+# OU importer fichier par fichier:
+Get-Content vps-export\schema.sql | docker exec -i supabase-db-local psql -U postgres
+Get-Content vps-export\data.sql | docker exec -i supabase-db-local psql -U postgres
+
+===========================================
+5. VÉRIFICATION
+===========================================
+
+docker exec -it supabase-db-local psql -U postgres -c "SELECT COUNT(*) FROM employees;"
+docker exec -it supabase-db-local psql -U postgres -c "\dt"
+
+===========================================

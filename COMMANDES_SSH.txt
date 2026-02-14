@@ -1,0 +1,38 @@
+# ============================================
+# COMMANDES À COPIER-COLLER DANS VOTRE TERMINAL SSH
+# ============================================
+
+# 1. Vérifier que vous êtes connecté en root
+whoami
+
+# 2. Vérifier l'état de Supabase
+docker ps | grep supabase
+
+# 3. Vérifier si Nginx est installé
+nginx -v 2>&1 || echo "Nginx non installé"
+
+# 4. Vérifier si Certbot est installé
+certbot --version 2>&1 || echo "Certbot non installé"
+
+# 5. Installer Nginx (si pas installé)
+apt-get update
+apt-get install -y nginx
+
+# 6. Installer Certbot (si pas installé)
+apt-get install -y certbot python3-certbot-nginx
+
+# 7. Démarrer Nginx
+systemctl enable nginx
+systemctl start nginx
+systemctl status nginx
+
+# 8. Vérifier que les ports 80 et 443 sont ouverts
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw status
+
+# ============================================
+# ENSUITE, DONNEZ-MOI VOS DOMAINES :
+# - Domaine pour l'API (ex: api.votredomaine.com)
+# - Domaine pour Studio (ex: studio.votredomaine.com)
+# ============================================

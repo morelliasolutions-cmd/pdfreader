@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "supabase-self-hosted": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\etien\\OneDrive\\Morellia\\Veloxnumeric\\veloxnumeric-web Final\\config\\mcp-supabase-server.cjs"
+      ],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="theme-color" content="#F59E0B"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>Interventions On Hold</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+<script src="../../js/config.js?v=7" defer></script>
+<script src="../../js/api.js?v=7" defer></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#F59E0B",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1c2433",
+                        "card-light": "#ffffff",
+                        "card-dark": "#1c2433",
+                        "text-main-light": "#111318",
+                        "text-main-dark": "#e2e8f0",
+                        "text-sub-light": "#667085",
+                        "text-sub-dark": "#94a3b8"
+                    }
+                }
+            }
+        };
+</script>
+<style>
+        .filled { font-variation-settings: 'FILL' 1; }
+        .material-symbols-outlined { font-size: 24px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark">
+
+<div class="flex flex-col h-screen">
+<!-- Header -->
+<header class="bg-surface-light dark:bg-surface-dark shadow-sm px-4 py-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-orange-500">report_problem</span>
+<h1 class="text-lg font-semibold">Interventions On Hold</h1>
+</div>
+<button id="refresh-btn" onclick="loadBlockedInterventions()" class="p-2 rounded-lg hover:bg-background-light dark:hover:bg-background-dark transition-colors">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</header>
+
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto pb-20">
+<div class="p-4">
+<!-- Stats -->
+<div class="grid grid-cols-2 gap-2 mb-4">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-3 text-center">
+<div class="text-2xl font-bold text-orange-500" id="total-count">0</div>
+<div class="text-xs text-text-sub-light dark:text-text-sub-dark mt-1">Total bloqué</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-3 text-center">
+<div class="text-2xl font-bold text-red-500" id="today-count">0</div>
+<div class="text-xs text-text-sub-light dark:text-text-sub-dark mt-1">Aujourd'hui</div>
+</div>
+</div>
+
+<!-- Loading State -->
+<div id="loading-state" class="text-center py-12">
+<span class="material-symbols-outlined text-4xl text-text-sub-light dark:text-text-sub-dark animate-spin">sync</span>
+<p class="text-text-sub-light dark:text-text-sub-dark mt-2">Chargement...</p>
+</div>
+
+<!-- Empty State -->
+<div id="empty-state" class="hidden text-center py-12">
+<span class="material-symbols-outlined text-6xl text-green-500 mb-4">check_circle</span>
+<p class="font-medium mb-1">Aucune intervention bloquée</p>
+<p class="text-sm text-text-sub-light dark:text-text-sub-dark">Tous les chantiers sont en cours</p>
+</div>
+
+<!-- Interventions List -->
+<div id="interventions-list" class="space-y-4"></div>
+</div>
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-700 px-4 py-2 safe-area-inset-bottom">
+<div class="flex items-center justify-around max-w-md mx-auto">
+<a href="carte-interventions.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">map</span>
+<span class="text-[10px] font-medium mt-1">Carte</span>
+</a>
+<a href="chefintervention.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">engineering</span>
+<span class="text-[10px] font-medium mt-1">Interventions</span>
+</a>
+<a href="verification-inventaire.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-medium mt-1">Stock</span>
+</a>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-primary bg-primary/10">
+<span class="material-symbols-outlined filled">report_problem</span>
+<span class="text-[10px] font-medium mt-1">On Hold</span>
+</button>
+</div>
+</nav>
+</div>
+
+<script>
+// ===== STATE =====
+let allInterventions = [];
+
+// ===== CACHE SYSTEM =====
+const CACHE_KEY = 'onhold_interventions';
+const CACHE_TTL_MS = 74 * 60 * 60 * 1000; // 74 heures
+
+// Sauvegarder dans le cache
+function saveToCache(data) {
+    try {
+        const cacheData = {
+            data: data,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+        console.log('✅ Interventions sauvegardées en cache');
+    } catch (error) {
+        console.error('❌ Erreur sauvegarde cache:', error);
+    }
+}
+
+// Charger depuis le cache
+function loadFromCache() {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return null;
+        
+        const cacheData = JSON.parse(cached);
+        const age = Date.now() - cacheData.timestamp;
+        
+        // Vérifier si le cache est encore valide (74h)
+        if (age < CACHE_TTL_MS) {
+            console.log('✅ Interventions chargées depuis le cache (âge:', Math.round(age/1000/60), 'min)');
+            return cacheData.data;
+        } else {
+            // Cache expiré, le supprimer
+            localStorage.removeItem(CACHE_KEY);
+            console.log('⏰ Cache expiré');
+            return null;
+        }
+    } catch (error) {
+        console.error('❌ Erreur chargement cache:', error);
+        return null;
+    }
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', async function() {
+    await initializeApp();
+    
+    // Charger d'abord depuis le cache (instantané)
+    const cachedData = loadFromCache();
+    if (cachedData && cachedData.length > 0) {
+        allInterventions = cachedData;
+        updateStats();
+        renderInterventions();
+        document.getElementById('loading-state').classList.add('hidden');
+    }
+    
+    // Puis charger depuis Supabase en arrière-plan et mettre à jour
+    await loadBlockedInterventions();
+});
+
+// ===== INITIALIZATION =====
+async function initializeApp() {
+    // Attendre que Supabase soit chargé
+    let libAttempts = 0;
+    while ((typeof window.supabase === 'undefined' || typeof window.supabase.createClient === 'undefined') && libAttempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        libAttempts++;
+    }
+    
+    if (window.supabase && typeof window.supabase.createClient === 'function' && typeof window.supabase.auth === 'undefined') {
+        if (typeof initSupabase === 'function') {
+            initSupabase();
+        } else {
+            const SupabaseLib = window.supabase;
+            const SUPABASE_URL = 'https://wdurkaelytgjbcsmkzgb.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkdXJrYWVseXRnamJjc21remdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3ODc0NDksImV4cCI6MjA4MjM2MzQ0OX0.E7R_3Ylk1Tf8FJurHfzhb-QgHokeVORpk99_nukjYZY';
+            window.supabase = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    }
+    
+    let attempts = 0;
+    while ((!window.supabase || typeof window.supabase.auth === 'undefined' || typeof window.supabase.from === 'undefined') && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (!window.supabase || typeof window.supabase.auth === 'undefined') {
+        console.error('❌ Supabase non initialisé');
+        return;
+    }
+    
+    // Vérifier l'authentification
+    const { data: { session }, error } = await window.supabase.auth.getSession();
+    if (error || !session) {
+        console.log('❌ Utilisateur non authentifié, redirection...');
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    console.log('✅ Utilisateur authentifié:', session.user.email);
+}
+
+// ===== LOAD BLOCKED INTERVENTIONS =====
+async function loadBlockedInterventions() {
+    const loadingState = document.getElementById('loading-state');
+    const emptyState = document.getElementById('empty-state');
+    const listContainer = document.getElementById('interventions-list');
+    
+    loadingState.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    listContainer.innerHTML = '';
+    
+    try {
+        // Charger les interventions bloquées
+        const { data: interventions, error: interventionsError } = await window.supabase
+            .from('intervention_details')
+            .select('*')
+            .eq('status', 'blocked')
+            .order('updated_at', { ascending: false });
+        
+        if (interventionsError) throw interventionsError;
+        
+        allInterventions = interventions || [];
+        
+        // Sauvegarder en cache
+        saveToCache(allInterventions);
+        
+        loadingState.classList.add('hidden');
+        
+        if (allInterventions.length === 0) {
+            emptyState.classList.remove('hidden');
+        } else {
+            updateStats();
+            renderInterventions();
+        }
+        
+    } catch (error) {
+        console.error('Erreur chargement interventions bloquées:', error);
+        loadingState.classList.add('hidden');
+        alert('Erreur lors du chargement des interventions');
+    }
+}
+
+// ===== UPDATE STATS =====
+function updateStats() {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    const todayCount = allInterventions.filter(i => 
+        i.updated_at && i.updated_at.split('T')[0] === today
+    ).length;
+    
+    document.getElementById('total-count').textContent = allInterventions.length;
+    document.getElementById('today-count').textContent = todayCount;
+}
+
+// ===== RENDER INTERVENTIONS =====
+function renderInterventions() {
+    const listContainer = document.getElementById('interventions-list');
+    listContainer.innerHTML = '';
+    
+    if (allInterventions.length === 0) {
+        document.getElementById('empty-state').classList.remove('hidden');
+        return;
+    }
+    
+    document.getElementById('empty-state').classList.add('hidden');
+    
+    allInterventions.forEach(intervention => {
+        const card = createInterventionCard(intervention);
+        listContainer.appendChild(card);
+    });
+}
+
+// ===== CREATE INTERVENTION CARD =====
+function createInterventionCard(intervention) {
+    const div = document.createElement('div');
+    div.className = 'bg-surface-light dark:bg-surface-dark rounded-2xl shadow-lg overflow-hidden border-l-4 border-red-500';
+    
+    const updatedDate = new Date(intervention.updated_at || intervention.created_at);
+    const formattedDate = updatedDate.toLocaleDateString('fr-FR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    div.innerHTML = `
+        <div class="p-4">
+            <!-- Header avec badge bloqué -->
+            <div class="flex items-start gap-3 mb-3">
+                <span class="material-symbols-outlined text-red-500 text-3xl">report_problem</span>
+                <div class="flex-1">
+                    <span class="inline-block px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-semibold rounded-full mb-2">
+                        BLOQUÉ
+                    </span>
+                    <h3 class="font-bold text-base leading-tight">${intervention.address}</h3>
+                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-0.5">
+                        ${intervention.postal_code} ${intervention.locality}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Problem Details -->
+            <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 mb-4">
+                <div class="flex items-start gap-2">
+                    <span class="material-symbols-outlined text-red-600 dark:text-red-400 flex-shrink-0">warning</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-red-800 dark:text-red-200 text-sm mb-1">Problème technique</p>
+                        <p class="text-sm text-red-700 dark:text-red-300 leading-snug">${intervention.comments || 'Aucun commentaire fourni'}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Date -->
+            <div class="flex items-center gap-2 text-sm text-text-sub-light dark:text-text-sub-dark mb-4">
+                <span class="material-symbols-outlined text-base">schedule</span>
+                <span>Bloqué le ${formattedDate}</span>
+            </div>
+            
+            <!-- Actions -->
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="viewDetails('${intervention.id}')" class="flex items-center justify-center gap-2 px-4 py-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition-colors active:scale-95">
+                    <span class="material-symbols-outlined text-xl">visibility</span>
+                    <span>Détails</span>
+                </button>
+                <button onclick="resolveIntervention('${intervention.id}')" class="flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors active:scale-95">
+                    <span class="material-symbols-outlined text-xl">check_circle</span>
+                    <span>Résoudre</span>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    return div;
+}
+
+// ===== VIEW DETAILS =====
+async function viewDetails(interventionId) {
+    window.location.href = `chefdetails.html?id=${interventionId}`;
+}
+
+// ===== RESOLVE INTERVENTION =====
+async function resolveIntervention(interventionId) {
+    if (!confirm('Marquer cette intervention comme résolue ?\n\nLe statut sera changé en "en cours".')) {
+        return;
+    }
+    
+    try {
+        const { error } = await window.supabase
+            .from('intervention_details')
+            .update({
+                status: 'in_progress',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', interventionId);
+        
+        if (error) throw error;
+        
+        console.log('✅ Intervention résolue:', interventionId);
+        
+        // Retirer l'intervention de la liste locale
+        allInterventions = allInterventions.filter(i => i.id !== interventionId);
+        
+        // Mettre à jour le cache
+        saveToCache(allInterventions);
+        
+        // Rafraîchir l'affichage
+        updateStats();
+        renderInterventions();
+        
+        if (allInterventions.length === 0) {
+            document.getElementById('empty-state').classList.remove('hidden');
+        }
+        
+    } catch (error) {
+        console.error('Erreur résolution intervention:', error);
+        alert('Erreur lors de la résolution de l\'intervention');
+    }
+}
+</script>
+
+</body>
+</html>

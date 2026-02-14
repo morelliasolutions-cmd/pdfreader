@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="theme-color" content="#ea2a33"/>
+    <link rel="manifest" href="./manifest.json"/>
+    <title>Paramètres - ConnectFiber</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+    <script src="js/config.js?v=7" defer></script>
+    <script src="js/api.js?v=7" defer></script>
+    <script src="js/role-access-control.js?v=1" defer></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ea2a33",
+                        "primary-dark": "#c82229",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#211111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2a2a2a",
+                        "card-light": "#ffffff",
+                        "card-dark": "#2a1a1a",
+                        "text-dark": "#0f172a",
+                        "text-muted": "#64748b",
+                        "border-color": "#e2e8f0"
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Spline Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        .animate-draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 2s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-dark dark:text-white h-screen flex overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="flex w-72 flex-col border-r border-border-color bg-surface-light dark:bg-surface-dark h-full hidden lg:flex shrink-0 transition-all duration-300">
+        <div class="flex flex-col h-full p-4">
+            <div class="flex flex-col gap-8">
+                <div class="flex gap-3 items-center px-2">
+                    <div class="size-8 text-primary">
+                        <svg class="w-full h-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+                            <path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">ConnectFiber</h1>
+                        <p class="text-text-muted text-xs font-medium uppercase tracking-wider">Gestion Chantier</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a id="nav-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="dashboard.html">
+                        <span class="material-symbols-outlined text-2xl">dashboard</span>
+                        <span class="text-sm font-medium">Tableau de bord</span>
+                    </a>
+                    <a id="nav-pointage" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="pointage.html">
+                        <span class="material-symbols-outlined text-2xl">timer</span>
+                        <span class="text-sm font-medium">Pointage</span>
+                    </a>
+                    <a id="nav-production" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="production.html">
+                        <span class="material-symbols-outlined text-2xl">factory</span>
+                        <span class="text-sm font-medium">Production</span>
+                    </a>
+                    <a id="nav-personnel" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="personnel.html">
+                        <span class="material-symbols-outlined text-2xl">group</span>
+                        <span class="text-sm font-medium">Personnel</span>
+                    </a>
+                    <a id="nav-planning" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="planif.html">
+                        <span class="material-symbols-outlined text-2xl">calendar_month</span>
+                        <span class="text-sm font-medium">Planning</span>
+                    </a>
+                    <a id="nav-mandat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="mandats.html">
+                        <span class="material-symbols-outlined text-2xl">assignment</span>
+                        <span class="text-sm font-medium">Mandat</span>
+                    </a>
+                    <a id="nav-inventaire" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="inventaire/inventaire.html" target="_blank">
+                        <span class="material-symbols-outlined text-2xl">inventory</span>
+                        <span class="text-sm font-medium">Inventaire</span>
+                    </a>
+                    <a id="nav-parametres" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors bg-primary/10 text-primary" href="parametres.html">
+                        <span class="material-symbols-outlined text-2xl">settings</span>
+                        <span class="text-sm font-bold">Paramètres</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+    
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Header -->
+        <header class="bg-surface-light dark:bg-surface-dark border-b border-[#f4f0f0] dark:border-gray-800 sticky top-0 z-50">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3 lg:hidden">
+                        <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                        <span class="text-lg font-bold text-gray-900 dark:text-white">Veloxnumeric</span>
+                    </div>
+                    <div class="hidden lg:block"></div>
+                    <div class="flex items-center gap-4">
+                        <button class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors relative">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-gray-800"></span>
+                        </button>
+                        <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <p id="userName" class="text-sm font-bold leading-none"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 leading-none mt-1">Admin RH</p>
+                            </div>
+                            <button onclick="logout()" class="size-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                                <span class="material-symbols-outlined text-gray-600 dark:text-gray-300">logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Paramètres</h2>
+                
+                <!-- Système d'onglets -->
+                <div class="bg-surface-light dark:bg-surface-dark rounded-lg shadow">
+                    <!-- Navigation des onglets -->
+                    <div class="border-b border-gray-200 dark:border-gray-700">
+                        <nav class="flex -mb-px">
+                            <button 
+                                onclick="switchTab('profile')" 
+                                id="tab-profile" 
+                                class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-primary text-primary bg-primary/5"
+                            >
+                                <span class="material-symbols-outlined align-middle mr-2 text-lg">person</span>
+                                Paramètres du profil
+                            </button>
+                            <button 
+                                onclick="switchTab('production')" 
+                                id="tab-production" 
+                                class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+                            >
+                                <span class="material-symbols-outlined align-middle mr-2 text-lg">attach_money</span>
+                                Tarifs de production
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Contenu des onglets -->
+                    <div class="p-6">
+                        <!-- Onglet 1: Paramètres du profil -->
+                        <div id="content-profile" class="tab-content">
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                                    <p id="userEmail" class="mt-1 text-sm font-bold text-gray-900 dark:text-white"></p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Rôle</label>
+                                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Admin RH</p>
+                                </div>
+                                
+                                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Messages préconçus</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Configurez le texte qui sera copié pour chaque activité quand vous cliquez sur l'icône de copie.</p>
+                                    
+                                    <div class="space-y-4">
+                                        <!-- Swisscom -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-sm">content_copy</span>
+                                                Swisscom
+                                            </label>
+                                            <textarea 
+                                                id="activityText_swisscom" 
+                                                rows="4" 
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="Texte pour Swisscom..."
+                                            ></textarea>
+                                        </div>
+
+                                        <!-- FTTH FR -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-sm">content_copy</span>
+                                                FTTH FR
+                                            </label>
+                                            <textarea 
+                                                id="activityText_ftth_fr" 
+                                                rows="4" 
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="Texte pour FTTH FR..."
+                                            ></textarea>
+                                        </div>
+
+                                        <!-- SIG -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-sm">content_copy</span>
+                                                SIG
+                                            </label>
+                                            <textarea 
+                                                id="activityText_sig" 
+                                                rows="4" 
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="Texte pour SIG..."
+                                            ></textarea>
+                                        </div>
+
+                                        <!-- REA -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-sm">content_copy</span>
+                                                REA
+                                            </label>
+                                            <textarea 
+                                                id="activityText_rea" 
+                                                rows="4" 
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="Texte pour REA..."
+                                            ></textarea>
+                                        </div>
+                                    </div>
+
+                                    <button onclick="saveAllActivityTexts()" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors">
+                                        Sauvegarder tous les textes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet 2: Tarifs de production -->
+                        <div id="content-production" class="tab-content hidden">
+                            <div class="space-y-6">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Tarifs par type d'installation</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Configurez les montants en CHF pour chaque type d'installation. Ces valeurs seront utilisées pour calculer automatiquement la production.</p>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <!-- Swisscom -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm text-primary">construction</span>
+                                            Installation Swisscom
+                                        </label>
+                                        <div class="flex items-center gap-3">
+                                            <input 
+                                                type="number" 
+                                                id="price_swisscom" 
+                                                step="0.01"
+                                                min="0"
+                                                class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="0.00"
+                                            />
+                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">CHF</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Prix par installation Swisscom</p>
+                                    </div>
+
+                                    <!-- FTTH FR -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm text-primary">construction</span>
+                                            Installation FTTH FR
+                                        </label>
+                                        <div class="flex items-center gap-3">
+                                            <input 
+                                                type="number" 
+                                                id="price_ftth_fr" 
+                                                step="0.01"
+                                                min="0"
+                                                class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="0.00"
+                                            />
+                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">CHF</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Prix par installation FTTH FR</p>
+                                    </div>
+
+                                    <!-- SIG -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm text-primary">construction</span>
+                                            Installation SIG
+                                        </label>
+                                        <div class="flex items-center gap-3">
+                                            <input 
+                                                type="number" 
+                                                id="price_sig" 
+                                                step="0.01"
+                                                min="0"
+                                                class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="0.00"
+                                            />
+                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">CHF</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Prix par installation SIG</p>
+                                    </div>
+
+                                    <!-- REA -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm text-primary">construction</span>
+                                            Installation REA
+                                        </label>
+                                        <div class="flex items-center gap-3">
+                                            <input 
+                                                type="number" 
+                                                id="price_rea" 
+                                                step="0.01"
+                                                min="0"
+                                                class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="0.00"
+                                            />
+                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">CHF</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Prix par installation REA</p>
+                                    </div>
+
+                                    <!-- Smart Metering -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm text-primary">construction</span>
+                                            Installation Smart Metering
+                                        </label>
+                                        <div class="flex items-center gap-3">
+                                            <input 
+                                                type="number" 
+                                                id="price_smartmetering" 
+                                                step="0.01"
+                                                min="0"
+                                                class="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="0.00"
+                                            />
+                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">CHF</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Prix par installation Smart Metering</p>
+                                    </div>
+                                </div>
+
+                                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <button onclick="saveProductionPrices()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors">
+                                        Sauvegarder les tarifs
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // currentUser est déjà déclaré dans role-access-control.js
+        // let currentUser = null; // Supprimé pour éviter la duplication
+
+        let isChecking = false;
+
+        // Fonction pour changer d'onglet (déclarée en premier pour être accessible)
+        function switchTab(tabName) {
+            console.log('Changement d\'onglet vers:', tabName);
+            
+            // Masquer tous les contenus
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Désactiver tous les boutons d'onglets
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('border-primary', 'text-primary', 'bg-primary/5', 'dark:text-primary');
+                button.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-300');
+            });
+            
+            // Afficher le contenu sélectionné
+            const contentElement = document.getElementById(`content-${tabName}`);
+            if (contentElement) {
+                contentElement.classList.remove('hidden');
+            } else {
+                console.error('Contenu non trouvé:', `content-${tabName}`);
+            }
+            
+            // Activer le bouton d'onglet sélectionné
+            const activeButton = document.getElementById(`tab-${tabName}`);
+            if (activeButton) {
+                activeButton.classList.add('border-primary', 'text-primary', 'bg-primary/5', 'dark:text-primary');
+                activeButton.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-300');
+            } else {
+                console.error('Bouton d\'onglet non trouvé:', `tab-${tabName}`);
+            }
+        }
+
+        // Rendre la fonction accessible globalement
+        window.switchTab = switchTab;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (isChecking) return;
+            isChecking = true;
+            
+            console.log('Paramètres - Vérification authentification...');
+            
+            if (!window.VeloxAPI) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            try {
+                const session = await window.VeloxAPI.getSession();
+                if (!session || !session.user) {
+                    window.location.replace('index.html');
+                    return;
+                }
+                currentUser = session.user;
+                document.getElementById('userName').textContent = currentUser.email.split('@')[0];
+                document.getElementById('userEmail').textContent = currentUser.email;
+                
+                // Attendre que Supabase soit initialisé avant de charger
+                let supabaseAttempts = 0;
+                while ((!window.supabase || typeof window.supabase.from !== 'function') && supabaseAttempts < 30) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    supabaseAttempts++;
+                }
+                
+                // Charger les textes d'activité sauvegardés
+                await loadActivityTexts();
+            } catch (error) {
+                console.error('Erreur:', error);
+                window.location.replace('index.html');
+            }
+        });
+
+        async function loadActivityTexts() {
+            try {
+                // Charger depuis Supabase
+                const { data, error } = await window.supabase
+                    .from('app_settings')
+                    .select('setting_value')
+                    .eq('setting_key', 'activity_messages')
+                    .single();
+
+                if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+                    console.error('Erreur chargement messages:', error);
+                    // Fallback sur localStorage si Supabase échoue
+                    loadActivityTextsFromLocalStorage();
+                    return;
+                }
+
+                if (data && data.setting_value) {
+                    const activities = ['swisscom', 'ftth_fr', 'sig', 'rea'];
+                    activities.forEach(activity => {
+                        const text = data.setting_value[activity] || '';
+                        document.getElementById(`activityText_${activity}`).value = text;
+                    });
+                } else {
+                    // Si pas de données dans Supabase, charger depuis localStorage
+                    loadActivityTextsFromLocalStorage();
+                }
+            } catch (error) {
+                console.error('Erreur chargement messages:', error);
+                loadActivityTextsFromLocalStorage();
+            }
+        }
+
+        function loadActivityTextsFromLocalStorage() {
+            const activities = ['swisscom', 'ftth_fr', 'sig', 'rea'];
+            activities.forEach(activity => {
+                const storageKey = `activityText_${activity}`;
+                const savedText = localStorage.getItem(storageKey);
+                if (savedText) {
+                    document.getElementById(storageKey).value = savedText;
+                }
+            });
+        }
+
+        async function saveAllActivityTexts() {
+            const activities = ['swisscom', 'ftth_fr', 'sig', 'rea'];
+            const messages = {};
+            
+            activities.forEach(activity => {
+                const text = document.getElementById(`activityText_${activity}`).value;
+                messages[activity] = text;
+            });
+
+            try {
+                // Sauvegarder dans Supabase
+                const { error } = await window.supabase
+                    .from('app_settings')
+                    .upsert({
+                        setting_key: 'activity_messages',
+                        setting_value: messages,
+                        setting_type: 'activity_messages',
+                        description: 'Messages preconcus pour les activites'
+                    }, {
+                        onConflict: 'setting_key'
+                    });
+
+                if (error) throw error;
+
+                // Afficher un message de confirmation
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Tous les textes sauvegardés!';
+                btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                btn.classList.add('bg-green-700');
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    btn.classList.remove('bg-green-700');
+                }, 2000);
+            } catch (error) {
+                console.error('Erreur sauvegarde messages:', error);
+                alert('Erreur lors de la sauvegarde. Vérifiez vos permissions.');
+            }
+        }
+
+        async function logout() {
+            await window.VeloxAPI.signOut();
+            window.location.href = 'index.html';
+        }
+
+
+        // Fonction pour charger les tarifs de production
+        async function loadProductionPrices() {
+            try {
+                // Charger depuis Supabase
+                const { data, error } = await window.supabase
+                    .from('app_settings')
+                    .select('setting_value')
+                    .eq('setting_key', 'production_prices')
+                    .single();
+
+                if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+                    console.error('Erreur chargement tarifs:', error);
+                    // Fallback sur localStorage si Supabase échoue
+                    loadProductionPricesFromLocalStorage();
+                    return;
+                }
+
+                if (data && data.setting_value) {
+                    const types = ['swisscom', 'ftth_fr', 'sig', 'rea', 'smartmetering'];
+                    types.forEach(type => {
+                        const price = data.setting_value[type] || 0;
+                        document.getElementById(`price_${type}`).value = price;
+                    });
+                } else {
+                    // Si pas de données dans Supabase, charger depuis localStorage
+                    loadProductionPricesFromLocalStorage();
+                }
+            } catch (error) {
+                console.error('Erreur chargement tarifs:', error);
+                loadProductionPricesFromLocalStorage();
+            }
+        }
+
+        function loadProductionPricesFromLocalStorage() {
+            const types = ['swisscom', 'ftth_fr', 'sig', 'rea', 'smartmetering'];
+            types.forEach(type => {
+                const storageKey = `production_price_${type}`;
+                const savedPrice = localStorage.getItem(storageKey);
+                if (savedPrice) {
+                    document.getElementById(`price_${type}`).value = savedPrice;
+                }
+            });
+        }
+
+        // Fonction pour sauvegarder les tarifs de production
+        async function saveProductionPrices() {
+            const types = ['swisscom', 'ftth_fr', 'sig', 'rea', 'smartmetering'];
+            const prices = {};
+            
+            types.forEach(type => {
+                const price = parseFloat(document.getElementById(`price_${type}`).value) || 0;
+                prices[type] = price;
+            });
+
+            try {
+                // Sauvegarder dans Supabase
+                const { error } = await window.supabase
+                    .from('app_settings')
+                    .upsert({
+                        setting_key: 'production_prices',
+                        setting_value: prices,
+                        setting_type: 'production_prices',
+                        description: 'Tarifs de production par type d\'installation en CHF'
+                    }, {
+                        onConflict: 'setting_key'
+                    });
+
+                if (error) throw error;
+
+                // Afficher un message de confirmation
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Tarifs sauvegardés!';
+                btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                btn.classList.add('bg-green-700');
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    btn.classList.remove('bg-green-700');
+                }, 2000);
+            } catch (error) {
+                console.error('Erreur sauvegarde tarifs:', error);
+                alert('Erreur lors de la sauvegarde. Vérifiez vos permissions.');
+            }
+        }
+
+        // Charger les tarifs au chargement de la page
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Attendre que Supabase soit initialisé
+            let attempts = 0;
+            while ((!window.supabase || typeof window.supabase.from !== 'function') && attempts < 30) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (window.supabase && typeof window.supabase.from === 'function') {
+                await loadProductionPrices();
+            } else {
+                loadProductionPricesFromLocalStorage();
+            }
+        });
+
+        // Register Service Worker (cache 74h)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>

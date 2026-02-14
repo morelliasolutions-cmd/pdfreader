@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Couleurs Fibres Swisscom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">Test des Couleurs Swisscom FTTH (1-24)</h1>
+        
+        <!-- Contrôles -->
+        <div class="bg-white rounded-lg p-4 mb-6">
+            <h2 class="font-bold mb-3">Sélection des Fibres</h2>
+            <div class="grid grid-cols-4 gap-4">
+                <div>
+                    <label class="text-sm text-gray-600">Fibre 1</label>
+                    <input type="number" id="input-fibre-1" min="1" max="24" 
+                           class="w-full border rounded px-2 py-1 mt-1"
+                           placeholder="1-24">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-600">Fibre 2</label>
+                    <input type="number" id="input-fibre-2" min="1" max="24" 
+                           class="w-full border rounded px-2 py-1 mt-1"
+                           placeholder="1-24">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-600">Fibre 3</label>
+                    <input type="number" id="input-fibre-3" min="1" max="24" 
+                           class="w-full border rounded px-2 py-1 mt-1"
+                           placeholder="1-24">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-600">Fibre 4</label>
+                    <input type="number" id="input-fibre-4" min="1" max="24" 
+                           class="w-full border rounded px-2 py-1 mt-1"
+                           placeholder="1-24">
+                </div>
+            </div>
+        </div>
+
+        <!-- Affichage des Fibres -->
+        <div class="bg-white rounded-lg p-4">
+            <h2 class="font-bold mb-3">Crochets Fibres (BEP)</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Fibre 1 -->
+                <div class="bg-gray-50 rounded-lg p-3 relative" id="fibre-card-1">
+                    <p class="text-xs text-gray-600 mb-1">Fibre 1</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full border-2 border-dashed border-gray-400" id="fibre-color-1"></div>
+                        <p class="font-bold text-sm" id="fibre-1">-</p>
+                    </div>
+                    <div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-black hidden" id="fibre-mark-1" title="2ème douzaine"></div>
+                </div>
+                
+                <!-- Fibre 2 -->
+                <div class="bg-gray-50 rounded-lg p-3 relative" id="fibre-card-2">
+                    <p class="text-xs text-gray-600 mb-1">Fibre 2</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full border-2 border-dashed border-gray-400" id="fibre-color-2"></div>
+                        <p class="font-bold text-sm" id="fibre-2">-</p>
+                    </div>
+                    <div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-black hidden" id="fibre-mark-2" title="2ème douzaine"></div>
+                </div>
+                
+                <!-- Fibre 3 -->
+                <div class="bg-gray-50 rounded-lg p-3 relative" id="fibre-card-3">
+                    <p class="text-xs text-gray-600 mb-1">Fibre 3</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full border-2 border-dashed border-gray-400" id="fibre-color-3"></div>
+                        <p class="font-bold text-sm" id="fibre-3">-</p>
+                    </div>
+                    <div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-black hidden" id="fibre-mark-3" title="2ème douzaine"></div>
+                </div>
+                
+                <!-- Fibre 4 -->
+                <div class="bg-gray-50 rounded-lg p-3 relative" id="fibre-card-4">
+                    <p class="text-xs text-gray-600 mb-1">Fibre 4</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full border-2 border-dashed border-gray-400" id="fibre-color-4"></div>
+                        <p class="font-bold text-sm" id="fibre-4">-</p>
+                    </div>
+                    <div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-black hidden" id="fibre-mark-4" title="2ème douzaine"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Référence des Couleurs -->
+        <div class="bg-white rounded-lg p-4 mt-6">
+            <h2 class="font-bold mb-3">Référence Swisscom (1-24)</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">1ère Douzaine (1-12)</h3>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #FF0000"></div>
+                            <span>1 - Rouge</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #00FF00"></div>
+                            <span>2 - Vert</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded border" style="background: #FFFF00"></div>
+                            <span>3 - Jaune</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #0000FF"></div>
+                            <span>4 - Bleu</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded border" style="background: #FFFFFF"></div>
+                            <span>5 - Blanc</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #800080"></div>
+                            <span>6 - Violet</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #FFA500"></div>
+                            <span>7 - Orange</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #000000"></div>
+                            <span>8 - Noir</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #808080"></div>
+                            <span>9 - Gris</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #8B4513"></div>
+                            <span>10 - Marron</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #FFC0CB"></div>
+                            <span>11 - Rose</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded" style="background: #00FFFF"></div>
+                            <span>12 - Cyan</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">2ème Douzaine (13-24) + Point Noir</h3>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #FF0000">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>13 - Rouge</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #00FF00">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>14 - Vert</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded border relative" style="background: #FFFF00">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>15 - Jaune</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #0000FF">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>16 - Bleu</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded border relative" style="background: #FFFFFF">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>17 - Blanc</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #800080">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>18 - Violet</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #FFA500">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>19 - Orange</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #000000">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-white border border-gray-300"></div>
+                            </div>
+                            <span>20 - Noir</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #808080">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>21 - Gris</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #8B4513">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>22 - Marron</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #FFC0CB">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>23 - Rose</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded relative" style="background: #00FFFF">
+                                <div class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-black"></div>
+                            </div>
+                            <span>24 - Cyan</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Table des couleurs Swisscom pour fibres FTTH (1-24)
+        const SWISSCOM_FIBER_COLORS = {
+            // 1ère douzaine (1-12)
+            1: { color: '#FF0000', name: 'Rouge' },
+            2: { color: '#00FF00', name: 'Vert' },
+            3: { color: '#FFFF00', name: 'Jaune' },
+            4: { color: '#0000FF', name: 'Bleu' },
+            5: { color: '#FFFFFF', name: 'Blanc' },
+            6: { color: '#800080', name: 'Violet' },
+            7: { color: '#FFA500', name: 'Orange' },
+            8: { color: '#000000', name: 'Noir' },
+            9: { color: '#808080', name: 'Gris' },
+            10: { color: '#8B4513', name: 'Marron' },
+            11: { color: '#FFC0CB', name: 'Rose' },
+            12: { color: '#00FFFF', name: 'Cyan' },
+            
+            // 2ème douzaine (13-24) - Mêmes couleurs avec marque noire
+            13: { color: '#FF0000', name: 'Rouge', mark: true },
+            14: { color: '#00FF00', name: 'Vert', mark: true },
+            15: { color: '#FFFF00', name: 'Jaune', mark: true },
+            16: { color: '#0000FF', name: 'Bleu', mark: true },
+            17: { color: '#FFFFFF', name: 'Blanc', mark: true },
+            18: { color: '#800080', name: 'Violet', mark: true },
+            19: { color: '#FFA500', name: 'Orange', mark: true },
+            20: { color: '#000000', name: 'Noir', mark: true },
+            21: { color: '#808080', name: 'Gris', mark: true },
+            22: { color: '#8B4513', name: 'Marron', mark: true },
+            23: { color: '#FFC0CB', name: 'Rose', mark: true },
+            24: { color: '#00FFFF', name: 'Cyan', mark: true }
+        };
+
+        // Fonction pour appliquer la couleur Swisscom à une fibre
+        function applyFiberColor(fiberNumber, value) {
+            if (!value || value === '-' || value === '') {
+                resetFiberColor(fiberNumber);
+                return;
+            }
+            
+            const num = parseInt(value);
+            if (isNaN(num) || num < 1 || num > 24) {
+                resetFiberColor(fiberNumber);
+                return;
+            }
+            
+            const colorData = SWISSCOM_FIBER_COLORS[num];
+            if (!colorData) return;
+            
+            // Appliquer la couleur au cercle indicateur
+            const colorEl = document.getElementById(`fibre-color-${fiberNumber}`);
+            if (colorEl) {
+                colorEl.style.backgroundColor = colorData.color;
+                if (colorData.color === '#FFFFFF' || colorData.color === '#FFFF00') {
+                    colorEl.style.border = '2px solid #999';
+                } else {
+                    colorEl.style.border = 'none';
+                }
+            }
+            
+            // Mettre à jour le texte avec la couleur
+            const textEl = document.getElementById(`fibre-${fiberNumber}`);
+            if (textEl) {
+                textEl.textContent = `${num} - ${colorData.name}`;
+                textEl.style.color = colorData.color;
+                if (colorData.color === '#FFFFFF' || colorData.color === '#FFFF00' || colorData.color === '#00FFFF') {
+                    textEl.style.textShadow = '0 0 3px rgba(0,0,0,0.8)';
+                } else {
+                    textEl.style.textShadow = 'none';
+                }
+            }
+            
+            // Afficher/masquer le point noir pour la 2ème douzaine
+            const markEl = document.getElementById(`fibre-mark-${fiberNumber}`);
+            if (markEl) {
+                if (colorData.mark) {
+                    markEl.classList.remove('hidden');
+                } else {
+                    markEl.classList.add('hidden');
+                }
+            }
+        }
+
+        // Fonction pour réinitialiser une fibre
+        function resetFiberColor(fiberNumber) {
+            const colorEl = document.getElementById(`fibre-color-${fiberNumber}`);
+            if (colorEl) {
+                colorEl.style.backgroundColor = 'transparent';
+                colorEl.style.border = '2px dashed #9ca3af';
+            }
+            
+            const textEl = document.getElementById(`fibre-${fiberNumber}`);
+            if (textEl) {
+                textEl.textContent = '-';
+                textEl.style.color = '';
+                textEl.style.textShadow = 'none';
+            }
+            
+            const markEl = document.getElementById(`fibre-mark-${fiberNumber}`);
+            if (markEl) {
+                markEl.classList.add('hidden');
+            }
+        }
+
+        // Event listeners pour les inputs
+        for (let i = 1; i <= 4; i++) {
+            const input = document.getElementById(`input-fibre-${i}`);
+            input.addEventListener('input', (e) => {
+                applyFiberColor(i, e.target.value);
+            });
+        }
+
+        // Initialiser avec quelques exemples
+        setTimeout(() => {
+            document.getElementById('input-fibre-1').value = '1';
+            applyFiberColor(1, '1');
+            
+            document.getElementById('input-fibre-2').value = '13';
+            applyFiberColor(2, '13');
+            
+            document.getElementById('input-fibre-3').value = '5';
+            applyFiberColor(3, '5');
+            
+            document.getElementById('input-fibre-4').value = '17';
+            applyFiberColor(4, '17');
+        }, 100);
+    </script>
+</body>
+</html>

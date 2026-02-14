@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  florence2-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    container_name: florence2-base-test
+    volumes:
+      - ./models:/app/.cache/huggingface  # Cache des modèles
+      - ./test.jpg:/app/test.jpg:ro  # Image de test (si elle existe)
+    environment:
+      - TRANSFORMERS_CACHE=/app/.cache/huggingface
+    restart: unless-stopped
+
+  # Version GPU (décommentez si vous avez un GPU)
+  # florence2-gpu:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: florence2-base-gpu
+  #   runtime: nvidia
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=all
+  #     - CUDA_VISIBLE_DEVICES=0
+  #   volumes:
+  #     - ./models:/app/.cache/huggingface
+  #     - ./test.jpg:/app/test.jpg:ro
+  #   restart: unless-stopped

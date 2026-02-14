@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="theme-color" content="#ea2a33"/>
+    <link rel="manifest" href="./manifest.json"/>
+    <title>Production - ConnectFiber</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+    <script src="js/config.js?v=7" defer></script>
+    <script src="js/api.js?v=7" defer></script>
+    <script src="js/role-access-control.js?v=1" defer></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ea2a33",
+                        "primary-dark": "#c82229",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#211111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2a2a2a",
+                        "card-light": "#ffffff",
+                        "card-dark": "#2a1a1a",
+                        "text-dark": "#0f172a",
+                        "text-muted": "#64748b",
+                        "border-color": "#e2e8f0"
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Spline Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        .animate-draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 2s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-dark dark:text-white h-screen flex overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="flex w-72 flex-col border-r border-border-color bg-surface-light dark:bg-surface-dark h-full hidden lg:flex shrink-0 transition-all duration-300">
+        <div class="flex flex-col h-full p-4 justify-between">
+            <div class="flex flex-col gap-8">
+                <div class="flex gap-3 items-center px-2">
+                    <div class="size-8 text-primary">
+                        <svg class="w-full h-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+                            <path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">ConnectFiber</h1>
+                        <p class="text-text-muted text-xs font-medium uppercase tracking-wider">Gestion Chantier</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a id="nav-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="dashboard.html">
+                        <span class="material-symbols-outlined text-2xl">dashboard</span>
+                        <span class="text-sm font-medium">Tableau de bord</span>
+                    </a>
+                    <a id="nav-pointage" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="pointage.html">
+                        <span class="material-symbols-outlined text-2xl">timer</span>
+                        <span class="text-sm font-medium">Pointage</span>
+                    </a>
+                    <a id="nav-production" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors bg-primary/10 text-primary" href="production.html">
+                        <span class="material-symbols-outlined text-2xl">factory</span>
+                        <span class="text-sm font-bold">Production</span>
+                    </a>
+                    <a id="nav-personnel" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="personnel.html">
+                        <span class="material-symbols-outlined text-2xl">group</span>
+                        <span class="text-sm font-medium">Personnel</span>
+                    </a>
+                    <a id="nav-planning" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="planif.html">
+                        <span class="material-symbols-outlined text-2xl">calendar_month</span>
+                        <span class="text-sm font-medium">Planning</span>
+                    </a>
+                    <a id="nav-mandat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="mandats.html">
+                        <span class="material-symbols-outlined text-2xl">assignment</span>
+                        <span class="text-sm font-medium">Mandat</span>
+                    </a>
+                    <a id="nav-inventaire" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="inventaire/inventaire.html" target="_blank">
+                        <span class="material-symbols-outlined text-2xl">inventory</span>
+                        <span class="text-sm font-medium">Inventaire</span>
+                    </a>
+                    <a id="nav-parametres" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="parametres.html">
+                        <span class="material-symbols-outlined text-2xl">settings</span>
+                        <span class="text-sm font-medium">Paramètres</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+    
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Header -->
+        <header class="bg-surface-light dark:bg-surface-dark border-b border-[#f4f0f0] dark:border-gray-800 sticky top-0 z-50 shrink-0">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3 lg:hidden">
+                        <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                        <span class="text-lg font-bold text-gray-900 dark:text-white">Veloxnumeric</span>
+                    </div>
+                    <div class="hidden lg:block"></div>
+                    <div class="flex items-center gap-4">
+                        <button class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors relative">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-gray-800"></span>
+                        </button>
+                        <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <p id="userName" class="text-sm font-bold leading-none"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 leading-none mt-1">Admin RH</p>
+                            </div>
+                            <button onclick="logout()" class="size-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                                <span class="material-symbols-outlined text-gray-600 dark:text-gray-300">logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+            <div class="w-full flex flex-col gap-4">
+                <!-- Header Card -->
+                <div class="relative w-full rounded-lg overflow-hidden min-h-[80px] shadow-sm group bg-gradient-to-r from-slate-800 to-slate-600">
+                    <div class="absolute inset-0 flex items-center px-6">
+                        <div class="flex items-center gap-3 flex-1">
+                            <span class="bg-primary/20 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-sm border border-primary/30">ATELIER</span>
+                            <span class="text-white/80 text-xs font-medium flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">schedule</span> 06:00 - 14:00
+                            </span>
+                            <div class="h-4 w-px bg-white/20 mx-2"></div>
+                            <h3 class="text-white text-xl font-bold tracking-tight">Saisie de Production</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPIs -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="bg-white rounded-lg p-3 border border-border-color shadow-sm flex items-center gap-3 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+                        <div class="flex-1 pl-2">
+                            <p class="text-text-muted text-xs font-medium">CHF Total</p>
+                            <div class="flex items-baseline gap-2 mt-0.5">
+                                <h4 id="kpiTotalChf" class="text-text-dark text-xl font-bold">0</h4>
+                                <span class="text-xs text-text-muted">CHF</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-3 border border-border-color shadow-sm flex items-center gap-3">
+                        <div class="flex-1">
+                            <p class="text-text-muted text-xs font-medium">Installations</p>
+                            <div class="flex items-baseline gap-2 mt-0.5">
+                                <h4 id="kpiPieces" class="text-text-dark text-xl font-bold">0</h4>
+                                <span class="text-xs text-text-muted">inst.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-3 border border-border-color shadow-sm flex items-center gap-3">
+                        <div class="flex-1">
+                            <p class="text-text-muted text-xs font-medium">Techniciens Actifs</p>
+                            <div class="flex items-baseline gap-2 mt-0.5">
+                                <h4 id="kpiTechActifs" class="text-text-dark text-xl font-bold">0</h4>
+                                <span class="text-xs text-text-muted">techs</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-3 border border-border-color shadow-sm flex items-center gap-3">
+                        <div class="flex-1">
+                            <p class="text-text-muted text-xs font-medium">Atteinte Objectifs</p>
+                            <div class="flex items-baseline gap-2 mt-0.5">
+                                <h4 id="kpiObjectif" class="text-text-dark text-xl font-bold">0%</h4>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                <div id="kpiObjectifBar" class="bg-primary h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Navigation -->
+                <div class="bg-white rounded-lg shadow-sm border border-border-color p-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button onclick="changeDate(-1)" class="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg flex items-center gap-2 font-bold text-sm transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                            Précédent
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+                            <input type="date" id="dateSelector" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                        </div>
+                        <button onclick="changeDate(1)" class="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg flex items-center gap-2 font-bold text-sm transition-colors">
+                            Suivant
+                            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPIs par Activité -->
+                <div class="bg-white rounded-lg shadow-sm border border-border-color p-3">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">Production par Activité</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                            <p class="text-gray-900 text-xs font-bold uppercase tracking-wide mb-1">Swisscom</p>
+                            <div class="flex items-baseline gap-2">
+                                <h4 id="kpiSwisscom" class="text-gray-900 text-lg font-bold">0</h4>
+                                <span class="text-xs text-gray-700">inst.</span>
+                            </div>
+                            <p id="kpiSwisscomChf" class="text-xs font-bold text-gray-900 mt-1">0 CHF</p>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                            <p class="text-gray-900 text-xs font-bold uppercase tracking-wide mb-1">Swiss4net</p>
+                            <div class="flex items-baseline gap-2">
+                                <h4 id="kpiRea" class="text-gray-900 text-lg font-bold">0</h4>
+                                <span class="text-xs text-gray-700">inst.</span>
+                            </div>
+                            <p id="kpiReaChf" class="text-xs font-bold text-gray-900 mt-1">0 CHF</p>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                            <p class="text-gray-900 text-xs font-bold uppercase tracking-wide mb-1">Col. Montante</p>
+                            <div class="flex items-baseline gap-2">
+                                <h4 id="kpiFtthFr" class="text-gray-900 text-lg font-bold">0</h4>
+                                <span class="text-xs text-gray-700">inst.</span>
+                            </div>
+                            <p id="kpiFtthFrChf" class="text-xs font-bold text-gray-900 mt-1">0 CHF</p>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                            <p class="text-gray-900 text-xs font-bold uppercase tracking-wide mb-1">Rollout</p>
+                            <div class="flex items-baseline gap-2">
+                                <h4 id="kpiSig" class="text-gray-900 text-lg font-bold">0</h4>
+                                <span class="text-xs text-gray-700">inst.</span>
+                            </div>
+                            <p id="kpiSigChf" class="text-xs font-bold text-gray-900 mt-1">0 CHF</p>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                            <p class="text-gray-900 text-xs font-bold uppercase tracking-wide mb-1">Manchon</p>
+                            <div class="flex items-baseline gap-2">
+                                <h4 id="kpiSmartmetering" class="text-gray-900 text-lg font-bold">0</h4>
+                                <span class="text-xs text-gray-700">inst.</span>
+                            </div>
+                            <p id="kpiSmartmeteringChf" class="text-xs font-bold text-gray-900 mt-1">0 CHF</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="bg-white rounded-lg shadow-sm border border-border-color overflow-hidden">
+                    <!-- Search & Actions -->
+                    <div class="p-4 border-b border-border-color flex items-center justify-between">
+                        <div class="relative flex-1 max-w-md">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                            <input type="text" id="searchTech" placeholder="Rechercher un technicien..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary" oninput="filterTable()">
+                        </div>
+                    </div>
+
+                    <!-- Table Header -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b border-border-color">
+                                <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-4 py-3">Technicien</th>
+                                    <th class="px-4 py-3">Prod par Canton</th>
+                                    <th class="px-4 py-3">Total CHF</th>
+                                    <th class="px-4 py-3">Install Total</th>
+                                    <th class="px-4 py-3">On Hold</th>
+                                    <th class="px-4 py-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="techTable" class="divide-y divide-gray-200">
+                                <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="px-4 py-2 border-t border-border-color">
+                        <p class="text-sm text-gray-500">Affichage de <span id="totalCount">0</span> technicien(s)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Interventions -->
+    <div id="interventionModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-surface-dark rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="bg-white dark:bg-surface-dark px-6 pt-5 pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 id="modalTitle" class="text-xl font-bold text-gray-900 dark:text-white">Interventions</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+
+                    <!-- Interventions List -->
+                    <div id="interventionsList" class="space-y-3 mb-4 max-h-60 overflow-y-auto"></div>
+
+                    <!-- Add Intervention Form -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <h4 class="font-bold text-sm text-gray-700 dark:text-gray-300 mb-3">Ajouter une intervention</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Canton</label>
+                                <select id="newCanton" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="VD">Vaud (VD)</option>
+                                    <option value="GE">Genève (GE)</option>
+                                    <option value="VS">Valais (VS)</option>
+                                    <option value="FR">Fribourg (FR)</option>
+                                    <option value="NE">Neuchâtel (NE)</option>
+                                    <option value="JU">Jura (JU)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Activité</label>
+                                <select id="newActivity" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="Swisscom">Swisscom</option>
+                                    <option value="Swiss4net">Swiss4net</option>
+                                    <option value="Col. Montante">Col. Montante</option>
+                                    <option value="Rollout">Rollout</option>
+                                    <option value="Manchon">Manchon</option>
+                                    <option value="Autre">Autre</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Montant CHF</label>
+                                <input type="number" id="newAmount" placeholder="0" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                                <input type="date" id="newDate" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" id="newOnHold" class="rounded">
+                                    <span class="text-gray-700 dark:text-gray-300">En attente (On Hold)</span>
+                                </label>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Notes</label>
+                                <textarea id="newNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm resize-none"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            <button onclick="closeModal()" class="flex-1 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-bold text-sm flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">close</span>
+                                Fermer
+                            </button>
+                            <button onclick="addIntervention()" class="flex-1 py-2 bg-primary hover:bg-red-700 text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">add</span>
+                                Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // currentUser est déjà déclaré dans role-access-control.js
+        // let currentUser = null; // Supprimé pour éviter la duplication
+        let currentTechId = null;
+        let currentDate = new Date().toISOString().split('T')[0];
+        let techniciansData = [];
+        let activityData = {};
+
+        let isChecking = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (isChecking) return;
+            isChecking = true;
+            
+            console.log('🔍 Production - Vérification authentification...');
+            
+            // Attendre que l'API soit prête
+            let attempts = 0;
+            while (!window.VeloxAPI && attempts < 10) {
+                console.log('⏳ API pas encore chargée, attente...', attempts);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (!window.VeloxAPI) {
+                console.error('❌ API VeloxAPI introuvable après 10 tentatives');
+                alert('Erreur: API non chargée. Veuillez recharger la page.');
+                return;
+            }
+            
+            console.log('✅ API chargée, vérification session...');
+            
+            try {
+                const session = await window.VeloxAPI.getSession();
+                console.log('📋 Session:', session);
+                
+                if (!session || !session.user) {
+                    console.log('❌ Pas de session, redirection vers login');
+                    window.location.replace('index.html');
+                    return;
+                }
+                
+                console.log('✅ Session valide, chargement de la page...');
+                currentUser = session.user;
+                document.getElementById('userName').textContent = currentUser.email.split('@')[0];
+                document.getElementById('dateSelector').value = currentDate;
+                document.getElementById('dateSelector').addEventListener('change', (e) => {
+                    currentDate = e.target.value;
+                    fetchData();
+                });
+                
+                fetchData();
+            } catch (error) {
+                console.error('Erreur:', error);
+                window.location.replace('index.html');
+            }
+        });
+
+        async function logout() {
+            await window.VeloxAPI.signOut();
+            window.location.href = 'index.html';
+        }
+
+        async function fetchData() {
+            try {
+                // Fetch technicians
+                const { data: employees, error: empError } = await supabase
+                    .from('employees')
+                    .select('*')
+                    .eq('type', 'Technicien')
+                    .eq('status', 'Actif')
+                    .order('first_name');
+
+                if (empError) throw empError;
+
+                // Fetch interventions for the date
+                const { data: interventions, error: intError } = await supabase
+                    .from('interventions')
+                    .select('*')
+                    .eq('date', currentDate);
+
+                if (intError) throw intError;
+
+                // Calculate stats per technician
+                techniciansData = employees.map(emp => {
+                    const empInterventions = interventions.filter(i => i.employee_id === emp.id);
+                    const totalChf = empInterventions.reduce((sum, i) => sum + parseFloat(i.amount_chf || 0), 0);
+                    const totalInstallations = empInterventions.length;
+                    const totalOnHold = empInterventions.filter(i => i.is_on_hold).length;
+                    
+                    // Group by canton
+                    const cantons = {};
+                    empInterventions.forEach(i => {
+                        if (i.canton) {
+                            cantons[i.canton] = (cantons[i.canton] || 0) + parseFloat(i.amount_chf || 0);
+                        }
+                    });
+                    
+                    return {
+                        id: emp.id,
+                        first_name: emp.first_name,
+                        last_name: emp.last_name,
+                        role: emp.role || 'Technicien',
+                        photo_url: emp.photo_url || `https://ui-avatars.com/api/?name=${emp.first_name}+${emp.last_name}&background=random`,
+                        total_chf: totalChf,
+                        total_installations: totalInstallations,
+                        total_on_hold: totalOnHold,
+                        cantons: cantons
+                    };
+                });
+
+                // Calculate activity stats
+                activityData = {};
+                interventions.forEach(i => {
+                    if (i.activity) {
+                        if (!activityData[i.activity]) {
+                            activityData[i.activity] = { count: 0, chf: 0 };
+                        }
+                        activityData[i.activity].count++;
+                        activityData[i.activity].chf += parseFloat(i.amount_chf || 0);
+                    }
+                });
+
+                renderTable();
+                updateKPIs();
+            } catch (error) {
+                console.error('Erreur chargement:', error);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('techTable');
+            tbody.innerHTML = '';
+
+            techniciansData.forEach(tech => {
+                const totalChf = tech.total_chf || 0;
+                let bgColor = '';
+                if (totalChf === 0) bgColor = 'bg-red-50';
+                else if (totalChf < 450) bgColor = 'bg-red-50';
+                else if (totalChf < 890) bgColor = 'bg-orange-50';
+                else bgColor = 'bg-green-50';
+
+                const cantonStr = Object.entries(tech.cantons).map(([c, amt]) => `${c}: ${amt.toFixed(2)} CHF`).join(', ') || '-';
+
+                const row = document.createElement('tr');
+                row.className = `hover:bg-gray-50 ${bgColor} transition-colors tech-row`;
+                row.dataset.techName = `${tech.first_name} ${tech.last_name}`.toLowerCase();
+                row.dataset.cantons = cantonStr.toLowerCase();
+                row.innerHTML = `
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <img src="${tech.photo_url}" class="w-8 h-8 rounded-full object-cover">
+                            <div>
+                                <p class="font-bold text-sm text-gray-900">${tech.first_name} ${tech.last_name}</p>
+                                <p class="text-xs text-gray-500">${tech.role}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${cantonStr}</td>
+                    <td class="px-4 py-3 text-sm font-bold text-gray-900">${totalChf.toFixed(2)} CHF</td>
+                    <td class="px-4 py-3 text-sm font-bold text-gray-900">${tech.total_installations}</td>
+                    <td class="px-4 py-3 text-sm ${tech.total_on_hold > 0 ? 'text-orange-600 font-bold' : 'text-gray-500'}">${tech.total_on_hold}</td>
+                    <td class="px-4 py-3 text-right">
+                        <button onclick="openModal('${tech.id}', '${tech.first_name} ${tech.last_name}')" class="text-gray-400 hover:text-primary">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('totalCount').innerText = techniciansData.length;
+        }
+
+        function filterTable() {
+            const searchTerm = document.getElementById('searchTech').value.toLowerCase();
+            const rows = document.querySelectorAll('.tech-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const techName = row.dataset.techName;
+                const cantons = row.dataset.cantons;
+                
+                if (techName.includes(searchTerm) || cantons.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            document.getElementById('totalCount').innerText = visibleCount;
+        }
+
+        function updateKPIs() {
+            const totalInstall = techniciansData.reduce((sum, t) => sum + t.total_installations, 0);
+            const totalChf = techniciansData.reduce((sum, t) => sum + (t.total_chf || 0), 0);
+            const activeTechs = techniciansData.filter(t => t.total_installations > 0).length;
+            
+            const objectifTotal = techniciansData.length * 900;
+            const percentObjectif = objectifTotal > 0 ? (totalChf / objectifTotal) * 100 : 0;
+
+            document.getElementById('kpiTotalChf').innerText = totalChf.toFixed(0);
+            document.getElementById('kpiPieces').innerText = totalInstall;
+            document.getElementById('kpiTechActifs').innerText = activeTechs;
+            document.getElementById('kpiObjectif').innerText = percentObjectif.toFixed(1) + '%';
+            document.getElementById('kpiObjectifBar').style.width = Math.min(percentObjectif, 100) + '%';
+
+            // Update activity KPIs
+            const activities = {
+                'Swisscom': activityData['Swisscom'] || { count: 0, chf: 0 },
+                'Swiss4net': activityData['Swiss4net'] || { count: 0, chf: 0 },
+                'Col. Montante': activityData['Col. Montante'] || { count: 0, chf: 0 },
+                'Rollout': activityData['Rollout'] || { count: 0, chf: 0 },
+                'Manchon': activityData['Manchon'] || { count: 0, chf: 0 }
+            };
+
+            document.getElementById('kpiSwisscom').innerText = activities['Swisscom'].count;
+            document.getElementById('kpiSwisscomChf').innerText = activities['Swisscom'].chf.toFixed(2) + ' CHF';
+            
+            document.getElementById('kpiRea').innerText = activities['Swiss4net'].count;
+            document.getElementById('kpiReaChf').innerText = activities['Swiss4net'].chf.toFixed(2) + ' CHF';
+            
+            document.getElementById('kpiFtthFr').innerText = activities['Col. Montante'].count;
+            document.getElementById('kpiFtthFrChf').innerText = activities['Col. Montante'].chf.toFixed(2) + ' CHF';
+            
+            document.getElementById('kpiSig').innerText = activities['Rollout'].count;
+            document.getElementById('kpiSigChf').innerText = activities['Rollout'].chf.toFixed(2) + ' CHF';
+            
+            document.getElementById('kpiSmartmetering').innerText = activities['Manchon'].count;
+            document.getElementById('kpiSmartmeteringChf').innerText = activities['Manchon'].chf.toFixed(2) + ' CHF';
+        }
+
+        async function openModal(techId, techName) {
+            currentTechId = techId;
+            document.getElementById('modalTitle').innerText = `Interventions - ${techName}`;
+            document.getElementById('newDate').value = currentDate;
+            
+            // Load interventions
+            try {
+                const { data: interventions, error } = await supabase
+                    .from('interventions')
+                    .select('*')
+                    .eq('employee_id', techId)
+                    .eq('date', currentDate);
+
+                if (error) throw error;
+                
+                renderInterventions(interventions);
+            } catch (error) {
+                console.error('Erreur chargement interventions:', error);
+            }
+
+            document.getElementById('interventionModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('interventionModal').classList.add('hidden');
+            currentTechId = null;
+            clearForm();
+            fetchData();
+        }
+
+        function renderInterventions(interventions) {
+            const list = document.getElementById('interventionsList');
+            list.innerHTML = '';
+
+            if (interventions.length === 0) {
+                list.innerHTML = '<p class="text-sm text-gray-400 italic text-center py-4">Aucune intervention</p>';
+                return;
+            }
+
+            interventions.forEach(interv => {
+                const div = document.createElement('div');
+                div.className = "p-3 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-start justify-between";
+                div.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold text-primary">${interv.canton || 'N/A'}</span>
+                            ${interv.is_on_hold ? '<span class="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded">On Hold</span>' : ''}
+                        </div>
+                        <p class="text-sm font-bold text-gray-900 dark:text-white">${interv.amount_chf} CHF - ${interv.activity || 'N/A'}</p>
+                        <p class="text-xs text-gray-500">${interv.date}</p>
+                        ${interv.notes ? `<p class="text-xs text-gray-600 mt-1">${interv.notes}</p>` : ''}
+                    </div>
+                    <button onclick="deleteIntervention('${interv.id}')" class="text-red-400 hover:text-red-600">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        async function addIntervention() {
+            try {
+                const data = {
+                    employee_id: currentTechId,
+                    date: document.getElementById('newDate').value,
+                    canton: document.getElementById('newCanton').value,
+                    activity: document.getElementById('newActivity').value,
+                    amount_chf: parseFloat(document.getElementById('newAmount').value) || 0,
+                    is_on_hold: document.getElementById('newOnHold').checked,
+                    notes: document.getElementById('newNotes').value
+                };
+
+                const { error } = await supabase
+                    .from('interventions')
+                    .insert(data);
+
+                if (error) throw error;
+
+                clearForm();
+                
+                // Reload interventions
+                const { data: interventions, error: loadError } = await supabase
+                    .from('interventions')
+                    .select('*')
+                    .eq('employee_id', currentTechId)
+                    .eq('date', currentDate);
+
+                if (loadError) throw loadError;
+                
+                renderInterventions(interventions);
+            } catch (error) {
+                console.error('Erreur ajout:', error);
+                alert('Erreur lors de l\'ajout');
+            }
+        }
+
+        async function deleteIntervention(intervId) {
+            if (!confirm('Supprimer cette intervention ?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('interventions')
+                    .delete()
+                    .eq('id', intervId);
+
+                if (error) throw error;
+                
+                // Reload interventions
+                const { data: interventions, error: loadError } = await supabase
+                    .from('interventions')
+                    .select('*')
+                    .eq('employee_id', currentTechId)
+                    .eq('date', currentDate);
+
+                if (loadError) throw loadError;
+                
+                renderInterventions(interventions);
+            } catch (error) {
+                console.error('Erreur suppression:', error);
+                alert('Erreur lors de la suppression');
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('newCanton').value = '';
+            document.getElementById('newActivity').value = '';
+            document.getElementById('newAmount').value = '';
+            document.getElementById('newNotes').value = '';
+            document.getElementById('newOnHold').checked = false;
+        }
+
+        function changeDate(delta) {
+            const datePicker = document.getElementById('dateSelector');
+            const date = new Date(datePicker.value);
+            date.setDate(date.getDate() + delta);
+            datePicker.value = date.toISOString().split('T')[0];
+            currentDate = datePicker.value;
+            fetchData();
+        }
+
+        // Register Service Worker (cache 74h)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>

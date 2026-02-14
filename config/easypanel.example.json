@@ -1,0 +1,6 @@
+{
+  "hostname": "https://votre-instance.easypanel.host",
+  "apiKey": "votre-cle-api-ici",
+  "timeout": 30000,
+  "verifySSL": true
+}

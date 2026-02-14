@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="refresh" content="0; url=collaborateurs.html">
+<title>Redirection...</title>
+<script>
+  window.location.href = "collaborateurs.html";
+</script>
+</head>
+<body>
+<p>Redirection vers la page Collaborateurs...</p>
+</body>
+</html>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B700%3B900&family=Noto+Sans%3Awght%40400%3B500%3B700%3B900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://sql.js.org/dist/sql-wasm.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#137fec",
+          "background-light": "#f6f7f8",
+          "background-dark": "#101922",
+        },
+        fontFamily: {
+          display: ["Inter"],
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      },
+    },
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+<div id="loading"></div>
+
+<div id="main-content" style="display: none;" class="flex flex-col min-h-screen">
+  <!-- Navigation bar horizontale -->
+  <nav class="bg-white dark:bg-background-dark/50 border-b border-gray-200 dark:border-gray-800">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <!-- Logo à gauche -->
+      <div class="flex items-center gap-3">
+        <img id="logo" src="" alt="Logo" class="h-8 w-auto" onerror="this.style.display='none'" />
+        <span class="text-xl font-bold text-primary">Gestionnaire de Stock</span>
+      </div>
+      
+      <!-- Menu du milieu -->
+      <div class="flex items-center gap-1">
+        <a href="inventaire.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">warehouse</span>
+          <span>Inventaire</span>
+        </a>
+        <a href="technicien.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">group</span>
+          <span>Technicien</span>
+        </a>
+        <a href="vehicule.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span>Véhicule</span>
+        </a>
+        <a href="commandes.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <span>Commandes</span>
+        </a>
+      </div>
+      
+      <!-- Profil utilisateur à droite -->
+      <div class="flex items-center gap-3 relative group">
+        <div class="text-right">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">Jean-Christophe Normand</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Administrateur</p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-lg transition-shadow">
+          JCN
+        </div>
+        
+        <!-- Menu déroulant -->
+        <div class="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-background-dark/50 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 hidden group-hover:block z-50">
+          <a href="parametres.html" class="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 rounded-t-lg flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">settings</span>
+            <span>Paramètres</span>
+          </a>
+          <div class="border-t border-gray-200 dark:border-gray-700"></div>
+          <button class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-b-lg flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">logout</span>
+            <span>Déconnexion</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <main class="flex-1 p-8">
+    <header class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Technicien</h1>
+      <button id="add-btn" class="bg-primary text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+        <span class="material-symbols-outlined">add</span>
+        Ajouter un article
+      </button>
+    </header>
+    
+    <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-primary/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-primary">inventory_2</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Total Articles</p>
+          <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-green-500/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-green-500">check_circle</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">En stock</p>
+          <p id="stat-ok" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-orange-500/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-orange-500">warning</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Seuil bas</p>
+          <p id="stat-low" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-red-500/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-red-500">dangerous</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Hors stock</p>
+          <p id="stat-empty" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-blue-500/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-blue-500">account_balance_wallet</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Valeur totale</p>
+          <p id="stat-total-value" class="text-2xl font-bold text-gray-900 dark:text-white">0.00 CHF</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+        <input id="search-input" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 dark:text-white" placeholder="Rechercher par référence, nom, catégorie ou fournisseur..." type="text"/>
+      </div>
+    </div>
+    
+    <div class="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+          <thead class="text-xs text-gray-700 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50">
+            <tr>
+              <th class="px-6 py-3" scope="col">Photo</th>
+              <th class="px-6 py-3" scope="col">Référence</th>
+              <th class="px-6 py-3" scope="col">Nom</th>
+              <th class="px-6 py-3" scope="col">Catégorie</th>
+              <th class="px-6 py-3" scope="col">Fournisseur</th>
+              <th class="px-6 py-3 text-center" scope="col">Quantité</th>
+              <th class="px-6 py-3 text-center" scope="col">Seuil</th>
+              <th class="px-6 py-3 text-center" scope="col">Prix unitaire (CHF)</th>
+              <th class="px-6 py-3 text-center" scope="col">Prix total (CHF)</th>
+              <th class="px-6 py-3 text-center" scope="col">Recommandé</th>
+              <th class="px-6 py-3 text-right" scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal (identique à inventaire.html, juste changer la table dans le JS) -->
+<div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-background-dark rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-6">
+      <h2 id="modal-title" class="text-2xl font-bold text-gray-900 dark:text-white">Ajouter un article</h2>
+      <button id="close-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form id="item-form" class="space-y-4">
+      <input type="hidden" id="item-id" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Référence *</label>
+          <input type="text" id="reference" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom *</label>
+          <input type="text" id="name" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Catégorie *</label>
+          <select id="category" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="Outils">Outils</option>
+            <option value="Consommables">Consommables</option>
+            <option value="Équipement">Équipement</option>
+            <option value="Pièces détachées">Pièces détachées</option>
+            <option value="Autres">Autres</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fournisseur</label>
+          <input type="text" id="supplier" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Nom du fournisseur" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix unitaire (CHF) *</label>
+          <input type="number" id="price" required min="0" step="0.01" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" placeholder="0.00" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantité *</label>
+          <input type="number" id="quantity" required min="0" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Seuil de sécurité *</label>
+          <input type="number" id="threshold" required min="0" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Besoin mensuel</label>
+          <input type="number" id="monthly_need" min="0" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Besoin hebdomadaire</label>
+          <input type="number" id="weekly_need" min="0" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Photo (URL)</label>
+        <input type="url" id="photo" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        <div id="preview-container" class="mt-2 hidden">
+          <img id="photo-preview" class="w-20 h-20 rounded-lg object-cover" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lien vers le site</label>
+        <input type="url" id="website_url" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://..." />
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="submit" class="flex-1 bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary/90">
+          Enregistrer
+        </button>
+        <button type="button" id="cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600">
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/database.js"></script>
+<script>
+// Le code JavaScript est identique à inventaire.html sauf que table = 'technicien'
+const TABLE_NAME = 'technicien';
+
+async function loadData() {
+  const db = getDB();
+  if (!db) return;
+  
+  try {
+    const results = db.exec(`SELECT * FROM ${TABLE_NAME} ORDER BY id DESC`);
+    
+    const data = results.length > 0 ? results[0].values.map(row => ({
+      id: row[0],
+      reference: row[1],
+      name: row[2],
+      category: row[3] || 'Outils',
+      supplier: row[4] || '',
+      price: row[5] || 0,
+      quantity: row[6] || 0,
+      threshold: row[7] || 0,
+      photo: row[8] || null,
+      website_url: row[9] || null,
+      monthly_need: row[10] || 0,
+      weekly_need: row[11] || 0
+    })) : [];
+    
+    renderTable(data);
+    updateStats(data);
+  } catch (error) {
+    console.error('Erreur lors du chargement des données:', error);
+  }
+}
+
+function calculateRecommended(quantity, threshold, monthly_need, weekly_need) {
+  const recommended = Math.max(threshold, quantity + monthly_need);
+  return recommended;
+}
+
+function getStatusColor(quantity, threshold) {
+  if (quantity === 0) return 'bg-red-500';
+  if (quantity <= threshold) return 'bg-orange-500';
+  return 'bg-green-500';
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  
+  if (data.length === 0) {
+    tbody.innerHTML = `
+      <tr class="bg-white dark:bg-background-dark/50">
+        <td colspan="11" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+          Aucun élément trouvé. Cliquez sur "Ajouter un article" pour commencer.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  data.forEach(item => {
+    const statusColor = getStatusColor(item.quantity, item.threshold);
+    const tr = document.createElement('tr');
+    tr.className = 'bg-white dark:bg-background-dark/50 border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50';
+    tr.innerHTML = `
+      <td class="px-6 py-4">
+        <img src="${item.photo || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22 fill=%22%23999%22%3E?%3C/text%3E%3C/svg%3E'}" alt="${item.name}" class="w-10 h-10 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22 fill=%22%23999%22%3E?%3C/text%3E%3C/svg%3E'" onclick="openProductWebsite('${item.website_url || ''}', '${item.name}')" title="${item.website_url ? 'Cliquer pour ouvrir le site du produit' : 'Aucun lien disponible'}" />
+      </td>
+      <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">${item.reference}</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.name}</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.category || 'Outils'}</td>
+      <td class="px-6 py-4 text-gray-700 dark:text-gray-300">${item.supplier || '-'}</td>
+      <td class="px-6 py-4 text-center">
+        <span class="text-gray-900 dark:text-white font-medium">${item.quantity}</span>
+      </td>
+      <td class="px-6 py-4 text-center">
+        <span class="inline-flex items-center justify-center gap-2">
+          <span class="h-2.5 w-2.5 rounded-full ${statusColor}"></span>
+          <span class="text-gray-700 dark:text-gray-300">${item.threshold}</span>
+        </span>
+      </td>
+      <td class="px-6 py-4 text-center text-gray-700 dark:text-gray-300">${item.price ? item.price.toFixed(2) : '0.00'}</td>
+      <td class="px-6 py-4 text-center text-gray-700 dark:text-gray-300 font-medium">${((item.price || 0) * (item.quantity || 0)).toFixed(2)}</td>
+      <td class="px-6 py-4 text-center text-gray-700 dark:text-gray-300">${calculateRecommended(item.quantity, item.threshold, item.monthly_need, item.weekly_need)}</td>
+      <td class="px-6 py-4 text-right space-x-2">
+        <button onclick="editItem(${item.id})" class="text-primary hover:underline">
+          <span class="material-symbols-outlined text-base align-middle">edit</span>
+        </button>
+        <button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700">
+          <span class="material-symbols-outlined text-base align-middle">delete</span>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateStats(data) {
+  const total = data.length;
+  let ok = 0, low = 0, empty = 0;
+  let totalValue = 0;
+  
+  data.forEach(item => {
+    const itemValue = (item.price || 0) * (item.quantity || 0);
+    totalValue += itemValue;
+    
+    if (item.quantity === 0) {
+      empty++;
+    } else if (item.quantity <= item.threshold) {
+      low++;
+    } else {
+      ok++;
+    }
+  });
+  
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-ok').textContent = ok;
+  document.getElementById('stat-low').textContent = low;
+  document.getElementById('stat-empty').textContent = empty;
+  document.getElementById('stat-total-value').textContent = totalValue.toFixed(2) + ' CHF';
+}
+
+function openProductWebsite(url, productName) {
+  if (url && url.trim()) {
+    let finalUrl = url.trim();
+    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      finalUrl = 'https://' + finalUrl;
+    }
+    window.open(finalUrl, '_blank', 'noopener,noreferrer');
+  } else {
+    alert(`Aucun lien disponible pour le produit "${productName}".`);
+  }
+}
+
+const modal = document.getElementById('modal');
+const addBtn = document.getElementById('add-btn');
+const closeModal = document.getElementById('close-modal');
+const cancelBtn = document.getElementById('cancel-btn');
+const itemForm = document.getElementById('item-form');
+
+addBtn.addEventListener('click', () => {
+  document.getElementById('modal-title').textContent = 'Ajouter un article';
+  itemForm.reset();
+  document.getElementById('item-id').value = '';
+  document.getElementById('preview-container').classList.add('hidden');
+  modal.classList.remove('hidden');
+});
+
+closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+document.getElementById('photo').addEventListener('input', (e) => {
+  const url = e.target.value;
+  if (url) {
+    document.getElementById('photo-preview').src = url;
+    document.getElementById('preview-container').classList.remove('hidden');
+  } else {
+    document.getElementById('preview-container').classList.add('hidden');
+  }
+});
+
+itemForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  
+  const db = getDB();
+  if (!db) return;
+  
+  const data = {
+    reference: document.getElementById('reference').value.trim(),
+    name: document.getElementById('name').value.trim(),
+    category: document.getElementById('category').value,
+    supplier: document.getElementById('supplier').value.trim(),
+    price: parseFloat(document.getElementById('price').value) || 0,
+    quantity: parseInt(document.getElementById('quantity').value),
+    threshold: parseInt(document.getElementById('threshold').value),
+    photo: document.getElementById('photo').value.trim() || null,
+    website_url: document.getElementById('website_url').value.trim() || null,
+    monthly_need: parseInt(document.getElementById('monthly_need').value) || 0,
+    weekly_need: parseInt(document.getElementById('weekly_need').value) || 0,
+    id: document.getElementById('item-id').value
+  };
+  
+  try {
+    if (data.id) {
+      db.run(
+        `UPDATE ${TABLE_NAME} SET reference = ?, name = ?, category = ?, supplier = ?, price = ?, quantity = ?, threshold = ?, photo = ?, website_url = ?, monthly_need = ?, weekly_need = ? WHERE id = ?`,
+        [data.reference, data.name, data.category, data.supplier, data.price, data.quantity, data.threshold, data.photo, data.website_url, data.monthly_need, data.weekly_need, data.id]
+      );
+    } else {
+      db.run(
+        `INSERT INTO ${TABLE_NAME} (reference, name, category, supplier, price, quantity, threshold, photo, website_url, monthly_need, weekly_need) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [data.reference, data.name, data.category, data.supplier, data.price, data.quantity, data.threshold, data.photo, data.website_url, data.monthly_need, data.weekly_need]
+      );
+    }
+    
+    saveDB();
+    loadData();
+    modal.classList.add('hidden');
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur: ' + error.message);
+  }
+});
+
+function editItem(id) {
+  const db = getDB();
+  if (!db) return;
+  
+  try {
+    const results = db.exec(`SELECT * FROM ${TABLE_NAME} WHERE id = ?`, [id]);
+    if (results.length > 0) {
+      const item = results[0].values[0];
+      
+      document.getElementById('modal-title').textContent = 'Modifier l\'article';
+      document.getElementById('item-id').value = item[0];
+      document.getElementById('reference').value = item[1];
+      document.getElementById('name').value = item[2];
+      document.getElementById('category').value = item[3] || 'Outils';
+      document.getElementById('supplier').value = item[4] || '';
+      document.getElementById('price').value = item[5] || 0;
+      document.getElementById('quantity').value = item[6];
+      document.getElementById('threshold').value = item[7];
+      document.getElementById('photo').value = item[8] || '';
+      document.getElementById('website_url').value = item[9] || '';
+      document.getElementById('monthly_need').value = item[10] || 0;
+      document.getElementById('weekly_need').value = item[11] || 0;
+      
+      if (item[8]) {
+        document.getElementById('photo-preview').src = item[8];
+        document.getElementById('preview-container').classList.remove('hidden');
+      }
+      
+      modal.classList.remove('hidden');
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+  }
+}
+
+function deleteItem(id) {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
+    const db = getDB();
+    if (!db) return;
+    
+    try {
+      db.run(`DELETE FROM ${TABLE_NAME} WHERE id = ?`, [id]);
+      saveDB();
+      loadData();
+    } catch (error) {
+      console.error('Erreur:', error);
+    }
+  }
+}
+
+document.getElementById('search-input').addEventListener('input', (e) => {
+  const searchTerm = e.target.value.toLowerCase();
+  const db = getDB();
+  if (!db) return;
+  
+  try {
+    const results = db.exec(`SELECT * FROM ${TABLE_NAME} ORDER BY id DESC`);
+    const data = results.length > 0 ? results[0].values.map(row => ({
+      id: row[0], reference: row[1], name: row[2], category: row[3],
+      supplier: row[4], price: row[5], quantity: row[6], threshold: row[7],
+      photo: row[8], website_url: row[9], monthly_need: row[10] || 0, weekly_need: row[11] || 0
+    })) : [];
+    
+    const filtered = data.filter(item => 
+      item.reference.toLowerCase().includes(searchTerm) ||
+      item.name.toLowerCase().includes(searchTerm) ||
+      (item.category && item.category.toLowerCase().includes(searchTerm)) ||
+      (item.supplier && item.supplier.toLowerCase().includes(searchTerm))
+    );
+    
+    renderTable(filtered);
+    updateStats(data);
+  } catch (error) {
+    console.error('Erreur:', error);
+  }
+});
+
+// Activer le lien actif dans la navbar
+function activateNavLink() {
+  const currentPage = window.location.pathname.split('/').pop() || 'technicien.html';
+  document.querySelectorAll('.nav-link').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href === currentPage) {
+      link.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+    } else {
+      link.classList.remove('bg-primary/10', 'text-primary', 'font-medium');
+    }
+  });
+}
+
+// Charger le logo depuis localStorage
+function loadLogo() {
+  const logoUrl = localStorage.getItem('company_logo_url') || '';
+  if (logoUrl) {
+    document.getElementById('logo').src = logoUrl;
+  }
+}
+
+loadLogo();
+activateNavLink();
+initDB().then(loadData);
+</script>
+
+</body>
+</html>

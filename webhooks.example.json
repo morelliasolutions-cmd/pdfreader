@@ -1,0 +1,38 @@
+{
+  "expense": {
+    "description_fr": "Note de frais",
+    "page_associee": "acceuil_Personnel.html",
+    "url": "https://velox-n8n.yhmr4j.easypanel.host/webhook-test/d056056b-764f-4aff-a551-3e1091661654",
+    "headers": {
+      "Authorization": "Basic TW9yZWxsaWEyOTplb2YtaW9naDB3LmVnamgwMzI=",
+      "Content-Type": "application/json"
+    }
+  },
+  "accident": {
+    "description_fr": "Signalement d'accident",
+    "page_associee": "acceuil_Personnel.html",
+    "url": "https://velox-n8n.yhmr4j.easypanel.host/webhook-test/d056056b-764f-4aff-a551-3e1091661654",
+    "headers": {
+      "Authorization": "Basic TW9yZWxsaWEyOTplb2YtaW9naDB3LmVnamgwMzI=",
+      "Content-Type": "application/json"
+    }
+  },
+  "breakdown": {
+    "description_fr": "Déclaration de panne",
+    "page_associee": "acceuil_Personnel.html",
+    "url": "https://velox-n8n.yhmr4j.easypanel.host/webhook-test/d056056b-764f-4aff-a551-3e1091661654",
+    "headers": {
+      "Authorization": "Basic TW9yZWxsaWEyOTplb2YtaW9naDB3LmVnamgwMzI=",
+      "Content-Type": "application/json"
+    }
+  },
+  "timesheet_sign": {
+    "description_fr": "Notification signature du pointage mensuel",
+    "page_associee": "acceuil_Personnel.html",
+    "url": "https://velox-n8n.yhmr4j.easypanel.host/webhook-test/d056056b-764f-4aff-a551-3e1091661654",
+    "headers": {
+      "Authorization": "Basic TW9yZWxsaWEyOTplb2YtaW9naDB3LmVnamgwMzI=",
+      "Content-Type": "application/json"
+    }
+  }
+}

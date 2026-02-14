@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ea2a33"/>
+    <link rel="manifest" href="./manifest.json"/>
+    <title>Création Utilisateur - Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+    <script src="js/config.js?v=7" defer></script>
+    <script src="js/api.js?v=7" defer></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h1 class="text-3xl font-bold mb-6 text-gray-800">👤 Création d'un Nouvel Utilisateur</h1>
+            
+            <!-- Messages -->
+            <div id="messages" class="mb-6"></div>
+            
+            <!-- Formulaire -->
+            <form id="createUserForm" class="space-y-6">
+                <!-- Informations de connexion -->
+                <div class="border-b pb-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">🔐 Informations de Connexion</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                            <input type="email" id="email" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="utilisateur@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe *</label>
+                            <input type="password" id="password" required minlength="6"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Minimum 6 caractères">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Informations employé -->
+                <div class="border-b pb-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">👔 Informations Employé</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Prénom *</label>
+                            <input type="text" id="first_name" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Jean">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nom *</label>
+                            <input type="text" id="last_name" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Dupont">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Type *</label>
+                            <select id="type" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Sélectionner...</option>
+                                <option value="Technicien">Technicien</option>
+                                <option value="Bureau">Bureau</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Rôle dans l'entreprise *</label>
+                            <input type="text" id="role_employee" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="ex: Technicien, Chef de chantier, etc.">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Statut *</label>
+                            <select id="status" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="Actif">Actif</option>
+                                <option value="Inactif">Inactif</option>
+                                <option value="Maladie">Maladie</option>
+                                <option value="En congé">En congé</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date de début</label>
+                            <input type="date" id="start_date"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jours de congé</label>
+                            <input type="number" id="vacation_days" min="0" max="50" value="25"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rôle système -->
+                <div class="border-b pb-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">🔑 Rôle Système</h2>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Rôle d'accès *</label>
+                        <select id="role_system" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Sélectionner...</option>
+                            <option value="admin">Admin</option>
+                            <option value="chef_chantier">Chef de chantier</option>
+                            <option value="dispatcher">Dispatcher</option>
+                            <option value="technicien">Technicien</option>
+                            <option value="direction">Direction</option>
+                        </select>
+                        <p class="text-sm text-gray-500 mt-2">
+                            Le rôle détermine les permissions dans l'application
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Boutons -->
+                <div class="flex gap-4">
+                    <button type="submit" 
+                        class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        ✅ Créer l'utilisateur
+                    </button>
+                    <button type="button" onclick="window.location.href='dashboard.html'"
+                        class="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                        ← Retour
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Liste des utilisateurs existants -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">📋 Utilisateurs existants</h2>
+            <div id="usersList" class="text-gray-500">Chargement...</div>
+        </div>
+    </div>
+
+    <script>
+        let api;
+        
+        // Fonction pour obtenir les valeurs Supabase (évite la redéclaration)
+        function getSupabaseConfig() {
+            return {
+                url: window.SUPABASE_CONFIG?.url || 'https://wdurkaelytgjbcsmkzgb.supabase.co',
+                anonKey: window.SUPABASE_CONFIG?.anonKey || ''
+            };
+        }
+        
+        // Initialiser l'API
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Attendre que Supabase soit initialisé
+            let attempts = 0;
+            while ((!window.supabase || typeof window.supabase.createClient !== 'function') && attempts < 20) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (!window.supabase) {
+                showMessage('Erreur: Supabase non initialisé', 'error');
+                return;
+            }
+            
+            api = new VeloxAPI();
+            
+            // Vérifier que l'utilisateur est admin
+            await checkAdminAccess();
+            
+            // Charger la liste des utilisateurs
+            loadUsersList();
+        });
+        
+        // Vérifier l'accès admin
+        async function checkAdminAccess() {
+            try {
+                const session = await api.getSession();
+                if (!session) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                // Vérifier le rôle
+                const { data: roleData } = await window.supabase
+                    .from('user_roles')
+                    .select('role')
+                    .eq('user_id', session.user.id)
+                    .single();
+                
+                if (!roleData || roleData.role !== 'admin') {
+                    showMessage('Accès refusé: Vous devez être administrateur', 'error');
+                    setTimeout(() => window.location.href = 'dashboard.html', 2000);
+                }
+            } catch (error) {
+                console.error('Erreur vérification admin:', error);
+                showMessage('Erreur de vérification des permissions', 'error');
+            }
+        }
+        
+        // Gérer la soumission du formulaire
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Création en cours...';
+            
+            try {
+                const formData = {
+                    email: document.getElementById('email').value.trim(),
+                    password: document.getElementById('password').value,
+                    first_name: document.getElementById('first_name').value.trim(),
+                    last_name: document.getElementById('last_name').value.trim(),
+                    type: document.getElementById('type').value,
+                    role_employee: document.getElementById('role_employee').value.trim(),
+                    status: document.getElementById('status').value,
+                    start_date: document.getElementById('start_date').value || null,
+                    vacation_days: parseInt(document.getElementById('vacation_days').value) || 25,
+                    role_system: document.getElementById('role_system').value
+                };
+                
+                await createUser(formData);
+                
+                // Réinitialiser le formulaire
+                e.target.reset();
+                showMessage('✅ Utilisateur créé avec succès !', 'success');
+                
+                // Recharger la liste
+                loadUsersList();
+                
+            } catch (error) {
+                console.error('Erreur création utilisateur:', error);
+                showMessage(`❌ Erreur: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Créer l\'utilisateur';
+            }
+        });
+        
+        // Créer l'utilisateur
+        async function createUser(formData) {
+            // ⚠️ IMPORTANT: Cette fonction utilise l'API Supabase directement
+            // Pour la production, utilisez l'Edge Function créée dans supabase_functions/create-user/
+            
+            // Option 1: Utiliser l'Edge Function (recommandé)
+            try {
+                const session = await api.getSession();
+                if (!session) throw new Error('Non authentifié');
+                
+                const config = getSupabaseConfig();
+                const response = await fetch(`${config.url}/functions/v1/create-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': config.anonKey
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Erreur lors de la création');
+                }
+                
+                return result;
+            } catch (error) {
+                // Si l'Edge Function n'existe pas, utiliser la méthode directe (nécessite SERVICE_ROLE_KEY)
+                console.warn('Edge Function non disponible, utilisation méthode directe');
+                
+                // ⚠️ ATTENTION: Cette méthode nécessite la SERVICE_ROLE_KEY
+                // Demander la SERVICE_ROLE_KEY à l'utilisateur (une seule fois)
+                let serviceRoleKey = sessionStorage.getItem('service_role_key');
+                
+                if (!serviceRoleKey) {
+                    serviceRoleKey = prompt(
+                        '⚠️ Entrez la SERVICE_ROLE_KEY pour créer des utilisateurs.\n' +
+                        'Vous pouvez la trouver dans Supabase Studio > Settings > API\n' +
+                        '(Cette clé sera stockée temporairement dans sessionStorage)'
+                    );
+                    
+                    if (!serviceRoleKey) {
+                        throw new Error('SERVICE_ROLE_KEY requise pour créer des utilisateurs');
+                    }
+                    
+                    sessionStorage.setItem('service_role_key', serviceRoleKey);
+                }
+                
+                // Créer un client Supabase avec SERVICE_ROLE_KEY
+                // Utiliser l'API REST directement pour créer l'utilisateur
+                
+                // 1. Créer l'utilisateur via l'API admin Supabase
+                const config = getSupabaseConfig();
+                const createUserResponse = await fetch(`${config.url}/auth/v1/admin/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${serviceRoleKey}`,
+                        'apikey': serviceRoleKey
+                    },
+                    body: JSON.stringify({
+                        email: formData.email,
+                        password: formData.password,
+                        email_confirm: true,
+                        user_metadata: {
+                            first_name: formData.first_name,
+                            last_name: formData.last_name
+                        }
+                    })
+                });
+                
+                if (!createUserResponse.ok) {
+                    const error = await createUserResponse.json().catch(() => ({ message: 'Erreur inconnue' }));
+                    throw new Error(`Erreur création utilisateur: ${error.message || error.error_description || 'Erreur HTTP ' + createUserResponse.status}`);
+                }
+                
+                const authData = await createUserResponse.json();
+                const userId = authData.id;
+                
+                // Créer un client Supabase avec SERVICE_ROLE_KEY pour les opérations sur les tables
+                const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+                const supabaseAdmin = createClient(config.url, serviceRoleKey);
+                
+                // 2. Créer l'employé
+                const { data: employeeData, error: employeeError } = await supabaseAdmin
+                    .from('employees')
+                    .insert({
+                        id: userId,
+                        email: formData.email,
+                        first_name: formData.first_name,
+                        last_name: formData.last_name,
+                        type: formData.type,
+                        role: formData.role_employee,
+                        status: formData.status,
+                        start_date: formData.start_date || new Date().toISOString().split('T')[0],
+                        vacation_days: formData.vacation_days || 25
+                    })
+                    .select()
+                    .single();
+                
+                if (employeeError) {
+                    // Si existe déjà, mettre à jour
+                    if (employeeError.code === '23505') {
+                        const { error: updateError } = await supabaseAdmin
+                            .from('employees')
+                            .update({
+                                email: formData.email,
+                                first_name: formData.first_name,
+                                last_name: formData.last_name,
+                                type: formData.type,
+                                role: formData.role_employee,
+                                status: formData.status,
+                                start_date: formData.start_date || new Date().toISOString().split('T')[0],
+                                vacation_days: formData.vacation_days || 25
+                            })
+                            .eq('id', userId);
+                        
+                        if (updateError) throw new Error(`Erreur mise à jour employé: ${updateError.message}`);
+                    } else {
+                        throw new Error(`Erreur création employé: ${employeeError.message}`);
+                    }
+                }
+                
+                // 3. Créer le rôle
+                const { data: roleData, error: roleError } = await supabaseAdmin
+                    .from('user_roles')
+                    .insert({
+                        user_id: userId,
+                        employee_id: userId,
+                        role: formData.role_system
+                    })
+                    .select()
+                    .single();
+                
+                if (roleError) {
+                    // Si existe déjà, mettre à jour
+                    if (roleError.code === '23505') {
+                        const { error: updateRoleError } = await supabaseAdmin
+                            .from('user_roles')
+                            .update({ role: formData.role_system })
+                            .eq('user_id', userId);
+                        
+                        if (updateRoleError) throw new Error(`Erreur mise à jour rôle: ${updateRoleError.message}`);
+                    } else {
+                        throw new Error(`Erreur création rôle: ${roleError.message}`);
+                    }
+                }
+                
+                return {
+                    success: true,
+                    user_id: userId,
+                    email: formData.email
+                };
+            }
+        }
+        
+        // Charger la liste des utilisateurs
+        async function loadUsersList() {
+            try {
+                const { data: employees, error } = await window.supabase
+                    .from('employees')
+                    .select('id, first_name, last_name, email, role, status, type')
+                    .order('last_name');
+                
+                if (error) throw error;
+                
+                const { data: userRoles, error: rolesError } = await window.supabase
+                    .from('user_roles')
+                    .select('user_id, role');
+                
+                if (rolesError) throw rolesError;
+                
+                const rolesMap = new Map(userRoles.map(ur => [ur.user_id, ur.role]));
+                
+                const html = employees.length > 0 
+                    ? `
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rôle Système</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${employees.map(emp => `
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap">${emp.first_name} ${emp.last_name}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap">${emp.email || '-'}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap">${emp.type}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap">
+                                                <span class="px-2 py-1 text-xs rounded-full ${rolesMap.get(emp.id) === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                                                    ${rolesMap.get(emp.id) || 'Aucun'}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap">${emp.status}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `
+                    : '<p class="text-gray-500">Aucun utilisateur trouvé</p>';
+                
+                document.getElementById('usersList').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur chargement utilisateurs:', error);
+                document.getElementById('usersList').innerHTML = `<p class="text-red-500">Erreur: ${error.message}</p>`;
+            }
+        }
+        
+        // Afficher un message
+        function showMessage(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `p-4 rounded-lg mb-4 ${type}`;
+            messageDiv.textContent = message;
+            messagesDiv.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

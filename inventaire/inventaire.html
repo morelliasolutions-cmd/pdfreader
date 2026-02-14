@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventaire - Gestionnaire de Stock</title>
+<link rel="preconnect" href="https://fonts.gstatic.com/">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B700%3B900&family=Noto+Sans%3Awght%40400%3B500%3B700%3B900">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js?v=8"></script>
+<script src="../js/api.js?v=8"></script>
+<script src="../js/role-access-control.js?v=1"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#137fec",
+          "background-light": "#f6f7f8",
+          "background-dark": "#101922",
+        },
+        fontFamily: {
+          display: ["Inter"],
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      },
+    },
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+<div id="loading"></div>
+
+<div id="main-content" style="display: none;" class="flex flex-col min-h-screen">
+  <!-- Navigation bar horizontale -->
+  <nav class="bg-white dark:bg-background-dark/50 border-b border-gray-200 dark:border-gray-800">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <!-- Logo à gauche -->
+      <div class="flex items-center gap-3">
+        <span class="text-xl font-bold text-primary">Gestionnaire de Stock</span>
+      </div>
+      
+      <!-- Menu du milieu -->
+      <div class="flex items-center gap-1">
+        <a href="inventaire.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">warehouse</span>
+          <span>Inventaire</span>
+        </a>
+        <a href="technicien.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">group</span>
+          <span>Technicien</span>
+        </a>
+        <a href="vehicule.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span>Véhicules</span>
+        </a>
+        <a href="commandes.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <span>Commandes</span>
+        </a>
+      </div>
+      
+      <!-- Droite: Profil utilisateur -->
+      <div class="flex items-center gap-3">
+        <!-- Profil utilisateur à droite -->
+        <div class="flex items-center gap-3 relative">
+          <div class="text-right">
+            <p id="user-name" class="text-sm font-medium text-gray-900 dark:text-white">Chargement...</p>
+            <p id="user-role" class="text-xs text-gray-500 dark:text-gray-400">Utilisateur</p>
+          </div>
+          <div id="profile-btn" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-lg transition-shadow">
+            <span id="user-initials">...</span>
+          </div>
+          
+          <!-- Menu déroulant -->
+          <div id="profile-menu" class="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-background-dark/50 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 hidden z-50">
+            <a href="parametres.html" class="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 rounded-t-lg flex items-center gap-2 transition-colors">
+              <span class="material-symbols-outlined text-base">settings</span>
+              <span>Paramètres</span>
+            </a>
+            <div class="border-t border-gray-200 dark:border-gray-700"></div>
+            <button class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-b-lg flex items-center gap-2 transition-colors">
+              <span class="material-symbols-outlined text-base">logout</span>
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <main class="flex-1 p-8">
+    <header class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Inventaire</h1>
+      <div class="flex items-center gap-3">
+        <!-- Sélecteur de dépôt -->
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Dépôt actif :</label>
+          <select id="depot-selector" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="">Chargement...</option>
+          </select>
+        </div>
+        <button id="export-excel-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors">
+          <span class="material-symbols-outlined">download</span>
+          Exporter Excel
+        </button>
+        <button id="add-btn" class="bg-primary text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+          <span class="material-symbols-outlined">add</span>
+          Ajouter un article
+        </button>
+      </div>
+    </header>
+    
+    <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-primary/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-primary">inventory_2</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Total Articles</p>
+          <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-green-500/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-green-500">check_circle</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">En stock</p>
+          <p id="stat-ok" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-orange-500/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-orange-500">warning</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Seuil bas</p>
+          <p id="stat-low" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-red-500/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-red-500">dangerous</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Hors stock</p>
+          <p id="stat-empty" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm flex items-center gap-4">
+        <div class="bg-blue-500/10 p-3 rounded-full">
+          <span class="material-symbols-outlined text-blue-500">account_balance_wallet</span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Valeur totale</p>
+          <p id="stat-total-value" class="text-2xl font-bold text-gray-900 dark:text-white">0.00 CHF</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+        <input id="search-input" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 dark:text-white" placeholder="Rechercher par référence, nom, catégorie ou fournisseur..." type="text"/>
+      </div>
+    </div>
+    
+    <div class="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+          <thead class="text-xs text-gray-700 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50">
+            <tr>
+              <th class="px-6 py-3" scope="col">Photo</th>
+              <th class="px-6 py-3" scope="col">Référence</th>
+              <th class="px-6 py-3" scope="col">Nom</th>
+              <th class="px-6 py-3" scope="col">Catégorie</th>
+              <th class="px-6 py-3" scope="col">Fournisseur</th>
+              <th class="px-6 py-3 text-center" scope="col">Quantité</th>
+              <th class="px-6 py-3 text-center" scope="col">Voulu</th>
+              <th class="px-6 py-3 text-center" scope="col">Prix unitaire (CHF)</th>
+              <th class="px-6 py-3 text-center" scope="col">Prix total (CHF)</th>
+              <th class="px-6 py-3 text-center" scope="col">Recommandé</th>
+              <th class="px-6 py-3 text-right" scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal d'ajout/modification -->
+<div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-background-dark rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-6">
+      <h2 id="modal-title" class="text-2xl font-bold text-gray-900 dark:text-white">Ajouter un article</h2>
+      <button id="close-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form id="item-form" class="space-y-4">
+      <input type="hidden" id="item-id" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Référence *</label>
+          <input type="text" id="reference" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom *</label>
+          <input type="text" id="name" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Catégorie *</label>
+          <select id="category" required class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="Outils">Outils</option>
+            <option value="Consommables">Consommables</option>
+            <option value="Équipement">Équipement</option>
+            <option value="Pièces détachées">Pièces détachées</option>
+            <option value="Autres">Autres</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fournisseur</label>
+          <input type="text" id="supplier" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Nom du fournisseur" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix unitaire (CHF) *</label>
+          <input type="number" id="price" required min="0" step="0.01" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" placeholder="0.00" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantité *</label>
+          <input type="number" id="quantity" required min="0" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Seuil de sécurité *</label>
+          <input type="number" id="threshold" required min="0" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Besoin hebdomadaire par technicien</label>
+        <input type="number" id="weekly_need" min="0" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Photo (URL)</label>
+        <input type="url" id="photo" placeholder="https://..." class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+        <div id="preview-container" class="mt-2 hidden">
+          <img id="photo-preview" class="w-20 h-20 rounded-lg object-cover" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lien vers le site</label>
+        <input type="url" id="website_url" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://..." />
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="submit" class="flex-1 bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary/90">
+          Enregistrer
+        </button>
+        <button type="button" id="cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600">
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/inventaire.js?v=2"></script>
+
+</body>
+</html>

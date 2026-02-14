@@ -1,0 +1,4 @@
+# ⬇️ COPIER ICI LE CONTENU DE volumes/api/kong.yml DU VPS ⬇️
+
+# Commande à exécuter sur le VPS :
+# cat volumes/api/kong.yml

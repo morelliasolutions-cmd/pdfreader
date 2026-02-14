@@ -1291,7 +1291,7 @@
                 // Conforme à AGENTS.md : Pas d'URL en dur, récupération dynamique depuis le backend
                 const apiUrl = typeof getSarExtractionUrl === 'function' 
                     ? getSarExtractionUrl() 
-                    : 'http://localhost:5001/api/extract-sar-address'; // Fallback dev
+                    : 'https://velox-sarpdf.yhmr4j.easypanel.host/api/extract-sar-address'; // Fallback prod
                 
                 console.log('📡 [SAR] Appel API:', apiUrl);
 
@@ -1467,7 +1467,7 @@
                 // Récupérer l'URL du backend proxy (sécurisé)
                 const saveUrl = typeof getSarExtractionUrl === 'function'
                     ? getSarExtractionUrl().replace('/extract-sar-address', '/save-sar')
-                    : 'http://localhost:5001/api/save-sar'; // Fallback dev
+                    : 'https://velox-sarpdf.yhmr4j.easypanel.host/api/save-sar'; // Fallback prod
                 
                 console.log('🌐 [SAR] Envoi vers backend proxy:', saveUrl);
                 

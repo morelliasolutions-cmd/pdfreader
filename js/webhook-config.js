@@ -24,7 +24,7 @@ const BACKEND_SERVICES = {
     // Service d'extraction SAR
     sar_extraction: {
         dev: 'http://localhost:5001',
-        prod: 'https://sar-extraction.yhmr4j.easypanel.host'
+        prod: 'https://velox-sarpdf.yhmr4j.easypanel.host'
     },
     // Ajoutez d'autres services ici si nécessaire
 };

@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="theme-color" content="#ea2a33"/>
+    <link rel="manifest" href="./manifest.json"/>
+    <title>Pointage - ConnectFiber</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+    <script src="js/config.js?v=7" defer></script>
+    <script src="js/api.js?v=7" defer></script>
+    <script src="js/role-access-control.js?v=1" defer></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ea2a33",
+                        "primary-dark": "#c82229",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#211111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2a2a2a",
+                        "card-light": "#ffffff",
+                        "card-dark": "#2a1a1a",
+                        "text-dark": "#0f172a",
+                        "text-muted": "#64748b",
+                        "border-color": "#e2e8f0"
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Spline Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        .animate-draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 2s ease-out forwards; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-dark dark:text-white h-screen flex overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="flex w-72 flex-col border-r border-border-color bg-surface-light dark:bg-surface-dark h-full hidden lg:flex shrink-0 transition-all duration-300">
+        <div class="flex flex-col h-full p-4 justify-between">
+            <div class="flex flex-col gap-8">
+                <div class="flex gap-3 items-center px-2">
+                    <div class="size-8 text-primary">
+                        <svg class="w-full h-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+                            <path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">ConnectFiber</h1>
+                        <p class="text-text-muted text-xs font-medium uppercase tracking-wider">Gestion Chantier</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a id="nav-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="dashboard.html">
+                        <span class="material-symbols-outlined text-2xl">dashboard</span>
+                        <span class="text-sm font-medium">Tableau de bord</span>
+                    </a>
+                    <a id="nav-pointage" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors bg-primary/10 text-primary" href="pointage.html">
+                        <span class="material-symbols-outlined text-2xl">timer</span>
+                        <span class="text-sm font-bold">Pointage</span>
+                    </a>
+                    <a id="nav-production" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="production.html">
+                        <span class="material-symbols-outlined text-2xl">factory</span>
+                        <span class="text-sm font-medium">Production</span>
+                    </a>
+                    <a id="nav-personnel" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="personnel.html">
+                        <span class="material-symbols-outlined text-2xl">group</span>
+                        <span class="text-sm font-medium">Personnel</span>
+                    </a>
+                    <a id="nav-planning" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="planif.html">
+                        <span class="material-symbols-outlined text-2xl">calendar_month</span>
+                        <span class="text-sm font-medium">Planning</span>
+                    </a>
+                    <a id="nav-mandat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="mandats.html">
+                        <span class="material-symbols-outlined text-2xl">assignment</span>
+                        <span class="text-sm font-medium">Mandat</span>
+                    </a>
+                    <a id="nav-inventaire" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="inventaire/inventaire.html" target="_blank">
+                        <span class="material-symbols-outlined text-2xl">inventory</span>
+                        <span class="text-sm font-medium">Inventaire</span>
+                    </a>
+                    <a id="nav-parametres" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="parametres.html">
+                        <span class="material-symbols-outlined text-2xl">settings</span>
+                        <span class="text-sm font-medium">Paramètres</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+    
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Header -->
+        <header class="bg-surface-light dark:bg-surface-dark border-b border-[#f4f0f0] dark:border-gray-800 sticky top-0 z-50 shrink-0">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3 lg:hidden">
+                        <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                        <span class="text-lg font-bold text-gray-900 dark:text-white">Veloxnumeric</span>
+                    </div>
+                    <div class="hidden lg:block"></div>
+                    <div class="flex items-center gap-4">
+                        <button class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors relative">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-gray-800"></span>
+                        </button>
+                        <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <p id="userName" class="text-sm font-bold leading-none"></p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 leading-none mt-1">Admin RH</p>
+                            </div>
+                            <button onclick="logout()" class="size-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                                <span class="material-symbols-outlined text-gray-600 dark:text-gray-300">logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8">
+            <div class="h-full flex flex-col lg:flex-row gap-6">
+                <!-- Main Content (Left) -->
+                <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+                    <!-- Header -->
+                    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Pointage rapide</h2>
+                            <p class="text-sm text-gray-500">Saisie des heures & présences pour <span id="headerDateDisplay" class="font-medium text-gray-900 dark:text-white"></span></p>
+                        </div>
+                        <div class="flex bg-white dark:bg-surface-dark rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700 self-start sm:self-auto">
+                            <button onclick="filterList('all')" id="btn-all" class="px-4 py-1 rounded-md bg-primary text-white text-sm font-medium transition-colors">Tous</button>
+                            <button onclick="filterList('Technicien')" id="btn-tech" class="px-4 py-1 rounded-md text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors">Technicien</button>
+                            <button onclick="filterList('Bureau')" id="btn-bur" class="px-4 py-1 rounded-md text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors">Bureau</button>
+                        </div>
+                    </div>
+
+                    <!-- Employee List -->
+                    <div class="flex-1 overflow-y-auto pr-2 space-y-3" id="employeeList">
+                        <div class="text-center py-10 text-gray-400">Chargement...</div>
+                    </div>
+                </div>
+
+                <!-- Sidebar (Right) -->
+                <div class="w-full lg:w-80 flex flex-col gap-6 shrink-0 overflow-y-auto lg:overflow-visible pr-1">
+                    <!-- Calendar -->
+                    <div class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 id="calendarMonthYear" class="font-bold text-gray-900 dark:text-white capitalize text-lg"></h3>
+                            <div class="flex gap-1">
+                                <button onclick="changeMonth(-1)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+                                <button onclick="changeMonth(1)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-2 text-center text-xs font-medium text-gray-400 mb-2">
+                            <div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div>
+                        </div>
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-2 text-center text-sm">
+                            <!-- Days injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- KPIs -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-gray-900 dark:text-white">Aperçu Mensuel</h4>
+                        </div>
+
+                        <!-- Taux de présence -->
+                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="text-sm text-gray-500 font-medium">Taux de présence</span>
+                                <span id="kpiRate" class="text-xl font-black text-gray-900 dark:text-white">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2 dark:bg-gray-700 overflow-hidden">
+                                <div id="kpiRateBar" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Collaborateurs actifs -->
+                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4">
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                                <span class="material-symbols-outlined">group</span>
+                            </div>
+                            <div>
+                                <h4 id="kpiActive" class="text-2xl font-black text-gray-900 dark:text-white">0</h4>
+                                <p class="text-xs text-gray-500 font-medium">Collaborateurs actifs</p>
+                            </div>
+                        </div>
+
+                        <!-- Pointages en attente -->
+                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4">
+                            <div class="p-3 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-xl">
+                                <span class="material-symbols-outlined">pending_actions</span>
+                            </div>
+                            <div>
+                                <h4 id="kpiPending" class="text-2xl font-black text-gray-900 dark:text-white">0</h4>
+                                <p class="text-xs text-gray-500 font-medium">Pointages en attente</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // currentUser est déjà déclaré dans role-access-control.js
+        // let currentUser = null; // Supprimé pour éviter la duplication
+        let currentDate = new Date();
+        let calendarDate = new Date();
+        let currentFilter = 'all';
+        let employeesData = { employees: [] };
+
+        let isChecking = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (isChecking) return;
+            isChecking = true;
+            
+            console.log('🔍 Pointage - Vérification authentification...');
+            
+            // Attendre que l'API soit prête
+            let attempts = 0;
+            while (!window.VeloxAPI && attempts < 10) {
+                console.log('⏳ API pas encore chargée, attente...', attempts);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (!window.VeloxAPI) {
+                console.error('❌ API VeloxAPI introuvable après 10 tentatives');
+                alert('Erreur: API non chargée. Veuillez recharger la page.');
+                return;
+            }
+            
+            console.log('✅ API chargée, vérification session...');
+            
+            try {
+                const session = await window.VeloxAPI.getSession();
+                console.log('📋 Session:', session);
+                
+                if (!session || !session.user) {
+                    console.log('❌ Pas de session, redirection vers login');
+                    window.location.replace('index.html');
+                    return;
+                }
+                
+                console.log('✅ Session valide, chargement de la page...');
+                currentUser = session.user;
+                document.getElementById('userName').textContent = currentUser.email.split('@')[0];
+                
+                updateHeader();
+                renderCalendar();
+                fetchData();
+            } catch (error) {
+                console.error('❌ Erreur:', error);
+                window.location.replace('index.html');
+            }
+        });
+
+        async function logout() {
+            await window.VeloxAPI.signOut();
+            window.location.href = 'index.html';
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function displayDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('fr-FR', options);
+        }
+        
+        function isWeekend(date) {
+            const day = date.getDay();
+            return day === 0 || day === 6; // 0 = Dimanche, 6 = Samedi
+        }
+
+        function updateHeader() {
+            document.getElementById('headerDateDisplay').innerText = displayDate(currentDate);
+            
+            // Si c'est un weekend, afficher un message
+            if (isWeekend(currentDate)) {
+                document.getElementById('employeeList').innerHTML = '<div class="text-center py-10 text-gray-400 italic">Week-end - Aucun pointage requis</div>';
+            }
+        }
+
+        function changeMonth(offset) {
+            calendarDate.setMonth(calendarDate.getMonth() + offset);
+            renderCalendar();
+        }
+
+        async function renderCalendar() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            
+            const monthName = calendarDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            document.getElementById('calendarMonthYear').innerText = monthName;
+
+            // Récupérer les stats de pointage pour ce mois EN UNE FOIS
+            await drawCalendarGrid(year, month);
+        }
+
+        async function drawCalendarGrid(year, month) {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '<div class="col-span-7 text-center py-2 text-gray-400 text-xs">Chargement...</div>';
+
+            try {
+                // Calculer les dates de début et fin du mois
+                const startDate = `${year}-${String(month+1).padStart(2, '0')}-01`;
+                const lastDay = new Date(year, month + 1, 0).getDate();
+                const endDate = `${year}-${String(month+1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+                // 1. Récupérer TOUS les employés actifs (1 requête)
+                const { data: employees } = await supabase
+                    .from('employees')
+                    .select('id')
+                    .eq('status', 'Actif');
+                
+                const totalEmployees = employees?.length || 0;
+
+                // 2. Récupérer TOUS les pointages du mois (1 requête)
+                const { data: allTimeEntries } = await supabase
+                    .from('time_entries')
+                    .select('date, employee_id')
+                    .gte('date', startDate)
+                    .lte('date', endDate);
+
+                // 3. Récupérer TOUS les événements (absences) du mois (1 requête)
+                const { data: allEvents } = await supabase
+                    .from('events')
+                    .select('date, employee_id, type')
+                    .gte('date', startDate)
+                    .lte('date', endDate);
+
+                // 4. Créer un map : date -> nombre de pointages
+                const pointagesByDate = {};
+                if (allTimeEntries) {
+                    allTimeEntries.forEach(entry => {
+                        if (!pointagesByDate[entry.date]) {
+                            pointagesByDate[entry.date] = 0;
+                        }
+                        pointagesByDate[entry.date]++;
+                    });
+                }
+
+                // 5. Créer un map : date -> nombre d'absences justifiées
+                const absencesByDate = {};
+                if (allEvents) {
+                    allEvents.forEach(event => {
+                        if (!absencesByDate[event.date]) {
+                            absencesByDate[event.date] = 0;
+                        }
+                        absencesByDate[event.date]++;
+                    });
+                }
+
+                // Maintenant on génère le calendrier (sans requêtes supplémentaires)
+                grid.innerHTML = '';
+
+                const firstDay = new Date(year, month, 1).getDay();
+                const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                // Cellules vides au début
+                for(let i=0; i<startOffset; i++) {
+                    grid.appendChild(document.createElement('div'));
+                }
+
+                // Jours du mois
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dateObj = new Date(year, month, d);
+                    const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const isSelected = dateStr === formatDate(currentDate);
+                    const isWeekendDay = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+                    const btn = document.createElement('button');
+                    btn.className = `w-8 h-8 rounded-full flex items-center justify-center text-sm relative transition-colors ${isSelected ? 'bg-primary text-white font-bold shadow-md' : isWeekendDay ? 'text-gray-300 dark:text-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`;
+                    btn.innerText = d;
+                    
+                    if (!isWeekendDay) {
+                        btn.onclick = () => {
+                            currentDate = new Date(year, month, d, 12, 0, 0);
+                            updateHeader();
+                            fetchData();
+                            renderCalendar();
+                        };
+                    }
+
+                    // Ajouter pastille de statut (sauf pour aujourd'hui et weekends)
+                    if (!isSelected && !isWeekendDay && dateStr <= formatDate(new Date())) {
+                        const pointagesCount = pointagesByDate[dateStr] || 0;
+                        const absencesCount = absencesByDate[dateStr] || 0;
+                        const accountedFor = pointagesCount + absencesCount;
+                        
+                        // Vert si tous les employés sont soit pointés, soit absents (justifiés)
+                        // Rouge si des employés manquent (ni pointage, ni absence)
+                        const isComplete = accountedFor >= totalEmployees;
+                        
+                        const dot = document.createElement('div');
+                        const dotColor = isComplete ? 'bg-green-500' : 'bg-red-500';
+                        dot.className = `absolute bottom-0.5 w-1.5 h-1.5 rounded-full ${dotColor}`;
+                        btn.appendChild(dot);
+                    }
+
+                    grid.appendChild(btn);
+                }
+            } catch (error) {
+                console.error('Erreur chargement calendrier:', error);
+                grid.innerHTML = '<div class="col-span-7 text-center py-2 text-red-400 text-xs">Erreur de chargement</div>';
+            }
+        }
+
+        function filterList(type) {
+            currentFilter = type;
+            document.getElementById('btn-all').className = type === 'all' ? "px-4 py-1 rounded-md bg-primary text-white text-sm font-medium transition-colors" : "px-4 py-1 rounded-md text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors";
+            document.getElementById('btn-tech').className = type === 'Technicien' ? "px-4 py-1 rounded-md bg-primary text-white text-sm font-medium transition-colors" : "px-4 py-1 rounded-md text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors";
+            document.getElementById('btn-bur').className = type === 'Bureau' ? "px-4 py-1 rounded-md bg-primary text-white text-sm font-medium transition-colors" : "px-4 py-1 rounded-md text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors";
+            
+            renderList();
+        }
+
+        async function fetchData() {
+            const dateStr = formatDate(currentDate);
+            
+            // Si c'est un weekend, ne pas charger
+            if (isWeekend(currentDate)) {
+                updateHeader();
+                return;
+            }
+            
+            document.getElementById('employeeList').innerHTML = '<div class="text-center py-10 text-gray-400"><span class="material-symbols-outlined animate-spin text-3xl">refresh</span></div>';
+            
+            try {
+                // Fetch employees
+                const { data: employees, error: empError } = await supabase
+                    .from('employees')
+                    .select('*')
+                    .eq('status', 'Actif')
+                    .order('first_name');
+
+                if (empError) throw empError;
+
+                // Fetch time entries for the date
+                const { data: timeEntries, error: timeError } = await supabase
+                    .from('time_entries')
+                    .select('*')
+                    .eq('date', dateStr);
+
+                if (timeError) {
+                    console.error('❌ Erreur récupération pointages:', timeError);
+                    throw timeError;
+                }
+                
+                console.log(`📅 Date recherchée: ${dateStr}`);
+                console.log(`⏰ Pointages trouvés (${timeEntries?.length || 0}):`, timeEntries);
+                console.log(`👥 Nombre d'employés:`, employees.length);
+                
+                // Debug spécifique pour chaque pointage
+                if (timeEntries && timeEntries.length > 0) {
+                    timeEntries.forEach(te => {
+                        console.log(`  → Pointage: employé ${te.employee_id}, ${te.start_time} - ${te.end_time}`);
+                    });
+                }
+
+                // Fetch events for the date
+                const { data: events, error: eventsError } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('date', dateStr);
+
+                if (eventsError) throw eventsError;
+
+                // Fetch interventions (production) for the date
+                const { data: interventions, error: intError } = await supabase
+                    .from('interventions')
+                    .select('employee_id, amount_chf')
+                    .eq('date', dateStr);
+
+                if (intError) throw intError;
+
+                // Calculate total CHF per employee
+                const productionByEmployee = {};
+                if (interventions) {
+                    interventions.forEach(interv => {
+                        if (!productionByEmployee[interv.employee_id]) {
+                            productionByEmployee[interv.employee_id] = 0;
+                        }
+                        productionByEmployee[interv.employee_id] += parseFloat(interv.amount_chf || 0);
+                    });
+                }
+
+                // Merge data
+                employeesData.employees = employees.map(emp => {
+                    const timeEntry = timeEntries.find(te => te.employee_id === emp.id);
+                    const event = events.find(ev => ev.employee_id === emp.id);
+                    
+                    // Convertir le format des heures (enlever les secondes si présentes)
+                    const startTime = timeEntry?.start_time ? timeEntry.start_time.slice(0, 5) : '';
+                    const endTime = timeEntry?.end_time ? timeEntry.end_time.slice(0, 5) : '';
+                    
+                    // Debug log pour tous les employés (temporaire)
+                    console.log(`👤 ${emp.first_name} ${emp.last_name} (ID: ${emp.id}):`, {
+                        hasTimeEntry: !!timeEntry,
+                        timeEntryId: timeEntry?.id,
+                        startTime: startTime,
+                        endTime: endTime,
+                        is_treated: !!timeEntry
+                    });
+                    
+                    return {
+                        id: emp.id,
+                        first_name: emp.first_name,
+                        last_name: emp.last_name,
+                        type: emp.type,
+                        photo_url: emp.photo_url || `https://ui-avatars.com/api/?name=${emp.first_name}+${emp.last_name}&background=random`,
+                        start_time: startTime,
+                        end_time: endTime,
+                        is_treated: !!timeEntry,
+                        filled_by: timeEntry?.filled_by || '',
+                        is_absent: event?.type !== 'work' && !!event,
+                        absence_reason: event?.type || '',
+                        production: productionByEmployee[emp.id] || 0
+                    };
+                });
+
+                renderList();
+                updateKPIs();
+            } catch (error) {
+                console.error('Erreur chargement données:', error);
+                document.getElementById('employeeList').innerHTML = '<div class="text-center py-10 text-red-400">Erreur de chargement</div>';
+            }
+        }
+
+        function renderList() {
+            const list = document.getElementById('employeeList');
+            list.innerHTML = '';
+            
+            const filtered = employeesData.employees.filter(emp => {
+                if (emp.is_absent) return false;
+                if (currentFilter === 'all') return true;
+                return emp.type === currentFilter;
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="text-center py-10 text-gray-400 italic">Aucun employé trouvé.</div>';
+                return;
+            }
+
+            filtered.forEach(emp => {
+                const isTreated = emp.is_treated;
+                const statusText = isTreated ? 'Pointage OK' : 'Non traité';
+                const statusIcon = isTreated ? 'check_circle' : 'error';
+                
+                const cardBg = isTreated 
+                    ? 'bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-surface-dark border-green-200 dark:border-green-900/30' 
+                    : 'bg-gradient-to-br from-red-50 to-white dark:from-red-900/20 dark:to-surface-dark border-red-200 dark:border-red-900/30';
+                
+                const card = document.createElement('div');
+                card.className = `flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl border shadow-sm transition-all hover:shadow-md ${cardBg}`;
+                
+                card.innerHTML = `
+                    <!-- User Info -->
+                    <div class="flex items-center gap-4 w-full sm:w-1/4 min-w-[200px]">
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                <img src="${emp.photo_url}" alt="" class="w-full h-full object-cover">
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 bg-white dark:bg-surface-dark rounded-full p-0.5">
+                                <span class="material-symbols-outlined text-[16px] ${isTreated ? 'text-green-500' : 'text-red-500'}">${statusIcon}</span>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-900 dark:text-white leading-tight">${emp.first_name} ${emp.last_name.charAt(0)}.</h4>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-medium ${isTreated ? 'text-green-600' : 'text-red-500'}">${statusText}</span>
+                                ${emp.production > 0 ? `<span class="text-xs text-gray-400">• ${emp.production.toFixed(0)} CHF</span>` : ''}
+                            </div>
+                            ${emp.filled_by ? `<p class="text-[10px] text-gray-400 mt-0.5">Par ${emp.filled_by}</p>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Inputs -->
+                    <div class="flex-1 grid grid-cols-2 gap-4 w-full">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 pl-1">Début</label>
+                            <div class="relative">
+                                <input type="time" id="start_${emp.id}" value="${emp.start_time}" class="w-full pl-3 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="--:--">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 pl-1">Fin</label>
+                            <div class="relative">
+                                <input type="time" id="end_${emp.id}" value="${emp.end_time}" class="w-full pl-3 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="--:--">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action -->
+                    <div class="w-full sm:w-auto flex flex-col gap-2">
+                        <button onclick="saveCard('${emp.id}', event)" class="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow-md ${isTreated ? 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white' : 'bg-primary text-white hover:bg-red-700 shadow-primary/30'}">
+                            ${isTreated ? '<span class="material-symbols-outlined">save</span> Mettre à jour' : '<span class="material-symbols-outlined">save</span> Enregistrer'}
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function updateKPIs() {
+            const allEmployees = employeesData.employees;
+            const activeEmployees = allEmployees.filter(e => !e.is_absent);
+            const totalActive = activeEmployees.length;
+            const present = activeEmployees.filter(e => e.is_treated).length;
+            const pending = totalActive - present;
+            
+            const finalRate = totalActive > 0 ? Math.round((present / totalActive) * 100) : 0;
+
+            document.getElementById('kpiRate').innerText = finalRate + '%';
+            document.getElementById('kpiRateBar').style.width = finalRate + '%';
+            document.getElementById('kpiActive').innerText = totalActive;
+            document.getElementById('kpiPending').innerText = pending;
+        }
+
+        async function saveCard(empId, evt) {
+            console.log('💾 Début de saveCard pour employé:', empId);
+            
+            const start = document.getElementById(`start_${empId}`).value;
+            const end = document.getElementById(`end_${empId}`).value;
+            const dateStr = formatDate(currentDate);
+            
+            console.log('📝 Données:', { start, end, dateStr });
+            
+            // Validation : vérifier que les deux champs sont remplis
+            if (!start || !end) {
+                showErrorToast('⚠️ Veuillez remplir les heures de début et de fin');
+                return;
+            }
+            
+            // Validation : vérifier que l'heure de fin est après l'heure de début
+            if (start >= end) {
+                showErrorToast('⚠️ L\'heure de fin doit être après l\'heure de début');
+                return;
+            }
+            
+            // Calculer les heures totales
+            let totalHours = 0;
+            let breakDuration = 0;
+            if (start && end) {
+                const startTime = new Date(`2000-01-01T${start}`);
+                const endTime = new Date(`2000-01-01T${end}`);
+                let hours = (endTime - startTime) / (1000 * 60 * 60);
+                
+                console.log(`⏱️ Calcul heures pour ${dateStr}:`);
+                console.log(`  Début: ${start}, Fin: ${end}`);
+                console.log(`  Heures brutes: ${hours}h`);
+                
+                // Vérifier si la plage horaire inclut 12h-13h (pause de midi)
+                const noon = new Date(`2000-01-01T12:00:00`);
+                const onepm = new Date(`2000-01-01T13:00:00`);
+                const includesLunchBreak = (startTime < onepm && endTime > noon);
+                
+                if (includesLunchBreak) {
+                    breakDuration = 60;
+                    hours -= 1; // Retirer 1h de pause
+                    console.log(`  Pause midi (12h-13h): -1h`);
+                }
+                
+                totalHours = Math.max(0, hours);
+                console.log(`  ✅ Total final: ${totalHours.toFixed(2)}h`);
+            }t ? evt.target.closest('button') : null;
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Sauvegarde...';
+                }
+                
+                console.log('🔍 Vérification existence entrée...');
+                
+                // Check if entry exists
+                const { data: existing, error: checkError } = await supabase
+                    .from('time_entries')
+                    .select('id')
+                    .eq('employee_id', empId)
+                    .eq('date', dateStr)
+                    .single();
+
+                if (checkError && checkError.code !== 'PGRST116') {
+                    console.error('❌ Erreur vérification:', checkError);
+                    throw checkError;
+                }
+                
+                console.log('📋 Entrée existante:', existing);
+
+                if (existing) {
+                    console.log('🔄 Mise à jour de l\'entrée ID:', existing.id);
+                    // Update
+                    const { error: updateError } = await supabase
+                        .from('time_entries')
+                        .update({
+                            start_time: start,
+                            end_time: end,
+                            break_duration: breakDuration,
+                            total_hours: totalHours.toFixed(2),
+                            filled_by: currentUser.email.split('@')[0],
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', existing.id);
+
+                    if (updateError) {
+                        console.error('❌ Erreur update:', updateError);
+                        throw updateError;
+                    }
+                    console.log('✅ Update réussie');
+                } else {
+                    console.log('➕ Insertion nouvelle entrée');
+                    // Insert
+                    const { error: insertError } = await supabase
+                        .from('time_entries')
+                        .insert({
+                            employee_id: empId,
+                            date: dateStr,
+                            start_time: start,
+                            end_time: end,
+                            break_duration: breakDuration,
+                            total_hours: totalHours.toFixed(2),
+                            filled_by: currentUser.email.split('@')[0]
+                        });
+
+                    if (insertError) {
+                        console.error('❌ Erreur insert:', insertError);
+                        throw insertError;
+                    }
+                    console.log('✅ Insert réussie')Fixed(2),
+                            filled_by: currentUser.email.split('@')[0]
+                        });
+console.log('🎉 Sauvegarde complète avec succès');
+                
+            } catch (error) {
+                console.error('❌ Erreur sauvegarde complète:', error);
+                showErrorToast('❌ Erreur lors de la sauvegarde : ' + (error.message || 'erreur inconnue'));
+                // Réactiver le bouton en cas d'erreur
+                const button = evt ? evt.target.closest('button') : nullIndex(e => e.id === empId);
+                if (empIndex !== -1) {
+                    employeesData.employees[empIndex].is_treated = true;
+                    employeesData.employees[empIndex].start_time = start;
+                    employeesData.employees[empIndex].end_time = end;
+                    employeesData.employees[empIndex].filled_by = currentUser.email.split('@')[0];
+                }
+                
+                // Mettre à jour visuellement uniquement cette carte
+                updateSingleCard(empId, start, end);
+                
+                // Mettre à jour les KPIs sans recharger toute la page
+                updateKPIs();
+                
+                // Toast de confirmation
+                showSuccessToast('✅ Pointage enregistré avec succès !');
+                
+            } catch (error) {
+                console.error('Erreur sauvegarde:', error);
+                showErrorToast('❌ Erreur lors de la sauvegarde : ' + (error.message || 'erreur inconnue'));
+                // Réactiver le bouton en cas d'erreur
+                const button = event.target.closest('button');
+                if (button) {
+                    button.disabled = false;
+                    const emp = employeesData.employees.find(e => e.id === empId);
+                    const isTreated = emp?.is_treated;
+                    button.innerHTML = isTreated ? '<span class="material-symbols-outlined">save</span> Mettre à jour' : '<span class="material-symbols-outlined">save</span> Enregistrer';
+                }
+            }
+        }
+        
+        /**
+         * Met à jour visuellement une seule carte sans recharger toute la page
+         */
+        function updateSingleCard(empId, start, end) {
+            const emp = employeesData.employees.find(e => e.id === empId);
+            if (!emp) return;
+            
+            // Trouver la carte dans le DOM
+            const card = document.querySelector(`button[onclick="saveCard('${empId}')"]`).closest('.flex.flex-col.sm\\:flex-row');
+            if (!card) return;
+            
+            const isTreated = true; // Après sauvegarde, c'est forcément traité
+            
+            // Mettre à jour le background
+            card.className = card.className.replace(
+                /bg-gradient-to-br from-red-50 to-white dark:from-red-900\/20 dark:to-surface-dark border-red-200 dark:border-red-900\/30/g,
+                'bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-surface-dark border-green-200 dark:border-green-900/30'
+            );
+            
+            // Mettre à jour l'icône de statut
+            const statusIcon = card.querySelector('.material-symbols-outlined');
+            if (statusIcon && statusIcon.textContent === 'error') {
+                statusIcon.textContent = 'check_circle';
+                statusIcon.className = statusIcon.className.replace('text-red-500', 'text-green-500');
+            }
+            
+            // Mettre à jour le texte de statut
+            const statusText = card.querySelector('.text-xs.font-medium');
+            if (statusText && statusText.textContent === 'Non traité') {
+                statusText.textContent = 'Pointage OK';
+                statusText.className = statusText.className.replace('text-red-500', 'text-green-600');
+            }
+            
+            // Mettre à jour le bouton
+            const button = card.querySelector('button');
+            if (button) {
+                button.disabled = false;
+                button.className = button.className.replace(
+                    /bg-primary text-white hover:bg-red-700 shadow-primary\/30/g,
+                    'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white'
+                );
+                button.innerHTML = '<span class="material-symbols-outlined">save</span> Mettre à jour';
+            }
+            
+            // Ajouter le nom de qui a rempli si pas déjà présent
+            if (!emp.filled_by) {
+                const userInfo = card.querySelector('.flex-1');
+                const filledByText = document.createElement('p');
+                filledByText.className = 'text-[10px] text-gray-400 mt-0.5';
+                filledByText.textContent = `Par ${currentUser.email.split('@')[0]}`;
+                userInfo.appendChild(filledByText);
+            }
+        }
+        
+        function showSuccessToast(message) {
+            // Créer un toast simple si pas déjà existant
+            let toast = document.getElementById('success-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'success-toast';
+                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity duration-300';
+                document.body.appendChild(toast);
+            }
+            
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 3000);
+        }
+
+        function showErrorToast(message) {
+            // Créer un toast d'erreur si pas déjà existant
+            let toast = document.getElementById('error-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'error-toast';
+                toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity duration-300 flex items-center gap-2';
+                document.body.appendChild(toast);
+            }
+            
+            toast.innerHTML = `<span class="material-symbols-outlined text-lg">error</span><span>${message}</span>`;
+            toast.style.opacity = '1';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 4000);
+        }
+
+        // Register Service Worker (cache 74h)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Dépendances pour l'analyse de PDF
+pdfplumber==0.11.4
+# Alternative: PyPDF2, pdfminer.six
+
+# Traitement d'images dans les PDF (optionnel)
+Pillow==10.4.0
+
+# Analyse avancée (optionnel)
+pandas==2.2.3
+openpyxl==3.1.5  # Pour export Excel

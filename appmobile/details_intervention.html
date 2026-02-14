@@ -1,0 +1,3438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="theme-color" content="#135bec"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>Détails de l'intervention</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+<script src="../js/config.js?v=7" defer></script>
+<script src="../js/api.js?v=7" defer></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1c2433",
+                        "text-main-light": "#111318",
+                        "text-main-dark": "#e2e8f0",
+                        "text-sub-light": "#616f89",
+                        "text-sub-dark": "#94a3b8",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#2d3748"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.375rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+      overflow-x: hidden;
+    }
+    * {
+      box-sizing: border-box;
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark antialiased selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-xl overflow-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur-md border-b border-border-light dark:border-border-dark px-4 pt-12 pb-4 shadow-sm">
+<div class="flex items-center justify-between">
+<a href="Rendez-vous_technicien.html" class="p-2 rounded-full hover:bg-background-light dark:hover:bg-background-dark text-text-main-light dark:text-text-main-dark transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</a>
+<h1 class="text-lg font-bold tracking-tight">Détails de l'intervention</h1>
+<div class="w-10"></div>
+</div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto pb-32 px-4 pt-6">
+<!-- Progress Bar -->
+<div class="mb-6 bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">Progression des photos</span>
+<span class="text-sm font-semibold text-text-main-light dark:text-text-main-dark" id="progress-text">0/11</span>
+</div>
+<div class="h-3 w-full bg-background-light dark:bg-background-dark rounded-full overflow-hidden">
+<div id="progress-bar" class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<span id="global-score" class="text-xs font-bold text-text-sub-light dark:text-text-sub-dark">--/10</span>
+<span class="text-xs font-medium text-primary" id="progress-percentage">0%</span>
+</div>
+</div>
+
+<!-- Client Information Card -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-5 mb-6 shadow-sm border border-border-light dark:border-border-dark">
+<div class="mb-4">
+<div class="flex items-center justify-between mb-2">
+<h2 class="font-bold text-xl text-text-main-light dark:text-text-main-dark" id="client-name">Chargement...</h2>
+<div id="urgent-badge" class="hidden">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs font-semibold">
+<span class="material-symbols-outlined text-sm">warning</span>
+Urgence
+</span>
+</div>
+</div>
+<div id="activity-badge" class="mb-2 hidden">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-xs font-semibold" id="activity-label"></span>
+</div>
+<div id="client-note" class="text-sm text-text-sub-light dark:text-text-sub-dark bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2.5 hidden">
+<span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 text-base align-middle mr-1">info</span>
+<span id="note-text"></span>
+</div>
+</div>
+<div class="space-y-2 mb-4">
+<div class="flex items-center gap-2 text-sm text-text-main-light dark:text-text-main-dark bg-background-light dark:bg-background-dark/50 p-3 rounded-lg">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<span id="client-address">Chargement...</span>
+</div>
+<div class="flex items-center gap-2 text-sm text-text-main-light dark:text-text-main-dark bg-background-light dark:bg-background-dark/50 p-3 rounded-lg">
+<span class="material-symbols-outlined text-primary">call</span>
+<span id="client-phone">-</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button onclick="openNavigation()" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary text-white font-semibold text-sm shadow-md hover:bg-blue-600 transition-colors">
+<span class="material-symbols-outlined text-lg">navigation</span>
+Itinéraire
+</button>
+<button onclick="callClient()" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors border border-border-light dark:border-border-dark">
+<span class="material-symbols-outlined text-lg">call</span>
+Appeler
+</button>
+</div>
+</div>
+
+<!-- Technical Information -->
+<div class="mb-6">
+<h3 class="text-xs font-semibold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-3 px-1">INFOS TECHNIQUES</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Numéro de Mandat</p>
+<p class="font-bold text-text-main-light dark:text-text-main-dark" id="mandate-number">-</p>
+</div>
+<div>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Référence Prise (OTO)</p>
+<p class="font-bold text-text-main-light dark:text-text-main-dark" id="pto-reference">-</p>
+</div>
+</div>
+<div class="mb-4">
+<div class="flex items-center justify-between">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark">Crochets Fibres (BEP)</p>
+<p class="font-bold text-text-main-light dark:text-text-main-dark text-right" id="cable-alim">-</p>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-2">
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-2.5 relative" id="fibre-card-1">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Fibre 1</p>
+<p class="font-bold text-sm" id="fibre-1">-</p>
+<div class="absolute top-1 right-1 text-xs font-bold text-black hidden" id="fibre-mark-1" title="2ème douzaine">\\</div>
+</div>
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-2.5 relative" id="fibre-card-2">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Fibre 2</p>
+<p class="font-bold text-sm" id="fibre-2">-</p>
+<div class="absolute top-1 right-1 text-xs font-bold text-black hidden" id="fibre-mark-2" title="2ème douzaine">\\</div>
+</div>
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-2.5 relative" id="fibre-card-3">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Fibre 3</p>
+<p class="font-bold text-sm" id="fibre-3">-</p>
+<div class="absolute top-1 right-1 text-xs font-bold text-black hidden" id="fibre-mark-3" title="2ème douzaine">\\</div>
+</div>
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-2.5 relative" id="fibre-card-4">
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-1">Fibre 4</p>
+<p class="font-bold text-sm" id="fibre-4">-</p>
+<div class="absolute top-1 right-1 text-xs font-bold text-black hidden" id="fibre-mark-4" title="2ème douzaine">\\</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Required Photos -->
+<div class="mb-6">
+<div class="flex items-center justify-between mb-3 px-1">
+<h3 class="text-xs font-semibold text-text-sub-light dark:text-sub-dark uppercase tracking-wider">PHOTOS REQUISES</h3>
+<span class="text-xs font-semibold text-text-main-light dark:text-text-main-dark" id="photos-count">0/11</span>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<!-- Photo 1: Prise Ouverte -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('prise-ouverte')">
+<input type="file" accept="image/*" class="hidden" id="photo-prise-ouverte" onchange="handlePhotoUpload(this, 'prise-ouverte')">
+<img id="preview-prise-ouverte" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-prise-ouverte" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Prise Ouverte</span>
+</div>
+<!-- AI Validation Badge -->
+<!-- Score Badge -->
+    <div id="score-badge-prise-ouverte" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-prise-ouverte">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('prise-ouverte')" id="ai-info-btn-prise-ouverte" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('prise-ouverte')" id="remove-prise-ouverte" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 2: Prise Fermée -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('prise-fermee')">
+<input type="file" accept="image/*" class="hidden" id="photo-prise-fermee" onchange="handlePhotoUpload(this, 'prise-fermee')">
+<img id="preview-prise-fermee" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-prise-fermee" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Prise Fermée</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-prise-fermee" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-prise-fermee">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('prise-fermee')" id="ai-info-btn-prise-fermee" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('prise-fermee')" id="remove-prise-fermee" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 3: Vue d'Ensemble -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('vue-ensemble')">
+<input type="file" accept="image/*" class="hidden" id="photo-vue-ensemble" onchange="handlePhotoUpload(this, 'vue-ensemble')">
+<img id="preview-vue-ensemble" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-vue-ensemble" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Vue d'Ensemble</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-vue-ensemble" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-vue-ensemble">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('vue-ensemble')" id="ai-info-btn-vue-ensemble" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('vue-ensemble')" id="remove-vue-ensemble" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 4: Interieur Cassette BEP -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('interieur-cassette-bep')">
+<input type="file" accept="image/*" class="hidden" id="photo-interieur-cassette-bep" onchange="handlePhotoUpload(this, 'interieur-cassette-bep')">
+<img id="preview-interieur-cassette-bep" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-interieur-cassette-bep" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Intérieur Cassette BEP</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-interieur-cassette-bep" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-interieur-cassette-bep">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('interieur-cassette-bep')" id="ai-info-btn-interieur-cassette-bep" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('interieur-cassette-bep')" id="remove-interieur-cassette-bep" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 5: Etiquette Cassette BEP -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('etiquette-cassette-bep')">
+<input type="file" accept="image/*" class="hidden" id="photo-etiquette-cassette-bep" onchange="handlePhotoUpload(this, 'etiquette-cassette-bep')">
+<img id="preview-etiquette-cassette-bep" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-etiquette-cassette-bep" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Étiquette Cassette BEP</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-etiquette-cassette-bep" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-etiquette-cassette-bep">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('etiquette-cassette-bep')" id="ai-info-btn-etiquette-cassette-bep" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('etiquette-cassette-bep')" id="remove-etiquette-cassette-bep" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 6: Photo Bague Cable -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('photo-bague-cable')">
+<input type="file" accept="image/*" class="hidden" id="photo-photo-bague-cable" onchange="handlePhotoUpload(this, 'photo-bague-cable')">
+<img id="preview-photo-bague-cable" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-photo-bague-cable" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Photo Bague Câble</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-photo-bague-cable" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-photo-bague-cable">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('photo-bague-cable')" id="ai-info-btn-photo-bague-cable" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('photo-bague-cable')" id="remove-photo-bague-cable" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 7: Photo BEP Ouvert -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('photo-bep-ouvert')">
+<input type="file" accept="image/*" class="hidden" id="photo-photo-bep-ouvert" onchange="handlePhotoUpload(this, 'photo-bep-ouvert')">
+<img id="preview-photo-bep-ouvert" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-photo-bep-ouvert" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Photo BEP Ouvert</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-photo-bep-ouvert" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-photo-bep-ouvert">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('photo-bep-ouvert')" id="ai-info-btn-photo-bep-ouvert" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('photo-bep-ouvert')" id="remove-photo-bep-ouvert" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 8: Photo BEP Fermé -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('photo-bep-ferme')">
+<input type="file" accept="image/*" class="hidden" id="photo-photo-bep-ferme" onchange="handlePhotoUpload(this, 'photo-bep-ferme')">
+<img id="preview-photo-bep-ferme" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-photo-bep-ferme" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Photo BEP Fermé</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-photo-bep-ferme" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-photo-bep-ferme">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('photo-bep-ferme')" id="ai-info-btn-photo-bep-ferme" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('photo-bep-ferme')" id="remove-photo-bep-ferme" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 9: Speedtest -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('speedtest')">
+<input type="file" accept="image/*" class="hidden" id="photo-speedtest" onchange="handlePhotoUpload(this, 'speedtest')">
+<img id="preview-speedtest" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-speedtest" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Speedtest</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-speedtest" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-speedtest">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('speedtest')" id="ai-info-btn-speedtest" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('speedtest')" id="remove-speedtest" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 10: OTDR sur Fibre Active -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('otdr-sur-fibre-active')">
+<input type="file" accept="image/*" class="hidden" id="photo-otdr-sur-fibre-active" onchange="handlePhotoUpload(this, 'otdr-sur-fibre-active')">
+<img id="preview-otdr-sur-fibre-active" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-otdr-sur-fibre-active" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">OTDR sur Fibre Active</span>
+</div>
+<!-- Score Badge -->
+    <div id="score-badge-otdr-sur-fibre-active" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-otdr-sur-fibre-active">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('otdr-sur-fibre-active')" id="ai-info-btn-otdr-sur-fibre-active" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('otdr-sur-fibre-active')" id="remove-otdr-sur-fibre-active" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Photo 11: Routeur OK -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takePhoto('routeur-ok')">
+<input type="file" accept="image/*" class="hidden" id="photo-routeur-ok" onchange="handlePhotoUpload(this, 'routeur-ok')">
+<img id="preview-routeur-ok" class="hidden w-full h-full object-cover rounded-lg">
+<div id="placeholder-routeur-ok" class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-gray-400 text-3xl mb-1">camera_alt</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Routeur OK</span>
+</div>
+<!-- AI Validation Badge -->
+<!-- Score Badge -->
+    <div id="score-badge-routeur-ok" class="hidden absolute top-1 left-1 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-white/20 z-10">
+        <span id="score-val-routeur-ok">-</span>/10
+    </div>
+    <!-- Info Button -->
+    <button onclick="event.stopPropagation(); showScoreDetails('routeur-ok')" id="ai-info-btn-routeur-ok" class="hidden absolute bottom-1 left-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors z-10 w-6 h-6 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[14px]">info</span>
+    </button>
+<button onclick="event.stopPropagation(); removePhoto('routeur-ok')" id="remove-routeur-ok" class="hidden absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Additional Photos -->
+<div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors" onclick="takeAdditionalPhoto()">
+<input type="file" accept="image/*" class="hidden" id="photo-additional" multiple onchange="handleAdditionalPhotoUpload(this)">
+<div class="flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-primary text-4xl mb-1">add</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">Photo supplémentaire</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Additional Photos Container -->
+<div id="additional-photos-container" class="grid grid-cols-3 gap-3 mt-3"></div>
+
+<!-- Option Photos Section -->
+<div class="mb-6 mt-6">
+<button onclick="openOptionSelector()" class="w-full bg-surface-light dark:bg-surface-dark border-2 border-dashed border-primary text-primary font-semibold py-3 px-4 rounded-xl hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">tune</span>
+<span>Ajouter des photos par option</span>
+</button>
+<!-- Option Photos Container -->
+<div id="option-photos-container" class="grid grid-cols-3 gap-3 mt-3"></div>
+</div>
+</div>
+
+<!-- Mesures OTDR Section -->
+<div class="mb-6">
+<div class="flex items-center justify-between mb-3 px-1">
+<h3 class="text-xs font-semibold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider">MESURES OTDR (PDF)</h3>
+<span class="text-[10px] text-text-sub-light dark:text-text-sub-dark" id="otdr-count">0/4</span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<!-- OTDR 1 -->
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-3 border-2 border-dashed border-gray-300 dark:border-gray-700">
+<input type="file" accept=".pdf,application/pdf" class="hidden" id="otdr-1" onchange="handleOTDRUpload(this, 1)">
+<div id="otdr-placeholder-1" class="flex flex-col items-center justify-center cursor-pointer" onclick="document.getElementById('otdr-1').click()">
+<span class="material-symbols-outlined text-gray-400 text-2xl mb-1">picture_as_pdf</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark">Mesure 1</span>
+</div>
+<div id="otdr-preview-1" class="hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 flex-1 min-w-0">
+<span class="material-symbols-outlined text-red-500 text-lg">picture_as_pdf</span>
+<span class="text-xs text-text-main-light dark:text-text-main-dark truncate" id="otdr-name-1"></span>
+</div>
+<button onclick="removeOTDR(1)" class="text-red-500 hover:text-red-700 ml-2">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+</div>
+</div>
+
+<!-- OTDR 2 -->
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-3 border-2 border-dashed border-gray-300 dark:border-gray-700">
+<input type="file" accept=".pdf,application/pdf" class="hidden" id="otdr-2" onchange="handleOTDRUpload(this, 2)">
+<div id="otdr-placeholder-2" class="flex flex-col items-center justify-center cursor-pointer" onclick="document.getElementById('otdr-2').click()">
+<span class="material-symbols-outlined text-gray-400 text-2xl mb-1">picture_as_pdf</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark">Mesure 2</span>
+</div>
+<div id="otdr-preview-2" class="hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 flex-1 min-w-0">
+<span class="material-symbols-outlined text-red-500 text-lg">picture_as_pdf</span>
+<span class="text-xs text-text-main-light dark:text-text-main-dark truncate" id="otdr-name-2"></span>
+</div>
+<button onclick="removeOTDR(2)" class="text-red-500 hover:text-red-700 ml-2">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+</div>
+</div>
+
+<!-- OTDR 3 -->
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-3 border-2 border-dashed border-gray-300 dark:border-gray-700">
+<input type="file" accept=".pdf,application/pdf" class="hidden" id="otdr-3" onchange="handleOTDRUpload(this, 3)">
+<div id="otdr-placeholder-3" class="flex flex-col items-center justify-center cursor-pointer" onclick="document.getElementById('otdr-3').click()">
+<span class="material-symbols-outlined text-gray-400 text-2xl mb-1">picture_as_pdf</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark">Mesure 3</span>
+</div>
+<div id="otdr-preview-3" class="hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 flex-1 min-w-0">
+<span class="material-symbols-outlined text-red-500 text-lg">picture_as_pdf</span>
+<span class="text-xs text-text-main-light dark:text-text-main-dark truncate" id="otdr-name-3"></span>
+</div>
+<button onclick="removeOTDR(3)" class="text-red-500 hover:text-red-700 ml-2">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+</div>
+</div>
+
+<!-- OTDR 4 -->
+<div class="bg-background-light dark:bg-background-dark/50 rounded-lg p-3 border-2 border-dashed border-gray-300 dark:border-gray-700">
+<input type="file" accept=".pdf,application/pdf" class="hidden" id="otdr-4" onchange="handleOTDRUpload(this, 4)">
+<div id="otdr-placeholder-4" class="flex flex-col items-center justify-center cursor-pointer" onclick="document.getElementById('otdr-4').click()">
+<span class="material-symbols-outlined text-gray-400 text-2xl mb-1">picture_as_pdf</span>
+<span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark">Mesure 4</span>
+</div>
+<div id="otdr-preview-4" class="hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 flex-1 min-w-0">
+<span class="material-symbols-outlined text-red-500 text-lg">picture_as_pdf</span>
+<span class="text-xs text-text-main-light dark:text-text-main-dark truncate" id="otdr-name-4"></span>
+</div>
+<button onclick="removeOTDR(4)" class="text-red-500 hover:text-red-700 ml-2">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Material Used -->
+<div class="mb-6">
+<div class="flex items-center justify-between mb-3 px-1">
+<h3 class="text-xs font-semibold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider">MATÉRIEL UTILISÉ</h3>
+<button onclick="openMaterialSelector()" class="text-xs font-semibold text-primary hover:text-blue-600 transition-colors whitespace-nowrap">+ Ajouter</button>
+</div>
+<div id="materials-list" class="space-y-3">
+<!-- Les matériaux seront ajoutés dynamiquement ici -->
+<div id="materials-empty" class="text-center py-8 text-text-sub-light dark:text-text-sub-dark text-sm">
+<span class="material-symbols-outlined text-4xl mb-2 opacity-50">inventory_2</span>
+<p>Aucun matériel utilisé</p>
+<p class="text-xs mt-1">Cliquez sur "+ Ajouter" pour sélectionner depuis votre inventaire</p>
+</div>
+</div>
+</div>
+
+<!-- Material Selector Modal -->
+<div id="material-selector-modal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-end">
+<div class="w-full max-w-md mx-auto bg-background-light dark:bg-background-dark rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col">
+<div class="sticky top-0 bg-background-light dark:bg-background-dark border-b border-border-light dark:border-border-dark p-4">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">Sélectionner un matériel</h3>
+<button onclick="closeMaterialSelector()" class="text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Barre de recherche -->
+<div class="relative mb-2">
+<input type="text" 
+       id="material-search-input" 
+       placeholder="Rechercher par réf, nom..." 
+       class="w-full px-3 py-2 pr-10 border border-border-light dark:border-border-dark rounded-lg bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+       oninput="filterMaterials()">
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-text-sub-light dark:text-text-sub-dark text-sm">search</span>
+</div>
+<!-- Bouton Scanner Code-Barres/QR -->
+<button onclick="openBarcodeScanner()" class="w-full py-2 px-3 bg-primary/10 text-primary rounded-lg flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors text-sm">
+<span class="material-symbols-outlined text-lg">qr_code_scanner</span>
+<span>Scanner Code-Barres / QR</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-4">
+<div id="technician-inventory-list" class="space-y-2">
+<!-- Les articles de l'inventaire du technicien seront affichés ici -->
+</div>
+<div id="inventory-empty" class="text-center py-8 text-text-sub-light dark:text-text-sub-dark text-sm hidden">
+<span class="material-symbols-outlined text-4xl mb-2 opacity-50">inventory_2</span>
+<p>Votre inventaire est vide</p>
+<p class="text-xs mt-1">Allez dans l'onglet "Stock" pour ajouter des matériaux</p>
+</div>
+<div id="inventory-no-results" class="text-center py-8 text-text-sub-light dark:text-text-sub-dark text-sm hidden">
+<span class="material-symbols-outlined text-4xl mb-2 opacity-50">search_off</span>
+<p>Aucun résultat trouvé</p>
+<p class="text-xs mt-1">Essayez avec d'autres mots-clés</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Barcode Scanner Modal -->
+<div id="barcode-scanner-modal" class="hidden fixed inset-0 z-[60] bg-black/90 flex flex-col">
+<div class="flex items-center justify-between p-4 bg-black/50">
+<h3 class="text-lg font-bold text-white">Scanner Code-Barres / QR</h3>
+<button onclick="closeBarcodeScanner()" class="text-white hover:text-gray-300">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 flex items-center justify-center relative bg-black">
+    <!-- Container pour html5-qrcode -->
+    <div id="barcode-reader" class="w-full h-full max-h-[80vh]"></div>
+</div>
+<div class="p-4 bg-black/50 text-center">
+<p class="text-white text-sm">Positionnez le code-barres ou QR code dans le cadre</p>
+<p id="scan-result" class="text-primary font-bold mt-2 hidden"></p>
+</div>
+</div>
+
+<!-- Option Selector Modal -->
+<div id="option-selector-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end">
+<div class="w-full max-w-md mx-auto bg-background-light dark:bg-background-dark rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+<div class="sticky top-0 bg-background-light dark:bg-background-dark border-b border-border-light dark:border-border-dark p-4 z-10">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">Sélectionner les options</h3>
+<button onclick="closeOptionSelector()" class="text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-3">Sélectionnez une option et ajoutez une photo</p>
+</div>
+<div class="flex-1 overflow-y-auto p-4">
+<div id="option-list" class="space-y-2">
+<!-- Les options seront ajoutées dynamiquement ici -->
+</div>
+</div>
+</div>
+</div>
+
+<!-- Quantity Selector Modal -->
+<div id="quantity-selector-modal" class="hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+<div class="w-full max-w-sm bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+<div class="p-4 border-b border-border-light dark:border-border-dark">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark" id="quantity-modal-title">Quantité</h3>
+<button onclick="closeQuantitySelector()" class="text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<div class="p-6">
+<p class="text-sm text-text-sub-light dark:text-text-sub-dark mb-4" id="quantity-modal-description"></p>
+<div class="flex items-center justify-center gap-4 mb-6">
+<button onclick="decreaseOptionQuantity()" class="w-12 h-12 rounded-full bg-background-light dark:bg-background-dark border-2 border-border-light dark:border-border-dark flex items-center justify-center hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-xl">remove</span>
+</button>
+<div class="text-5xl font-bold text-text-main-light dark:text-text-main-dark" id="quantity-value">1</div>
+<button onclick="increaseOptionQuantity()" class="w-12 h-12 rounded-full bg-background-light dark:bg-background-dark border-2 border-border-light dark:border-border-dark flex items-center justify-center hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+</div>
+<div class="flex gap-3">
+<button onclick="closeQuantitySelector()" class="flex-1 py-3 rounded-xl border-2 border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark font-semibold hover:bg-background-light dark:hover:bg-background-dark transition-colors">
+Annuler
+</button>
+<button onclick="confirmOptionQuantity()" class="flex-1 py-3 rounded-xl bg-primary text-white font-semibold hover:bg-blue-600 transition-colors">
+Confirmer
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Comments -->
+<div class="mb-6">
+<h3 class="text-xs font-semibold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-3 px-1">COMMENTAIRES</h3>
+<textarea id="comments" rows="4" class="w-full bg-surface-light dark:bg-surface-dark rounded-xl p-4 border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark placeholder:text-text-sub-light dark:placeholder:text-text-sub-dark resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Ajouter une observation sur l'intervention (ex: difficulté de passage de câble, absence client...)"></textarea>
+</div>
+
+<!-- Validation Buttons -->
+<div class="flex flex-col gap-3 mb-24">
+<button id="validate-btn" onclick="validateIntervention()" class="w-full bg-primary text-white font-semibold py-4 rounded-xl shadow-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+<span>Valider l'intervention</span>
+<span class="material-symbols-outlined">check</span>
+</button>
+
+<button id="block-btn" onclick="reportTechnicalProblem()" class="w-full bg-orange-500 text-white font-semibold py-4 rounded-xl shadow-md hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+<span>Signaler un problème technique</span>
+<span class="material-symbols-outlined">warning</span>
+</button>
+</div>
+
+</main>
+
+<!-- Modal détails validation IA -->
+<div id="score-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeScoreModal()">
+    <div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden" onclick="event.stopPropagation()">
+        <div class="p-4 border-b border-border-light dark:border-border-dark flex items-center justify-between">
+            <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark" id="modal-title">Détails de validation</h3>
+            <button onclick="closeScoreModal()" class="text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[calc(80vh-100px)]">
+            <!-- Note / Score -->
+            <div class="mb-4 text-center">
+                <div class="text-sm text-text-sub-light dark:text-text-sub-dark mb-2">Note de validation</div>
+                <div class="text-5xl font-bold mb-2" id="modal-score">-</div>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold" id="modal-valid-badge">
+                    <span class="material-symbols-outlined text-sm">check_circle</span>
+                    <span id="modal-valid-text">Validé</span>
+                </div>
+            </div>
+            
+            <!-- Commentaire IA -->
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-text-sub-light dark:text-text-sub-dark mb-2">Commentaire IA</h4>
+                <p class="text-sm text-text-main-light dark:text-text-main-dark bg-background-light dark:bg-background-dark rounded-lg p-3" id="modal-comment">-</p>
+            </div>
+            
+            <!-- Date de validation -->
+            <div class="text-xs text-text-sub-light dark:text-text-sub-dark text-center" id="modal-date"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark pb-safe pt-2 px-2 z-30 pb-4">
+<div class="grid grid-cols-4 gap-1">
+<a href="Rendez-vous_technicien.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium mt-1">Agenda</span>
+</a>
+<a href="invetaire_technicien.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-medium mt-1">Stock</span>
+</a>
+<button onclick="openProfile()" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium mt-1">Profil</span>
+</button>
+<button onclick="handleLogout()" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-[10px] font-medium mt-1">Déconnexion</span>
+</button>
+</div>
+</nav>
+</div>
+
+<script>
+// Photo management
+let photos = {
+    'prise-ouverte': null,
+    'prise-fermee': null,
+    'vue-ensemble': null,
+    'interieur-cassette-bep': null,
+    'etiquette-cassette-bep': null,
+    'photo-bague-cable': null,
+    'photo-bep-ouvert': null,
+    'photo-bep-ferme': null,
+    'speedtest': null,
+    'otdr-sur-fibre-active': null,
+    'routeur-ok': null
+};
+
+// AI validation status for photos
+let aiValidation = {};
+
+// Additional photos
+let additionalPhotos = [];
+
+// Option photos management
+let optionPhotos = []; // Array of { option: string, optionLabel: string, quantity: number, photo: { dataUrl, file, timestamp }, photoId: string }
+let tempSelectedOption = null; // Stockage temporaire de l'option sélectionnée
+let tempQuantity = 1; // Quantité temporaire
+let availableOptions = [
+    { 
+        id: 'oto-reepissure', 
+        label: 'OTO Réépissure / Extension',
+        description: 'Équipement remontée fibre 4/2 vers 4/3 ou 4/4',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'order-aborted', 
+        label: 'Order Aborted OTO Available',
+        description: 'Les interruptions dues à une panne sont à considérer comme forfait',
+        unit: '+/-',
+        preApproval: false,
+        highlight: true
+    },
+    { 
+        id: 'accord-mnc', 
+        label: 'Accord MNC Préalable',
+        description: 'Applicable uniquement sur accord MNC (Pre-Approval)',
+        unit: '+/-',
+        preApproval: true,
+        highlight: true
+    },
+    { 
+        id: 'connexion-bep', 
+        label: 'Connexion BEP-Colonne',
+        description: 'Montage canal installation entre BEP et zone de montée',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'ap-etage', 
+        label: 'Installation AP par Étage',
+        description: 'Canalisation montée dans la colonne montante',
+        unit: '+/- par étage',
+        preApproval: false
+    },
+    { 
+        id: 'bep-16v1', 
+        label: 'BEP 16 V1 (HAK Optique)',
+        description: 'Équipement HAK o16 V1 avec cassettes d\'épissage',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'bep-24v1', 
+        label: 'BEP 24 V1 (HAK Optique)',
+        description: 'Équipement HAK o24 V1 avec cassettes d\'épissage',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'bep-36v1', 
+        label: 'BEP 36 V1 (HAK Optique)',
+        description: 'Équipement HAK o36 V1 avec cassettes d\'épissage',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'bep-48v1', 
+        label: 'BEP 48 V1 (HAK Optique)',
+        description: 'Équipement HAK o48 V1 avec cassettes d\'épissage',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'liaison-bep-colonne', 
+        label: 'Liaison BEP-Colonne Montante',
+        description: 'Montage canalisation entre BEP et colonne montante',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'ap-incendie', 
+        label: 'AP Étage Protection Incendie',
+        description: 'Installation AP colonne montante RAL8010 blanc pur',
+        unit: '+/- par étage',
+        preApproval: true,
+        highlight: true
+    },
+    { 
+        id: 'contournement-horizontal', 
+        label: 'Contournement Horizontal Local',
+        description: 'Canalisation dans les locaux du sous-sol',
+        unit: '+/-',
+        preApproval: true,
+        highlight: true
+    },
+    { 
+        id: 'contournement-colonnes', 
+        label: 'Contournement Colonnes Montantes',
+        description: 'Canalisation pour plusieurs colonnes montantes et emplacements BSO',
+        unit: '+/-',
+        preApproval: true,
+        highlight: true
+    },
+    { 
+        id: 'hak-2hv3', 
+        label: 'Équipement HAK 2 H V3',
+        description: 'Équipement HAK 2 H V3 hybride avec cassettes d\'épissage',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'bep-o6v2', 
+        label: 'BEP o6 V2 (HAK)',
+        description: 'Introduction et répartition câble Drop dans cassettes',
+        unit: '+/-',
+        preApproval: false
+    },
+    { 
+        id: 'bep-report', 
+        label: 'BEP Report (Consultation MNC)',
+        description: 'Uniquement après consultation de MNC - Pre-Approval obligatoire',
+        unit: '+/-',
+        preApproval: true,
+        highlight: true
+    }
+];
+
+// Supabase configuration - utilise la configuration globale via window.supabase
+let currentInterventionId = null; // ID de l'intervention en cours
+let currentEmployeeId = null; // ID de l'employé connecté
+let technicianInventory = []; // Inventaire du technicien
+let usedMaterials = []; // Matériaux utilisés dans cette intervention
+
+// OTDR PDFs management
+let otdrFiles = {
+    1: null,
+    2: null,
+    3: null,
+    4: null
+};
+
+// Webhook URL -> Proxy Supabase Edge Function
+// const N8N_WEBHOOK_PHOTOS_URL = 'https://n8n-n8n.tozxvr.easypanel.host/webhook-test/bb1a268a-e0f3-4b2b-b45a-1ebe07628f77';
+const N8N_WEBHOOK_PHOTOS_URL = 'https://wdurkaelytgjbcsmkzgb.supabase.co/functions/v1/analyze-photo';
+
+// Table des couleurs Swisscom pour fibres FTTH (1-24)
+const SWISSCOM_FIBER_COLORS = {
+    // 1ère douzaine (1-12)
+    1: { color: '#FF0000', name: 'Rouge' },
+    2: { color: '#00FF00', name: 'Vert' },
+    3: { color: '#FFFF00', name: 'Jaune' },
+    4: { color: '#0000FF', name: 'Bleu' },
+    5: { color: '#FFFFFF', name: 'Blanc' },
+    6: { color: '#800080', name: 'Violet' },
+    7: { color: '#FFA500', name: 'Orange' },
+    8: { color: '#000000', name: 'Noir' },
+    9: { color: '#808080', name: 'Gris' },
+    10: { color: '#8B4513', name: 'Marron' },
+    11: { color: '#FFC0CB', name: 'Rose' },
+    12: { color: '#00FFFF', name: 'Cyan' },
+    
+    // 2ème douzaine (13-24) - Mêmes couleurs avec marque noire
+    13: { color: '#FF0000', name: 'Rouge', mark: true },
+    14: { color: '#00FF00', name: 'Vert', mark: true },
+    15: { color: '#FFFF00', name: 'Jaune', mark: true },
+    16: { color: '#0000FF', name: 'Bleu', mark: true },
+    17: { color: '#FFFFFF', name: 'Blanc', mark: true },
+    18: { color: '#800080', name: 'Violet', mark: true },
+    19: { color: '#FFA500', name: 'Orange', mark: true },
+    20: { color: '#000000', name: 'Noir', mark: true },
+    21: { color: '#808080', name: 'Gris', mark: true },
+    22: { color: '#8B4513', name: 'Marron', mark: true },
+    23: { color: '#FFC0CB', name: 'Rose', mark: true },
+    24: { color: '#00FFFF', name: 'Cyan', mark: true }
+};
+
+// Fonction pour appliquer la couleur Swisscom à une fibre
+function applyFiberColor(fiberNumber, value) {
+    // Si pas de valeur, ne rien faire
+    if (!value || value === '-' || value === '') return;
+    
+    const num = parseInt(value);
+    
+    // Si le numéro n'est pas valide, on ne fait rien (le numéro reste affiché tel quel)
+    if (isNaN(num) || num < 1) {
+        return;
+    }
+    
+    // Calculer la position dans le cycle de 24 fibres (1-24)
+    // Le cycle se répète : 1-24, 25-48, 49-72, etc.
+    const cyclePosition = ((num - 1) % 24) + 1;
+    
+    const colorData = SWISSCOM_FIBER_COLORS[cyclePosition];
+    if (!colorData) return;
+    
+    // Appliquer la couleur au cercle indicateur
+    const colorEl = document.getElementById(`fibre-color-${fiberNumber}`);
+    if (colorEl) {
+        colorEl.style.backgroundColor = colorData.color;
+        // Ajouter une bordure pour les couleurs claires
+        if (colorData.color === '#FFFFFF' || colorData.color === '#FFFF00') {
+            colorEl.style.border = '2px solid #999';
+        } else {
+            colorEl.style.border = 'none';
+        }
+    }
+    
+    // Mettre à jour le texte avec le numéro original (texte en noir)
+    const textEl = document.getElementById(`fibre-${fiberNumber}`);
+    if (textEl) {
+        textEl.textContent = `${num}`;
+    }
+    
+    // Afficher/masquer le point noir pour la 2ème douzaine
+    const markEl = document.getElementById(`fibre-mark-${fiberNumber}`);
+    if (markEl) {
+        if (colorData.mark) {
+            markEl.classList.remove('hidden');
+        } else {
+            markEl.classList.add('hidden');
+        }
+    }
+}
+
+// Fonction pour réinitialiser une fibre
+function resetFiberColor(fiberNumber) {
+    const colorEl = document.getElementById(`fibre-color-${fiberNumber}`);
+    if (colorEl) {
+        colorEl.style.backgroundColor = 'transparent';
+        colorEl.style.border = '2px dashed #4B5563';
+    }
+    
+    const textEl = document.getElementById(`fibre-${fiberNumber}`);
+    if (textEl) {
+        textEl.textContent = '-';
+        textEl.style.color = '';
+        textEl.style.textShadow = 'none';
+    }
+    
+    const markEl = document.getElementById(`fibre-mark-${fiberNumber}`);
+    if (markEl) {
+        markEl.classList.add('hidden');
+    }
+}
+
+// Initialiser Supabase
+async function initSupabase() {
+    // Attendre que Supabase soit initialisé via config.js
+    let attempts = 0;
+    while ((!window.supabase || typeof window.supabase.auth === 'undefined') && attempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (!window.supabase) {
+        console.error('Supabase non initialisé');
+    }
+}
+
+function takePhoto(photoId) {
+    document.getElementById(`photo-${photoId}`).click();
+}
+
+async function handlePhotoUpload_OLD(input, photoId) {
+    if (!input.files || !input.files[0]) return;
+    
+    const file = input.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = async function(e) {
+        // Afficher la prévisualisation immédiatement
+        photos[photoId] = {
+            dataUrl: e.target.result,
+            file: file,
+            timestamp: new Date().toISOString()
+        };
+        const preview = document.getElementById(`preview-${photoId}`);
+        const placeholder = document.getElementById(`placeholder-${photoId}`);
+        const removeBtn = document.getElementById(`remove-${photoId}`);
+        preview.src = e.target.result;
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        if (removeBtn) removeBtn.classList.remove('hidden');
+        updatePhotosCount();
+        
+        // MODE PRODUCTION : Upload vers Supabase Storage Privé
+        uploadPhotoToSupabase(photoId, file, getPhotoLabel(photoId)).catch(error => {
+            console.error('Erreur lors de l\'upload Supabase:', error);
+            alert('Erreur lors de l\'upload de la photo: ' + error.message);
+        });
+        
+        // MODE TEST OPTIONNEL : Envoyer aussi au webhook n8n si nécessaire
+        // sendSpecialPhotoToWebhook(photoId, file).catch(err => {
+        //     console.error('Erreur webhook:', err);
+        // });
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+// Fonction pour uploader la photo vers Supabase Storage PRIVÉ et créer l'enregistrement
+async function uploadPhotoToSupabase(photoId, file, photoLabel) {
+    if (!window.supabase) {
+        console.warn('Supabase non initialisé, la photo sera uploadée plus tard');
+        return;
+    }
+    
+    if (!currentInterventionId) {
+        console.warn('Aucune intervention en cours, la photo sera uploadée plus tard');
+        return;
+    }
+    
+    try {
+        // 0. Récupérer les informations du technicien
+        const technicianEmail = (await window.supabase.auth.getUser()).data?.user?.email;
+        let technicianName = 'Technicien Inconnu';
+        let technicianId = null;
+        
+        if (technicianEmail) {
+            const { data: empData } = await window.supabase
+                .from('employees')
+                .select('id, first_name, last_name')
+                .eq('email', technicianEmail)
+                .single();
+            
+            if (empData) {
+                technicianName = `${empData.first_name} ${empData.last_name}`;
+                technicianId = empData.id;
+            }
+        }
+        
+        // Récupérer les métadonnées de l'intervention
+        const ptoReference = document.getElementById('pto-reference')?.textContent || '';
+        const mandateNumber = document.getElementById('mandate-number')?.textContent || '';
+        const activityType = document.getElementById('activity-label')?.textContent?.trim() || null;
+        
+        // Récupérer les couleurs des fibres (pas les numéros)
+        const fibreColors = {
+            fibre1: document.getElementById('fibre-1')?.textContent || '',
+            fibre2: document.getElementById('fibre-2')?.textContent || '',
+            fibre3: document.getElementById('fibre-3')?.textContent || '',
+            fibre4: document.getElementById('fibre-4')?.textContent || ''
+        };
+        
+        // 1. Upload vers Supabase Storage PRIVÉ
+        const fileExt = file.name.split('.').pop();
+        const timestamp = Date.now();
+        const fileName = `${currentInterventionId}/${photoId}-${timestamp}.${fileExt}`;
+        const filePath = fileName; // Chemin relatif dans le bucket
+        
+        // Upload vers Storage PRIVÉ
+        const { data: uploadData, error: uploadError } = await window.supabase
+            .storage
+            .from('intervention-photos-private')
+            .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+        
+        if (uploadError) {
+            // Gestion spécifique de l'erreur "Bucket not found"
+            if (uploadError.message.includes('Bucket not found')) {
+                console.error('⚠️ Le bucket "intervention-photos-private" n\'existe pas dans Supabase Storage.');
+                console.error('📝 Exécutez le script SQL: CREATE_INTERVENTION_PHOTOS_TABLE.sql');
+                alert('Configuration manquante: Le bucket privé "intervention-photos-private" doit être créé.\n\nExécutez le script SQL: CREATE_INTERVENTION_PHOTOS_TABLE.sql dans votre Dashboard Supabase');
+            }
+            throw uploadError;
+        }
+        
+        // 2. Générer une URL signée temporaire (valide 1 heure)
+        const { data: signedUrlData, error: urlError } = await window.supabase
+            .storage
+            .from('intervention-photos-private')
+            .createSignedUrl(filePath, 3600); // 1 heure
+        
+        const storageUrl = signedUrlData?.signedUrl || null;
+        
+        // 3. Créer l'enregistrement dans intervention_photos avec TOUTES les métadonnées
+        const { data: photoRecord, error: dbError } = await window.supabase
+            .from('intervention_photos')
+            .insert({
+                intervention_detail_id: currentInterventionId,
+                photo_type: photoId,
+                photo_label: photoLabel,
+                storage_path: filePath,
+                storage_url: storageUrl,
+                file_name: file.name,
+                file_size: file.size,
+                mime_type: file.type,
+                
+                // Métadonnées technicien
+                technician_name: technicianName,
+                technician_id: technicianId,
+                capture_timestamp: new Date().toISOString(),
+                
+                // Métadonnées intervention
+                pto_reference: ptoReference,
+                mandate_number: mandateNumber,
+                
+                // Couleurs des fibres (pas les numéros)
+                fibre_colors: fibreColors,
+                
+                // Métadonnées supplémentaires
+                metadata: {
+                    activity_type: activityType
+                },
+                
+                is_additional: false,
+                validation_status: 'pending'
+            })
+            .select()
+            .single();
+        
+        if (dbError) {
+            console.error('Erreur DB:', dbError);
+            throw dbError;
+        }
+        
+        // Stocker l'ID de la photo pour récupérer la validation plus tard
+        photos[photoId].photoId = photoRecord.id;
+        photos[photoId].storagePath = filePath;
+        
+        console.log(`✅ Photo ${photoId} uploadée avec succès. ID: ${photoRecord.id}`);
+        console.log(`📊 Métadonnées: Technicien=${technicianName}, OTO=${ptoReference}, Mandat=${mandateNumber}, Type=${activityType}`);
+        
+        // 4. Déclencher l'analyse IA si disponible
+        if (storageUrl) {
+            await triggerAIAnalysis(photoRecord.id, storageUrl, photoId, photoLabel);
+        }
+        
+        // 5. Polling pour récupérer le résultat de la validation IA
+        pollAIValidation(photoId, photoRecord.id);
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'upload:', error);
+        throw error;
+    }
+}
+
+// Fonction pour déclencher l'analyse IA
+async function triggerAIAnalysis(photoId, photoUrl, photoType, photoLabel) {
+    try {
+        const { data, error } = await window.supabase.functions.invoke('analyze-photo', {
+            body: {
+                photo_id: photoId,
+                photo_url: photoUrl,
+                photo_type: photoType,
+                photo_label: photoLabel
+            }
+        });
+        
+        if (error) {
+            console.error('Erreur lors du déclenchement de l\'analyse IA:', error);
+        } else {
+            console.log('Analyse IA déclenchée:', data);
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+    }
+}
+
+// Fonction pour écouter les résultats de validation IA en temps réel (WebSocket)
+function subscribeToAIValidation(photoId, dbPhotoId) {
+    console.log(`🔔 Subscription WebSocket pour photo ${photoId} (DB ID: ${dbPhotoId})`);
+    
+    // S'abonner aux changements dans la table photo_ai_validations
+    const subscription = window.supabase
+        .channel(`ai-validation-${dbPhotoId}`)
+        .on('postgres_changes', 
+            { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'photo_ai_validations',
+                filter: `photo_id=eq.${dbPhotoId}`
+            }, 
+            (payload) => {
+                console.log(`✅ Résultats IA reçus en temps réel pour ${photoId}:`, payload.new);
+                
+                const data = payload.new;
+                const status = data.validation_status === 'validated' ? 'validated' :
+                              data.validation_status === 'partial' ? 'partial' :
+                              data.validation_status === 'rejected' ? 'rejected' : null;
+                
+                // Mettre à jour l'UI
+                updateAIValidation(photoId, status, data.ai_comment);
+                
+                // Arrêter le loader
+                if (typeof updatePhotoStatusUI === 'function') {
+                    updatePhotoStatusUI(photoId, 'complete');
+                }
+                
+                // Se désabonner après réception
+                window.supabase.removeChannel(subscription);
+            }
+        )
+        .subscribe((status) => {
+            console.log(`📡 Subscription status pour ${photoId}:`, status);
+        });
+    
+    // Timeout de sécurité : arrêter le loader après 30 secondes même sans réponse
+    setTimeout(() => {
+        console.warn(`⏱️ Timeout subscription pour ${photoId} après 30 secondes`);
+        if (typeof updatePhotoStatusUI === 'function') {
+            updatePhotoStatusUI(photoId, 'complete');
+        }
+        window.supabase.removeChannel(subscription);
+    }, 30000);
+}
+
+function removePhoto(photoId) {
+    if (confirm('Voulez-vous supprimer cette photo ?')) {
+        photos[photoId] = null;
+        const preview = document.getElementById(`preview-${photoId}`);
+        const placeholder = document.getElementById(`placeholder-${photoId}`);
+        const removeBtn = document.getElementById(`remove-${photoId}`);
+        const input = document.getElementById(`photo-${photoId}`);
+        if (preview) preview.classList.add('hidden');
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (removeBtn) removeBtn.classList.add('hidden');
+        if (input) input.value = '';
+        updatePhotosCount();
+    }
+}
+
+// Fonction pour afficher le modal avec les détails de validation IA
+function showScoreDetails(photoId) {
+    const modal = document.getElementById('score-modal');
+    const photo = photos[photoId];
+    
+    console.log(`showScoreDetails for ${photoId}:`, photo); // Debug
+    
+    if (!photo) {
+        alert('Photo non trouvée');
+        return;
+    }
+    
+    // Mettre à jour le titre
+    document.getElementById('modal-title').textContent = getPhotoLabel(photoId);
+    
+    // Mettre à jour le score
+    const scoreEl = document.getElementById('modal-score');
+    const scoreValue = photo.ai_score !== null && photo.ai_score !== undefined && photo.ai_score !== '' ? parseFloat(photo.ai_score) : null;
+    
+    if (scoreValue !== null && !isNaN(scoreValue)) {
+        scoreEl.textContent = `${scoreValue.toFixed(1)}/10`;
+        scoreEl.className = photo.is_valid ? 'text-5xl font-bold mb-2 text-green-500' : 'text-5xl font-bold mb-2 text-red-500';
+    } else {
+        scoreEl.textContent = '-';
+        scoreEl.className = 'text-5xl font-bold mb-2 text-gray-500';
+    }
+    
+    // Mettre à jour le badge de validation
+    const validBadge = document.getElementById('modal-valid-badge');
+    const validText = document.getElementById('modal-valid-text');
+    if (photo.is_valid === true) {
+        validBadge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-500';
+        validText.textContent = 'Validé';
+        validBadge.querySelector('.material-symbols-outlined').textContent = 'check_circle';
+    } else if (photo.is_valid === false) {
+        validBadge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-500';
+        validText.textContent = 'Non conforme';
+        validBadge.querySelector('.material-symbols-outlined').textContent = 'cancel';
+    } else {
+        validBadge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-500/20 text-gray-500';
+        validText.textContent = 'En attente';
+        validBadge.querySelector('.material-symbols-outlined').textContent = 'schedule';
+    }
+    
+    // Mettre à jour le commentaire
+    const commentEl = document.getElementById('modal-comment');
+    commentEl.textContent = photo.ai_comment || 'Aucun commentaire disponible';
+    
+    // Mettre à jour la date
+    const dateEl = document.getElementById('modal-date');
+    if (photo.uploaded_at || photo.timestamp) {
+        const date = new Date(photo.uploaded_at || photo.timestamp);
+        dateEl.textContent = `Analysé le ${date.toLocaleDateString('fr-CH')} à ${date.toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+        dateEl.textContent = '';
+    }
+    
+    // Afficher le modal
+    modal.classList.remove('hidden');
+}
+
+function closeScoreModal() {
+    const modal = document.getElementById('score-modal');
+    modal.classList.add('hidden');
+}
+
+// OTDR PDF Management Functions
+async function handleOTDRUpload_OLD(input, otdrNumber) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // Vérifier que c'est bien un PDF
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        alert('Veuillez sélectionner un fichier PDF');
+        input.value = '';
+        return;
+    }
+    
+    // Vérifier la taille (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Le fichier PDF ne doit pas dépasser 10 MB');
+        input.value = '';
+        return;
+    }
+    
+    // Stocker le fichier
+    otdrFiles[otdrNumber] = file;
+    
+    // Mettre à jour l'affichage
+    const placeholder = document.getElementById(`otdr-placeholder-${otdrNumber}`);
+    const preview = document.getElementById(`otdr-preview-${otdrNumber}`);
+    const nameEl = document.getElementById(`otdr-name-${otdrNumber}`);
+    
+    if (placeholder) placeholder.classList.add('hidden');
+    if (preview) preview.classList.remove('hidden');
+    if (nameEl) nameEl.textContent = file.name;
+    
+    updateOTDRCount();
+    
+    // Envoyer au webhook n8n automatiquement
+    await sendOTDRToWebhook(otdrNumber, file);
+}
+
+function removeOTDR(otdrNumber) {
+    if (confirm('Voulez-vous supprimer ce fichier PDF ?')) {
+        otdrFiles[otdrNumber] = null;
+        
+        const placeholder = document.getElementById(`otdr-placeholder-${otdrNumber}`);
+        const preview = document.getElementById(`otdr-preview-${otdrNumber}`);
+        const input = document.getElementById(`otdr-${otdrNumber}`);
+        
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (preview) preview.classList.add('hidden');
+        if (input) input.value = '';
+        
+        updateOTDRCount();
+    }
+}
+
+function updateOTDRCount() {
+    const count = Object.values(otdrFiles).filter(f => f !== null).length;
+    const countEl = document.getElementById('otdr-count');
+    
+    if (countEl) {
+        countEl.textContent = `${count}/4`;
+    }
+}
+
+async function sendOTDRToWebhook(otdrNumber, file) {
+    try {
+        // Créer un FormData pour envoyer le fichier
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('otdr_number', otdrNumber);
+        formData.append('intervention_id', currentInterventionId || 'unknown');
+        formData.append('employee_id', currentEmployeeId || 'unknown');
+        formData.append('timestamp', new Date().toISOString());
+        
+        // Envoyer via l'API backend (l'URL du webhook est gérée côté serveur)
+        const response = await fetch('/api/upload-otdr', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erreur API: ${response.status}`);
+        }
+        
+        console.log(`OTDR ${otdrNumber} envoyé avec succès`);
+        
+    } catch (error) {
+        console.error(`Erreur lors de l'envoi de l'OTDR ${otdrNumber}:`, error);
+        // Ne pas bloquer l'utilisateur en cas d'erreur webhook
+        // Le fichier reste stocké localement
+    }
+}
+
+// Envoyer les photos spéciales vers le webhook n8n (direct pour tests)
+async function sendSpecialPhotoToWebhook_OLD(photoId, file) {
+    console.log('🔹 ÉTAPE 1: Début sendSpecialPhotoToWebhook');
+    console.log('   - photoId:', photoId);
+    console.log('   - file:', file.name, file.size, 'bytes');
+    
+    try {
+        // Mapping des IDs de photos vers leurs numéros
+        const photoMapping = {
+            'facade': 1,
+            'pbo-avant': 2,
+            'pbo-apres': 3,
+            'chemin-cable': 4,
+            'percement': 5,
+            'pto-installe': 6,
+            'numero-serie': 7,
+            'test-laser': 8,
+            'speedtest': 9,
+            'otdr-sur-fibre-active': 10,
+            'routeur-ok': 11
+        };
+        
+        console.log('🔹 ÉTAPE 2: Récupération des métadonnées');
+        
+        // Récupérer les informations techniques pour les métadonnées
+        const mandateNumber = document.getElementById('mandate-number')?.textContent || '';
+        const ptoReference = document.getElementById('pto-reference')?.textContent || '';
+        const cableAlim = document.getElementById('cable-alim')?.textContent || '';
+        const fibre1 = document.getElementById('fibre-1')?.textContent || '';
+        const fibre2 = document.getElementById('fibre-2')?.textContent || '';
+        const fibre3 = document.getElementById('fibre-3')?.textContent || '';
+        const fibre4 = document.getElementById('fibre-4')?.textContent || '';
+        
+        console.log('   - mandate:', mandateNumber);
+        console.log('   - pto:', ptoReference);
+        console.log('   - intervention_id:', currentInterventionId);
+        
+        // Créer l'objet metadata JSON
+        const metadata = {
+            photo_id: photoId,
+            photo_type: photoId,
+            photo_number: photoMapping[photoId] || 0,
+            photo_label: getPhotoLabel(photoId),
+            intervention_id: currentInterventionId || 'unknown',
+            employee_id: currentEmployeeId || 'unknown',
+            timestamp: new Date().toISOString(),
+            technical_info: {
+                mandate_number: mandateNumber !== '-' ? mandateNumber : null,
+                pto_reference: ptoReference !== '-' ? ptoReference : null,
+                cable_alim: cableAlim !== '-' ? cableAlim : null,
+                fibres: {
+                    fibre_1: fibre1 !== '-' ? fibre1 : null,
+                    fibre_2: fibre2 !== '-' ? fibre2 : null,
+                    fibre_3: fibre3 !== '-' ? fibre3 : null,
+                    fibre_4: fibre4 !== '-' ? fibre4 : null
+                }
+            }
+        };
+        
+        console.log('🔹 ÉTAPE 3: Création du FormData');
+        console.log('   - Metadata:', JSON.stringify(metadata, null, 2));
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('metadata', JSON.stringify(metadata));
+        
+        // Vérifier le contenu du FormData
+        console.log('   - FormData entries:');
+        for (let pair of formData.entries()) {
+            console.log(`      ${pair[0]}:`, pair[1]);
+        }
+        
+        console.log('🔹 ÉTAPE 4: Envoi de la requête au webhook');
+        console.log('   - URL:', N8N_WEBHOOK_PHOTOS_URL);
+        console.log('   - Method: POST');
+        
+        // Envoyer directement au webhook n8n (mode test)
+        const response = await fetch(N8N_WEBHOOK_PHOTOS_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        console.log('🔹 ÉTAPE 5: Réponse reçue');
+        console.log('   - Status:', response.status);
+        console.log('   - StatusText:', response.statusText);
+        console.log('   - OK:', response.ok);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Erreur serveur:', errorText);
+            throw new Error(`Erreur webhook: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ ÉTAPE 6: Photo envoyée avec succès!');
+        console.log('   - Résultat:', result);
+        
+        // Si l'IA a retourné une note, l'afficher
+        if (result.ai_score !== undefined) {
+            updateAIScore(photoId, result.ai_score, result.ai_comment);
+        }
+        
+    } catch (error) {
+        console.error('❌ ERREUR GLOBALE:', error);
+        console.error('   - Message:', error.message);
+        console.error('   - Stack:', error.stack);
+        // Ne pas bloquer l'utilisateur
+    }
+}
+
+// Mettre à jour la note IA dans le tableau
+function updateAIScore(photoId, score, comment) {
+    // Afficher la ligne correspondante
+    const row = document.getElementById(`score-row-${photoId}`);
+    const emptyMessage = document.getElementById('ai-scores-empty');
+    
+    if (row) {
+        row.classList.remove('hidden');
+        
+        // Mettre à jour le PTO
+        const ptoEl = document.getElementById(`score-pto-${photoId}`);
+        const ptoReference = document.getElementById('pto-reference')?.textContent || '-';
+        if (ptoEl) {
+            ptoEl.textContent = ptoReference;
+        }
+        
+        // Mettre à jour la note
+        const scoreValue = document.getElementById(`score-value-${photoId}`);
+        if (scoreValue) {
+            scoreValue.textContent = score.toFixed(1);
+        }
+        
+        // Mettre à jour le commentaire
+        const commentEl = document.getElementById(`score-comment-${photoId}`);
+        if (commentEl) {
+            commentEl.textContent = comment || '-';
+        }
+        
+        // Mettre à jour le statut avec couleur
+        const statusEl = document.getElementById(`score-status-${photoId}`);
+        if (statusEl) {
+            let statusClass = '';
+            let statusIcon = '';
+            let statusText = '';
+            
+            if (score >= 8) {
+                statusClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+                statusIcon = 'check_circle';
+                statusText = 'Excellent';
+            } else if (score >= 6) {
+                statusClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+                statusIcon = 'check_circle';
+                statusText = 'Bon';
+            } else if (score >= 4) {
+                statusClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+                statusIcon = 'warning';
+                statusText = 'Moyen';
+            } else {
+                statusClass = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+                statusIcon = 'error';
+                statusText = 'Faible';
+            }
+            
+            statusEl.className = `inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold ${statusClass}`;
+            statusEl.innerHTML = `<span class="material-symbols-outlined text-xs">${statusIcon}</span> ${statusText}`;
+        }
+    }
+    
+    // Masquer le message vide si au moins une ligne est visible
+    if (emptyMessage) {
+        const hasVisibleRows = document.querySelectorAll('#ai-scores-table tr:not(.hidden)').length > 0;
+        if (hasVisibleRows) {
+            emptyMessage.classList.add('hidden');
+        }
+    }
+    
+    // Stocker le commentaire pour affichage ultérieur
+    if (comment) {
+        aiValidation[photoId] = {
+            score: score,
+            comment: comment,
+            timestamp: new Date().toISOString()
+        };
+    }
+}
+
+function updatePhotosCount() {
+    const activePhotos = Object.values(photos).filter(p => p !== null);
+    const count = activePhotos.length;
+    const totalPhotos = count + additionalPhotos.length;
+    const countEl = document.getElementById('photos-count');
+    const progressEl = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const progressPercentage = document.getElementById('progress-percentage');
+    const globalScoreEl = document.getElementById('global-score');
+    
+    if (countEl) {
+        countEl.textContent = `${count}/11`;
+        if (count === 11) {
+            countEl.classList.add('text-green-600', 'dark:text-green-400');
+            countEl.classList.remove('text-text-main-light', 'dark:text-text-main-dark');
+        } else {
+            countEl.classList.remove('text-green-600', 'dark:text-green-400');
+            countEl.classList.add('text-text-main-light', 'dark:text-text-main-dark');
+        }
+    }
+    
+    // Calculate Score
+    if (globalScoreEl) {
+        let totalScore = 0;
+        let scoredCount = 0;
+        activePhotos.forEach(p => {
+            if (p.score !== undefined && p.score !== null) {
+                totalScore += parseFloat(p.score);
+                scoredCount++;
+            }
+        });
+        
+        if (scoredCount > 0) {
+            const avg = (totalScore / scoredCount).toFixed(1);
+            globalScoreEl.textContent = `${avg}/10`;
+            globalScoreEl.className = avg >= 7 
+                ? 'text-xs font-bold text-green-600 dark:text-green-400' 
+                : 'text-xs font-bold text-red-600 dark:text-red-400';
+        } else {
+            globalScoreEl.textContent = '--/10';
+            globalScoreEl.className = 'text-xs font-bold text-text-sub-light dark:text-text-sub-dark';
+        }
+    }
+    
+    // Update progress bar
+    if (progressEl && progressText && progressPercentage) {
+        const percentage = Math.round((count / 11) * 100);
+        progressEl.style.width = `${percentage}%`;
+        progressText.textContent = `${count}/11`;
+        progressPercentage.textContent = `${percentage}%`;
+        
+        if (percentage === 100) {
+            progressEl.classList.remove('bg-primary');
+            progressEl.classList.add('bg-green-500');
+        } else if (percentage >= 50) {
+            progressEl.classList.remove('bg-green-500', 'bg-yellow-500');
+            progressEl.classList.add('bg-primary');
+        } else {
+            progressEl.classList.remove('bg-primary', 'bg-green-500');
+            progressEl.classList.add('bg-yellow-500');
+        }
+    }
+}
+
+// Material management
+function increaseQuantity(materialId) {
+    const quantityEl = document.getElementById(`quantity-${materialId}`);
+    const current = parseInt(quantityEl.textContent) || 0;
+    quantityEl.textContent = current + 1;
+}
+
+function decreaseQuantity(materialId) {
+    const quantityEl = document.getElementById(`quantity-${materialId}`);
+    const current = parseInt(quantityEl.textContent) || 0;
+    if (current > 0) {
+        quantityEl.textContent = current - 1;
+    }
+}
+
+// ===== MATERIAL MANAGEMENT =====
+async function loadTechnicianInventory() {
+    if (!window.supabase || !currentEmployeeId) return;
+    
+    try {
+        const { data, error } = await window.supabase
+            .from('employee_equipment')
+            .select('*')
+            .eq('employee_id', currentEmployeeId)
+            .eq('returned', false)
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error('Erreur chargement inventaire technicien:', error);
+            return;
+        }
+        
+        // Regrouper par référence pour éviter les doublons
+        const groupedInventory = {};
+        (data || []).forEach(item => {
+            const key = item.reference || item.name; // Utiliser ref ou nom comme clé
+            if (!groupedInventory[key]) {
+                groupedInventory[key] = {
+                    ...item,
+                    quantity: 0,
+                    sourceIds: [] // Garder trace des IDs sources pour la sélection
+                };
+            }
+            groupedInventory[key].quantity += item.quantity;
+            groupedInventory[key].sourceIds.push({id: item.id, quantity: item.quantity});
+        });
+        
+        technicianInventory = Object.values(groupedInventory);
+        console.log('Inventaire technicien chargé:', technicianInventory.length, 'items uniques (regroupés depuis', data?.length || 0, 'enregistrements)');
+    } catch (error) {
+        console.error('Erreur:', error);
+    }
+}
+
+function openMaterialSelector() {
+    const modal = document.getElementById('material-selector-modal');
+    const list = document.getElementById('technician-inventory-list');
+    const empty = document.getElementById('inventory-empty');
+    const searchInput = document.getElementById('material-search-input');
+    
+    // Réinitialiser la recherche
+    if (searchInput) searchInput.value = '';
+    
+    if (technicianInventory.length === 0) {
+        list.classList.add('hidden');
+        empty.classList.remove('hidden');
+    } else {
+        list.classList.remove('hidden');
+        empty.classList.add('hidden');
+        
+        // Afficher les articles disponibles (filtré par stock du technicien uniquement)
+        renderMaterialList();
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+// Fonction pour afficher la liste des matériaux
+function renderMaterialList(searchTerm = '') {
+    const list = document.getElementById('technician-inventory-list');
+    const noResults = document.getElementById('inventory-no-results');
+    
+    // Filtrer les articles selon la recherche
+    let filteredInventory = technicianInventory;
+    
+    if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filteredInventory = technicianInventory.filter(item => {
+            const name = (item.name || '').toLowerCase();
+            const ref = (item.reference || '').toLowerCase();
+            const barcode = (item.barcode || '').toLowerCase();
+            return name.includes(term) || ref.includes(term) || barcode.includes(term);
+        });
+    }
+    
+    // Si aucun résultat
+    if (filteredInventory.length === 0) {
+        list.classList.add('hidden');
+        noResults.classList.remove('hidden');
+        return;
+    }
+    
+    list.classList.remove('hidden');
+    noResults.classList.add('hidden');
+    
+    list.innerHTML = filteredInventory.map((item, index) => {
+        // Utiliser la référence comme ID unique pour les items regroupés
+        const itemKey = item.reference || item.name;
+        const alreadyUsed = usedMaterials.find(m => m.equipment_key === itemKey);
+        const availableQty = item.quantity - (alreadyUsed ? alreadyUsed.quantity : 0);
+        
+        if (availableQty <= 0) return ''; // Ne pas afficher si déjà utilisé en totalité
+        
+        return `
+            <div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
+                <div class="flex items-center gap-3">
+                    <div class="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg flex-shrink-0">
+                        <span class="material-symbols-outlined text-text-sub-light dark:text-text-sub-dark text-xl">inventory_2</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-text-main-light dark:text-text-main-dark text-sm truncate">${item.name}</p>
+                        <p class="text-xs text-text-sub-light dark:text-text-sub-dark truncate">Ref: ${item.reference || '-'}</p>
+                        ${item.barcode ? `<p class="text-xs text-text-sub-light dark:text-text-sub-dark truncate">Code: ${item.barcode}</p>` : ''}
+                        <p class="text-xs text-text-sub-light dark:text-text-sub-dark mt-1">Disponible: ${availableQty}</p>
+                    </div>
+                    <button onclick="selectMaterial('${itemKey}', '${item.name.replace(/'/g, "\\'")}', '${item.reference || ''}', ${availableQty}, ${JSON.stringify(item.sourceIds).replace(/'/g, "\\'")
+})" 
+                            class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors">
+                        Sélectionner
+                    </button>
+                </div>
+            </div>
+        `;
+    }).filter(html => html !== '').join('');
+}
+
+// Fonction de filtrage en temps réel
+function filterMaterials() {
+    const searchInput = document.getElementById('material-search-input');
+    const searchTerm = searchInput ? searchInput.value : '';
+    renderMaterialList(searchTerm);
+}
+
+function closeMaterialSelector() {
+    document.getElementById('material-selector-modal').classList.add('hidden');
+}
+
+// Scanner de code-barres/QR avec html5-qrcode
+let html5QrCode = null;
+let isScanning = false;
+
+async function openBarcodeScanner() {
+    const modal = document.getElementById('barcode-scanner-modal');
+    const result = document.getElementById('scan-result');
+    
+    modal.classList.remove('hidden');
+    result.classList.add('hidden');
+    
+    try {
+        // Obtenir les caméras disponibles
+        const devices = await Html5Qrcode.getCameras();
+        
+        if (!devices || devices.length === 0) {
+            alert('Aucune caméra détectée sur cet appareil');
+            closeBarcodeScanner();
+            return;
+        }
+        
+        // Préférer la caméra arrière
+        const backCamera = devices.find(device => 
+            device.label.toLowerCase().includes('back') || 
+            device.label.toLowerCase().includes('arrière') ||
+            device.label.toLowerCase().includes('rear')
+        );
+        const selectedCamera = backCamera || devices[devices.length - 1];
+        
+        console.log('📷 Caméra sélectionnée:', selectedCamera.label);
+        
+        // Créer l'instance du scanner
+        html5QrCode = new Html5Qrcode("barcode-reader");
+        
+        // Configuration pour les codes-barres
+        const config = {
+            fps: 10,
+            qrbox: { width: 300, height: 150 }, // Zone de scan rectangulaire pour codes-barres
+            aspectRatio: 1.0, // Carré pour maximiser la vue caméra sur mobile
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+            ]
+        };
+        
+        // Démarrer le scan - pas de video constraints specifiques, laisser la lib gérer
+        await html5QrCode.start(
+            selectedCamera.id,
+            config,
+            onBarcodeScanned,
+            onBarcodeScanError
+        );
+        
+        isScanning = true;
+        console.log('✅ Scanner démarré');
+        
+    } catch (error) {
+        console.error('❌ Erreur accès caméra:', error);
+        alert('Impossible d\'accéder à la caméra. Veuillez autoriser l\'accès.');
+        closeBarcodeScanner();
+    }
+}
+
+async function closeBarcodeScanner() {
+    const modal = document.getElementById('barcode-scanner-modal');
+    
+    try {
+        if (html5QrCode && isScanning) {
+            await html5QrCode.stop();
+            html5QrCode.clear();
+        }
+    } catch (error) {
+        console.error('Erreur arrêt scanner:', error);
+    }
+    
+    html5QrCode = null;
+    isScanning = false;
+    modal.classList.add('hidden');
+}
+
+function onBarcodeScanned(decodedText, decodedResult) {
+    console.log('✅ Code détecté:', decodedText, '- Format:', decodedResult.result.format.formatName);
+    
+    // Vibration
+    if (navigator.vibrate) {
+        navigator.vibrate(100);
+    }
+    
+    // Traiter le code
+    handleScannedCode(decodedText);
+}
+
+function onBarcodeScanError(errorMessage) {
+    // Ne rien faire - c'est normal d'avoir des erreurs pendant le scan
+}
+
+function handleScannedCode(code) {
+    const result = document.getElementById('scan-result');
+    result.textContent = `Code détecté: ${code}`;
+    result.classList.remove('hidden');
+    
+    // Chercher dans l'inventaire
+    const item = technicianInventory.find(i => 
+        i.barcode === code || 
+        i.reference === code
+    );
+    
+    if (item) {
+        setTimeout(() => {
+            closeBarcodeScanner();
+            closeMaterialSelector();
+            
+            const itemKey = item.reference || item.name;
+            const alreadyUsed = usedMaterials.find(m => m.equipment_key === itemKey);
+            const availableQty = item.quantity - (alreadyUsed ? alreadyUsed.quantity : 0);
+            
+            if (availableQty > 0) {
+                selectMaterial(itemKey, item.name, item.reference || '', availableQty, item.sourceIds || []);
+            } else {
+                alert('Ce matériel n\'est plus disponible dans votre stock.');
+            }
+        }, 1000);
+    } else {
+        result.textContent = `Code non trouvé dans votre inventaire`;
+        setTimeout(() => {
+            closeBarcodeScanner();
+        }, 2000);
+    }
+}
+
+function selectMaterial(equipmentKey, name, reference, maxQuantity, sourceIds) {
+    closeMaterialSelector();
+    
+    // Vérifier si déjà dans la liste
+    const existing = usedMaterials.find(m => m.equipment_key === equipmentKey);
+    if (existing) {
+        // Augmenter la quantité si possible
+        const available = maxQuantity - existing.quantity;
+        if (available > 0) {
+            existing.quantity += 1;
+            renderMaterialsList();
+            return;
+        } else {
+            alert('Quantité maximale disponible atteinte');
+            return;
+        }
+    }
+    
+    // Ajouter à la liste
+    usedMaterials.push({
+        equipment_key: equipmentKey,
+        name: name,
+        reference: reference,
+        quantity: 1,
+        max_quantity: maxQuantity,
+        source_ids: sourceIds || [] // Garder la trace des IDs sources
+    });
+    
+    renderMaterialsList();
+}
+
+function removeMaterial(equipmentKey) {
+    usedMaterials = usedMaterials.filter(m => m.equipment_key !== equipmentKey);
+    renderMaterialsList();
+}
+
+function adjustMaterialQuantity(equipmentKey, delta) {
+    const material = usedMaterials.find(m => m.equipment_key === equipmentKey);
+    if (!material) return;
+    
+    const newQuantity = material.quantity + delta;
+    if (newQuantity < 1) {
+        removeMaterial(equipmentKey);
+        return;
+    }
+    
+    if (newQuantity > material.max_quantity) {
+        alert(`Quantité maximale disponible: ${material.max_quantity}`);
+        return;
+    }
+    
+    material.quantity = newQuantity;
+    renderMaterialsList();
+}
+
+function renderMaterialsList() {
+    const container = document.getElementById('materials-list');
+    const empty = document.getElementById('materials-empty');
+    
+    if (usedMaterials.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(empty);
+        empty.classList.remove('hidden');
+        return;
+    }
+    
+    empty.classList.add('hidden');
+    
+    container.innerHTML = usedMaterials.map((material, index) => `
+        <div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div class="bg-gray-100 dark:bg-gray-800 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                    <span class="material-symbols-outlined text-text-sub-light dark:text-text-sub-dark text-lg sm:text-xl">inventory_2</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-text-main-light dark:text-text-main-dark text-sm truncate">${material.name}</p>
+                    <p class="text-xs text-text-sub-light dark:text-text-sub-dark truncate">Ref: ${material.reference || '-'}</p>
+                </div>
+                <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    <button onclick="adjustMaterialQuantity('${material.equipment_key}', -1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-background-light dark:bg-background-dark flex items-center justify-center text-text-main-light dark:text-text-main-dark hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm">-</button>
+                    <span class="w-6 sm:w-8 text-center font-semibold text-text-main-light dark:text-text-main-dark text-sm">${material.quantity}</span>
+                    <button onclick="adjustMaterialQuantity('${material.equipment_key}', 1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-background-light dark:bg-background-dark flex items-center justify-center text-text-main-light dark:text-text-main-dark hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm">+</button>
+                    <button onclick="removeMaterial('${material.equipment_key}')" class="ml-2 text-red-500 hover:text-red-600 transition-colors">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// AI Validation functions
+function updateAIValidation(photoId, status, comment) {
+    // status: 'validated', 'partial', 'rejected', null
+    aiValidation[photoId] = { status, comment };
+    
+    const badge = document.getElementById(`ai-badge-${photoId}`);
+    const statusEl = document.getElementById(`ai-status-${photoId}`);
+    const commentBtn = document.getElementById(`ai-comment-btn-${photoId}`);
+    
+    if (!badge || !statusEl) return;
+    
+    if (status) {
+        badge.classList.remove('hidden');
+        commentBtn?.classList.remove('hidden');
+        
+        // Update badge color and icon based on status
+        statusEl.className = 'w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg';
+        
+        if (status === 'validated') {
+            statusEl.classList.add('bg-green-500');
+            statusEl.innerHTML = '<span class="material-symbols-outlined text-sm">check_circle</span>';
+            statusEl.title = 'Photo validée par l\'IA';
+        } else if (status === 'partial') {
+            statusEl.classList.add('bg-yellow-500');
+            statusEl.innerHTML = '<span class="material-symbols-outlined text-sm">warning</span>';
+            statusEl.title = 'Photo partiellement validée par l\'IA';
+        } else if (status === 'rejected') {
+            statusEl.classList.add('bg-red-500');
+            statusEl.innerHTML = '<span class="material-symbols-outlined text-sm">cancel</span>';
+            statusEl.title = 'Photo non validée par l\'IA';
+        }
+    } else {
+        badge.classList.add('hidden');
+        commentBtn?.classList.add('hidden');
+    }
+}
+
+function showAIComment(photoId) {
+    const validation = aiValidation[photoId];
+    if (!validation || !validation.comment) {
+        alert('Aucun commentaire IA disponible pour cette photo.');
+        return;
+    }
+    
+    // Create modal or alert with AI comment
+    const statusText = {
+        'validated': 'Validée',
+        'partial': 'Partiellement validée',
+        'rejected': 'Non validée'
+    };
+    
+    alert(`Commentaire IA (${statusText[validation.status] || 'En attente'}):\n\n${validation.comment}`);
+}
+
+// Additional photos functions
+function takeAdditionalPhoto() {
+    document.getElementById('photo-additional').click();
+}
+
+function handleAdditionalPhotoUpload(input) {
+    if (input.files && input.files.length > 0) {
+        Array.from(input.files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const photoId = `additional-${Date.now()}-${index}`;
+                additionalPhotos.push({
+                    id: photoId,
+                    dataUrl: e.target.result,
+                    file: file,
+                    timestamp: new Date().toISOString()
+                });
+                addAdditionalPhotoToGrid(photoId, e.target.result);
+                updatePhotosCount();
+            };
+            reader.readAsDataURL(file);
+        });
+        input.value = '';
+    }
+}
+
+function addAdditionalPhotoToGrid(photoId, dataUrl) {
+    const container = document.getElementById('additional-photos-container');
+    if (!container) return;
+    
+    // Vérifier que dataUrl est valide
+    if (!dataUrl || typeof dataUrl !== 'string') {
+        console.error('dataUrl invalide pour la photo supplémentaire:', photoId);
+        return;
+    }
+    
+    const photoDiv = document.createElement('div');
+    photoDiv.className = 'relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-solid border-gray-300 dark:border-gray-700 overflow-hidden';
+    photoDiv.id = `additional-photo-${photoId}`;
+    
+    // Échapper les caractères spéciaux dans photoId pour éviter les problèmes dans innerHTML
+    const escapedPhotoId = photoId.replace(/'/g, "\\'");
+    
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.className = 'w-full h-full object-cover';
+    img.onerror = function() {
+        console.error('Erreur lors du chargement de l\'image:', dataUrl.substring(0, 50) + '...');
+        this.style.display = 'none';
+    };
+    
+    const aiBadge = document.createElement('div');
+    aiBadge.id = `ai-badge-${photoId}`;
+    aiBadge.className = 'hidden absolute top-1 left-1';
+    
+    const aiStatus = document.createElement('div');
+    aiStatus.id = `ai-status-${photoId}`;
+    aiStatus.className = 'w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg';
+    aiStatus.innerHTML = '<span class="material-symbols-outlined text-sm">check_circle</span>';
+    aiBadge.appendChild(aiStatus);
+    
+    const commentBtn = document.createElement('button');
+    commentBtn.id = `ai-comment-btn-${photoId}`;
+    commentBtn.className = 'hidden absolute bottom-1 left-1 bg-black/50 text-white rounded px-1.5 py-0.5 text-[9px] hover:bg-black/70 transition-colors';
+    commentBtn.onclick = function(e) {
+        e.stopPropagation();
+        showAIComment(photoId);
+    };
+    commentBtn.innerHTML = '<span class="material-symbols-outlined text-xs align-middle">info</span>';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors';
+    removeBtn.onclick = function() {
+        removeAdditionalPhoto(photoId);
+    };
+    removeBtn.innerHTML = '<span class="material-symbols-outlined text-sm">close</span>';
+    
+    photoDiv.appendChild(img);
+    photoDiv.appendChild(aiBadge);
+    photoDiv.appendChild(commentBtn);
+    photoDiv.appendChild(removeBtn);
+    
+    container.appendChild(photoDiv);
+}
+
+function removeAdditionalPhoto(photoId) {
+    if (confirm('Voulez-vous supprimer cette photo supplémentaire ?')) {
+        additionalPhotos = additionalPhotos.filter(p => p.id !== photoId);
+        const photoEl = document.getElementById(`additional-photo-${photoId}`);
+        if (photoEl) {
+            photoEl.remove();
+            updatePhotosCount();
+        }
+    }
+}
+
+// ===== OPTION PHOTOS MANAGEMENT =====
+function openOptionSelector() {
+    const modal = document.getElementById('option-selector-modal');
+    const list = document.getElementById('option-list');
+    
+    // Afficher la liste des options disponibles
+    renderOptionList();
+    
+    modal.classList.remove('hidden');
+}
+
+function closeOptionSelector() {
+    const modal = document.getElementById('option-selector-modal');
+    modal.classList.add('hidden');
+}
+
+function renderOptionList() {
+    const list = document.getElementById('option-list');
+    if (!list) return;
+    
+    // Filtrer les options déjà utilisées
+    const usedOptionIds = optionPhotos.map(op => op.option);
+    const availableOptionsList = availableOptions.filter(opt => !usedOptionIds.includes(opt.id));
+    
+    if (availableOptionsList.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark text-sm">
+                <span class="material-symbols-outlined text-4xl mb-2 opacity-50">check_circle</span>
+                <p>Toutes les options ont été utilisées</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = availableOptionsList.map(option => {
+        const highlightClass = option.highlight ? 'border-yellow-400 bg-yellow-50/10 dark:bg-yellow-900/10' : '';
+        const preApprovalBadge = option.preApproval ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-[10px] font-semibold"><span class="material-symbols-outlined text-[12px]">warning</span>Pre-Approval</span>` : '';
+        
+        return `
+            <div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border-2 border-border-light dark:border-border-dark ${highlightClass} cursor-pointer hover:border-primary transition-all" onclick="selectOption('${option.id}')">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-xl">construction</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                            <h4 class="font-semibold text-sm text-text-main-light dark:text-text-main-dark leading-tight">${option.label}</h4>
+                            <span class="material-symbols-outlined text-text-sub-light dark:text-text-sub-dark text-xl flex-shrink-0">arrow_forward</span>
+                        </div>
+                        <p class="text-[11px] text-text-sub-light dark:text-text-sub-dark leading-snug mb-2">${option.description}</p>
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-mono font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded">${option.unit}</span>
+                            ${preApprovalBadge}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectOption(optionId) {
+    const option = availableOptions.find(o => o.id === optionId);
+    if (!option) return;
+    
+    // Vérifier si l'option n'existe pas déjà
+    if (optionPhotos.find(p => p.option === optionId)) {
+        alert('Cette option a déjà été ajoutée');
+        return;
+    }
+    
+    // Stocker l'option sélectionnée temporairement
+    tempSelectedOption = option;
+    tempQuantity = 1;
+    
+    // Fermer le modal de sélection d'option
+    closeOptionSelector();
+    
+    // Ouvrir le modal de sélection de quantité
+    openQuantitySelector(option);
+}
+
+// Fonctions pour gérer le modal de quantité
+function openQuantitySelector(option) {
+    const modal = document.getElementById('quantity-selector-modal');
+    if (!modal) return;
+    
+    document.getElementById('quantity-modal-title').textContent = option.label;
+    document.getElementById('quantity-modal-description').textContent = option.description;
+    document.getElementById('quantity-value').textContent = tempQuantity;
+    
+    modal.classList.remove('hidden');
+}
+
+function closeQuantitySelector() {
+    const modal = document.getElementById('quantity-selector-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    tempSelectedOption = null;
+    tempQuantity = 1;
+}
+
+function increaseOptionQuantity() {
+    tempQuantity++;
+    document.getElementById('quantity-value').textContent = tempQuantity;
+}
+
+function decreaseOptionQuantity() {
+    if (tempQuantity > 1) {
+        tempQuantity--;
+        document.getElementById('quantity-value').textContent = tempQuantity;
+    }
+}
+
+function confirmOptionQuantity() {
+    if (!tempSelectedOption) return;
+    
+    // Sauvegarder l'ID avant de réinitialiser
+    const selectedOptionId = tempSelectedOption.id;
+    const selectedOptionLabel = tempSelectedOption.label;
+    const selectedQuantity = tempQuantity;
+    
+    // Ajouter l'option à la liste avec la quantité
+    optionPhotos.push({
+        option: selectedOptionId,
+        optionLabel: selectedOptionLabel,
+        quantity: selectedQuantity,
+        photo: null,
+        photoId: null
+    });
+    
+    // Réinitialiser les variables temporaires
+    tempSelectedOption = null;
+    tempQuantity = 1;
+    
+    // Fermer le modal de quantité
+    closeQuantitySelector();
+    
+    // Afficher la liste
+    renderOptionPhotos();
+    
+    // Déclencher automatiquement le sélecteur de fichier avec un délai plus long
+    setTimeout(() => {
+        const input = document.getElementById(`option-photo-${selectedOptionId}`);
+        if (input) {
+            console.log('Ouverture du sélecteur de photo pour:', selectedOptionId);
+            input.click();
+        } else {
+            console.error('Input non trouvé pour:', selectedOptionId);
+        }
+    }, 300);
+}
+
+function renderOptionPhotos() {
+    const container = document.getElementById('option-photos-container');
+    if (!container) return;
+    
+    container.innerHTML = optionPhotos.map((item, index) => {
+        const option = availableOptions.find(o => o.id === item.option);
+        const hasPhoto = item.photo !== null;
+        const photoUrl = hasPhoto ? (item.photo.dataUrl || item.photo.url || '') : '';
+        const quantity = item.quantity || 1;
+        
+        return `
+            <div class="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border-2 ${hasPhoto ? 'border-solid border-primary' : 'border-dashed border-gray-300 dark:border-gray-700'} flex flex-col items-center justify-center overflow-hidden">
+                ${hasPhoto && photoUrl ? `
+                    <img src="${photoUrl}" class="w-full h-full object-cover rounded-lg" id="option-preview-${item.option}">
+                    <div class="absolute top-1 left-1 bg-black/60 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded backdrop-blur-sm">
+                        ${option?.label || item.optionLabel}
+                    </div>
+                    <div class="absolute top-1 right-1 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+                        ×${quantity}
+                    </div>
+                    <button onclick="removeOptionPhoto('${item.option}')" class="absolute bottom-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                ` : `
+                    <input type="file" accept="image/*" class="hidden" id="option-photo-${item.option}" onchange="handleOptionPhotoUpload(this, '${item.option}')">
+                    <div class="flex flex-col items-center justify-center cursor-pointer" onclick="document.getElementById('option-photo-${item.option}').click()">
+                        <span class="material-symbols-outlined text-primary text-3xl mb-1">camera_alt</span>
+                        <span class="text-[10px] text-center text-text-sub-light dark:text-text-sub-dark px-1">${option?.label || item.optionLabel}</span>
+                        <span class="text-[8px] font-bold text-primary mt-1">Quantité: ${quantity}</span>
+                    </div>
+                `}
+            </div>
+        `;
+    }).join('');
+}
+
+async function handleOptionPhotoUpload(input, optionId) {
+    if (!input.files || !input.files[0]) return;
+    
+    const file = input.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = async function(e) {
+        const optionItem = optionPhotos.find(p => p.option === optionId);
+        if (!optionItem) return;
+        
+        optionItem.photo = {
+            dataUrl: e.target.result,
+            file: file,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Upload vers Supabase si disponible
+        if (currentInterventionId && window.supabase) {
+            try {
+                await uploadOptionPhotoToSupabase(optionId, file, optionItem.optionLabel);
+            } catch (error) {
+                console.error('Erreur upload option photo:', error);
+            }
+        }
+        
+        renderOptionPhotos();
+        updatePhotosCount();
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+async function uploadOptionPhotoToSupabase(optionId, file, optionLabel) {
+    if (!window.supabase || !currentInterventionId) return;
+    
+    try {
+        const technicianEmail = (await window.supabase.auth.getUser()).data?.user?.email;
+        let technicianName = 'Technicien Inconnu';
+        let technicianId = null;
+        
+        if (technicianEmail) {
+            const { data: empData } = await window.supabase
+                .from('employees')
+                .select('id, first_name, last_name')
+                .eq('email', technicianEmail)
+                .single();
+            
+            if (empData) {
+                technicianName = `${empData.first_name} ${empData.last_name}`;
+                technicianId = empData.id;
+            }
+        }
+        
+        const fileExt = file.name.split('.').pop();
+        const timestamp = Date.now();
+        const fileName = `${currentInterventionId}/option-${optionId}-${timestamp}.${fileExt}`;
+        
+        // Upload vers Storage PRIVÉ
+        const { data: uploadData, error: uploadError } = await window.supabase
+            .storage
+            .from('intervention-photos-private')
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+        
+        if (uploadError) throw uploadError;
+        
+        // Générer URL signée
+        const { data: signedUrlData } = await window.supabase
+            .storage
+            .from('intervention-photos-private')
+            .createSignedUrl(fileName, 3600);
+        
+        const storageUrl = signedUrlData?.signedUrl || null;
+        
+        // Créer l'enregistrement dans intervention_photos
+        const { data: photoRecord, error: dbError } = await window.supabase
+            .from('intervention_photos')
+            .insert({
+                intervention_detail_id: currentInterventionId,
+                photo_type: `option-${optionId}`,
+                photo_label: `Option: ${optionLabel}`,
+                storage_path: fileName,
+                storage_url: storageUrl,
+                file_name: file.name,
+                file_size: file.size,
+                mime_type: file.type,
+                technician_name: technicianName,
+                technician_id: technicianId,
+                capture_timestamp: new Date().toISOString(),
+                is_additional: true, // Marquer comme photo supplémentaire
+                validation_status: 'pending'
+            })
+            .select()
+            .single();
+        
+        if (dbError) throw dbError;
+        
+        // Stocker l'ID de la photo
+        const optionItem = optionPhotos.find(p => p.option === optionId);
+        if (optionItem) {
+            optionItem.photoId = photoRecord.id;
+            optionItem.storagePath = fileName;
+        }
+        
+        console.log(`✅ Photo option ${optionId} uploadée avec succès. ID: ${photoRecord.id}`);
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'upload option photo:', error);
+        throw error;
+    }
+}
+
+function removeOptionPhoto(optionId) {
+    if (confirm('Voulez-vous supprimer cette photo d\'option ?')) {
+        optionPhotos = optionPhotos.filter(p => p.option !== optionId);
+        renderOptionPhotos();
+        updatePhotosCount();
+    }
+}
+
+// Navigation and call functions
+function openNavigation() {
+    const addressEl = document.getElementById('client-address');
+    const address = addressEl ? addressEl.textContent : "8 Impasse du Bois, Lyon 69003";
+    // Open in Google Maps or Apple Maps
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        window.open(`maps://maps.apple.com/?q=${encodeURIComponent(address)}`);
+    } else {
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`);
+    }
+}
+
+function callClient() {
+    const phoneEl = document.getElementById('client-phone');
+    if (phoneEl && phoneEl.textContent) {
+        // Nettoyer le numéro de téléphone (enlever espaces, tirets, etc.)
+        const phoneNumber = phoneEl.textContent.replace(/[\s\-\(\)]/g, '');
+        window.location.href = `tel:${phoneNumber}`;
+    } else {
+        alert('Numéro de téléphone non disponible');
+    }
+}
+
+// Validation function
+async function validateIntervention() {
+    const photoCount = Object.values(photos).filter(p => p !== null).length;
+    const comments = document.getElementById('comments').value;
+    
+    // Validate minimum requirements
+    if (photoCount < 11) {
+        if (!confirm(`Vous n'avez pris que ${photoCount}/11 photos. Voulez-vous continuer quand même ?`)) {
+            return;
+        }
+    }
+    
+    // Collect material data from usedMaterials
+    const materials = usedMaterials.map(m => ({
+        equipment_key: m.equipment_key,
+        name: m.name,
+        reference: m.reference,
+        quantity: m.quantity,
+        source_ids: m.source_ids // IDs sources de la BDD pour traçabilité
+    }));
+    
+    // Prepare photo data for upload
+    const photoData = {};
+    Object.keys(photos).forEach(key => {
+        if (photos[key] !== null) {
+            photoData[key] = {
+                label: getPhotoLabel(key),
+                dataUrl: photos[key].dataUrl || photos[key],
+                timestamp: photos[key].timestamp || new Date().toISOString()
+            };
+        }
+    });
+    
+    const interventionData = {
+        interventionId: new URLSearchParams(window.location.search).get('id'),
+        mandateNumber: document.getElementById('mandate-number').textContent,
+        ptoReference: document.getElementById('pto-reference').textContent,
+        cableAlim: document.getElementById('cable-alim').textContent,
+        fibres: {
+            fibre1: document.getElementById('fibre-1').textContent,
+            fibre2: document.getElementById('fibre-2').textContent,
+            fibre3: document.getElementById('fibre-3').textContent,
+            fibre4: document.getElementById('fibre-4').textContent
+        },
+        photos: photoData,
+        additionalPhotos: additionalPhotos,
+        optionPhotos: optionPhotos.map(opt => ({
+            option: opt.option,
+            optionLabel: opt.optionLabel,
+            quantity: opt.quantity || 1,
+            photo: opt.photo,
+            photoId: opt.photoId
+        })),
+        materials: materials,
+        comments: comments,
+        timestamp: new Date().toISOString(),
+        technicianId: 'TECH-001' // TODO: Get from session/auth
+    };
+    
+    console.log('Intervention data to send:', interventionData);
+    
+    // Show loading state
+    const validateBtn = document.getElementById('validate-btn');
+    const originalText = validateBtn.innerHTML;
+    validateBtn.disabled = true;
+    validateBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Validation...';
+    
+    try {
+        // TODO: Replace with actual API endpoint
+        // const response = await fetch('/api/interventions/validate', {
+        //     method: 'POST',
+        //     headers: { 
+        //         'Content-Type': 'application/json',
+        //         'Authorization': 'Bearer ' + getAuthToken()
+        //     },
+        //     body: JSON.stringify(interventionData)
+        // });
+        
+        // const result = await response.json();
+        
+        // Simulate API call for now
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Example of expected response structure:
+        // {
+        //     success: true,
+        //     validation: {
+        //         status: 'conforme' | 'non_conforme' | 'partiellement_conforme',
+        //         score: 0.95,
+        //         aiComment: 'Toutes les photos sont conformes...',
+        //         issues: []
+        //     }
+        // }
+        
+        // Mettre à jour le statut de l'intervention dans la base de données
+        if (currentInterventionId && window.supabase) {
+            try {
+                const { error: updateError } = await window.supabase
+                    .from('intervention_details')
+                    .update({
+                        status: 'validated', // Changé de 'completed' à 'validated' pour afficher le badge "Validé"
+                        comments: comments,
+                        materials: materials,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', currentInterventionId);
+                
+                if (updateError) {
+                    console.error('Erreur lors de la mise à jour du statut:', updateError);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+        
+        // For now, show success message
+        // alert(`Intervention validée avec succès!\n\nPhotos: ${photoCount}/11\nMatériel: ${materials.length} article(s)\nCommentaires: ${comments ? 'Oui' : 'Non'}\n\nLes données seront envoyées pour validation IA.`);
+        console.log('Intervention validée avec succès');
+        
+        // TODO: Show validation result from AI
+        // showValidationResult(result.validation);
+        
+        // Redirect back to appointments list
+        window.location.href = 'Rendez-vous_technicien.html';
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Erreur lors de la validation. Veuillez réessayer.');
+        validateBtn.disabled = false;
+        validateBtn.innerHTML = originalText;
+    }
+}
+
+async function reportTechnicalProblem() {
+    const comments = document.getElementById('comments').value;
+    
+    if (!comments || comments.trim().length < 10) {
+        alert('Veuillez décrire le problème technique rencontré dans les commentaires (minimum 10 caractères).');
+        return;
+    }
+    
+    if (!confirm('Êtes-vous sûr de vouloir signaler un problème technique ?\n\nCette intervention sera marquée comme bloquée.')) {
+        return;
+    }
+    
+    const blockBtn = document.getElementById('block-btn');
+    const originalText = blockBtn.innerHTML;
+    blockBtn.disabled = true;
+    blockBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Signalement...';
+    
+    try {
+        // Mettre à jour le statut de l'intervention dans la base de données
+        if (currentInterventionId && window.supabase) {
+            console.log('Mise à jour de l\'intervention:', currentInterventionId);
+            
+            const { data, error: updateError } = await window.supabase
+                .from('intervention_details')
+                .update({
+                    status: 'blocked',
+                    comments: comments,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', currentInterventionId)
+                .select();
+            
+            if (updateError) {
+                console.error('Erreur lors de la mise à jour du statut:', JSON.stringify(updateError, null, 2));
+                throw updateError;
+            } else {
+                console.log('Intervention mise à jour avec succès:', data);
+            }
+        }
+        
+        console.log('Problème technique signalé avec succès');
+        alert('Problème technique signalé.\n\nL\'intervention a été marquée comme bloquée.');
+        
+        // Redirect back to appointments list
+        window.location.href = 'Rendez-vous_technicien.html';
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Erreur lors du signalement. Veuillez réessayer.');
+        blockBtn.disabled = false;
+        blockBtn.innerHTML = originalText;
+    }
+}
+
+function getPhotoLabel(photoId) {
+    const labels = {
+        'facade': 'Façade Immeuble',
+        'pbo-avant': 'PBO Avant',
+        'pbo-apres': 'PBO Après',
+        'chemin-cable': 'Chemin Câble',
+        'percement': 'Percement',
+        'pto-installe': 'PTO Installé',
+        'numero-serie': 'Numéro Série',
+        'test-laser': 'Test Laser',
+        'speedtest': 'Speedtest',
+        'otdr-sur-fibre-active': 'OTDR sur Fibre Active',
+        'routeur-ok': 'Routeur OK'
+    };
+    return labels[photoId] || photoId;
+}
+
+function showValidationResult(validation) {
+    // TODO: Create a modal or notification to show AI validation results
+    const statusColors = {
+        'conforme': 'green',
+        'non_conforme': 'red',
+        'partiellement_conforme': 'orange'
+    };
+    console.log('AI Validation:', validation);
+    
+    // Update AI validation badges for each photo
+    if (validation.photos) {
+        Object.keys(validation.photos).forEach(photoId => {
+            const photoValidation = validation.photos[photoId];
+            const status = photoValidation.status === 'conforme' ? 'validated' : 
+                          photoValidation.status === 'partiellement_conforme' ? 'partial' : 
+                          photoValidation.status === 'non_conforme' ? 'rejected' : null;
+            updateAIValidation(photoId, status, photoValidation.comment);
+        });
+    }
+}
+
+// Simulate AI validation (for testing - remove in production)
+function simulateAIValidation(photoId) {
+    // Simulate API delay
+    setTimeout(() => {
+        const random = Math.random();
+        let status, comment;
+        if (random > 0.7) {
+            status = 'validated';
+            comment = 'Photo conforme. Tous les éléments requis sont visibles et corrects.';
+        } else if (random > 0.3) {
+            status = 'partial';
+            comment = 'Photo partiellement conforme. Certains éléments sont flous ou manquants.';
+        } else {
+            status = 'rejected';
+            comment = 'Photo non conforme. La qualité est insuffisante ou des éléments essentiels sont absents.';
+        }
+        updateAIValidation(photoId, status, comment);
+    }, 2000);
+}
+
+// Load intervention data from URL parameters or API
+async function loadInterventionData() {
+    const params = new URLSearchParams(window.location.search);
+    const interventionId = params.get('id');
+    const appointmentId = params.get('appointment_id');
+    
+    // PRIORITÉ 1: Si on a un ID d'intervention, charger depuis l'API
+    if (interventionId && window.supabase) {
+        try {
+            const { data: intervention, error } = await window.supabase
+                .from('intervention_details')
+                .select('*')
+                .eq('id', interventionId)
+                .single();
+            
+            if (!error && intervention) {
+                console.log('Intervention chargée depuis DB:', intervention);
+                currentInterventionId = intervention.id;
+                
+                // Si l'intervention a un appointment_id, charger aussi les données de l'appointment
+                if (intervention.appointment_id) {
+                    const { data: appointment, error: appError } = await window.supabase
+                        .from('appointments')
+                        .select('*')
+                        .eq('id', intervention.appointment_id)
+                        .single();
+                    
+                    if (!appError && appointment) {
+                        // Fusionner les données de l'appointment avec l'intervention
+                        Object.assign(intervention, appointment);
+                    }
+                }
+
+                // Fusionner les paramètres URL manquant dans l'intervention (pour le premier chargement)
+                // Cela s'assure que si les données techniques sont dans l'URL mais pas encore en DB, elles s'affichent et sont colorées
+                if (!intervention.fibre_1 && params.get('fibre1')) intervention.fibre_1 = params.get('fibre1');
+                if (!intervention.fibre_2 && params.get('fibre2')) intervention.fibre_2 = params.get('fibre2');
+                if (!intervention.fibre_3 && params.get('fibre3')) intervention.fibre_3 = params.get('fibre3');
+                if (!intervention.fibre_4 && params.get('fibre4')) intervention.fibre_4 = params.get('fibre4');
+                if (!intervention.mandate_number && params.get('mandate')) intervention.mandate_number = params.get('mandate');
+                if (!intervention.pto_reference && params.get('pto')) intervention.pto_reference = params.get('pto');
+                if (!intervention.cable_alim && params.get('cableAlim')) intervention.cable_alim = params.get('cableAlim');
+                if (!intervention.client_name && params.get('client')) intervention.client_name = decodeURIComponent(params.get('client'));
+                if (!intervention.phone && params.get('phone')) intervention.phone = decodeURIComponent(params.get('phone'));
+                if (!intervention.address && params.get('address')) intervention.address = decodeURIComponent(params.get('address'));
+                
+                populateInterventionData(intervention);
+                await loadInterventionPhotos(interventionId);
+                return;
+            } else {
+                console.error('Erreur chargement intervention:', error);
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement de l\'intervention:', error);
+        }
+    }
+    
+    // PRIORITÉ 2: Si on a un appointment_id, charger depuis l'appointment (plus fiable que les paramètres URL)
+    if (appointmentId && !interventionId && window.supabase) {
+        console.log('Chargement depuis appointment_id:', appointmentId);
+        await createInterventionFromAppointment(appointmentId);
+        return; // Ne pas charger les paramètres URL si on a chargé depuis l'appointment
+    }
+    
+    // PRIORITÉ 3: Sinon, charger depuis les paramètres URL (fallback)
+    console.log('Chargement depuis paramètres URL');
+    if (params.get('mandate')) {
+        document.getElementById('mandate-number').textContent = params.get('mandate');
+    }
+    if (params.get('pto')) {
+        document.getElementById('pto-reference').textContent = params.get('pto');
+    }
+    if (params.get('cableAlim')) {
+        document.getElementById('cable-alim').textContent = params.get('cableAlim');
+    }
+    if (params.get('fibre1')) {
+        document.getElementById('fibre-1').textContent = params.get('fibre1');
+        applyFiberColor(1, params.get('fibre1'));
+    }
+    if (params.get('fibre2')) {
+        document.getElementById('fibre-2').textContent = params.get('fibre2');
+        applyFiberColor(2, params.get('fibre2'));
+    }
+    if (params.get('fibre3')) {
+        document.getElementById('fibre-3').textContent = params.get('fibre3');
+        applyFiberColor(3, params.get('fibre3'));
+    }
+    if (params.get('fibre4')) {
+        document.getElementById('fibre-4').textContent = params.get('fibre4');
+        applyFiberColor(4, params.get('fibre4'));
+    }
+    if (params.get('client')) {
+        const clientName = document.getElementById('client-name');
+        if (clientName) {
+            clientName.textContent = decodeURIComponent(params.get('client'));
+        }
+    }
+    if (params.get('phone')) {
+        const clientPhone = document.getElementById('client-phone');
+        if (clientPhone) {
+            clientPhone.textContent = decodeURIComponent(params.get('phone'));
+        }
+    }
+    if (params.get('activity')) {
+        const activityLabel = document.getElementById('activity-label');
+        const activityBadge = document.getElementById('activity-badge');
+        if (activityLabel && activityBadge) {
+            const activityMap = {
+                'swisscom': 'Swisscom',
+                'ftth_fr': 'FTTH France',
+                'sig': 'SIG',
+                'rea': 'REA',
+                'smartmetering': 'Smart Metering'
+            };
+            const activityValue = params.get('activity');
+            activityLabel.textContent = activityMap[activityValue] || activityValue;
+            activityBadge.classList.remove('hidden');
+        }
+    }
+    if (params.get('urgent') === 'true' || params.get('is_urgent') === 'true') {
+        const urgentBadge = document.getElementById('urgent-badge');
+        if (urgentBadge) {
+            urgentBadge.classList.remove('hidden');
+        }
+    }
+    if (params.get('note')) {
+        const noteText = document.getElementById('note-text');
+        const clientNote = document.getElementById('client-note');
+        if (noteText && clientNote) {
+            noteText.textContent = decodeURIComponent(params.get('note'));
+            clientNote.classList.remove('hidden');
+        }
+    } else {
+        const clientNote = document.getElementById('client-note');
+        if (clientNote) {
+            clientNote.classList.add('hidden');
+        }
+    }
+    if (params.get('address')) {
+        const addressEl = document.getElementById('client-address');
+        if (addressEl) {
+            addressEl.textContent = decodeURIComponent(params.get('address'));
+        }
+    }
+    if (params.get('time')) {
+        const timeEl = document.querySelector('.bg-surface-light span:last-child');
+        if (timeEl) {
+            timeEl.textContent = params.get('time').replace('-', ' - ');
+        }
+    }
+}
+
+// Fonction pour créer une intervention depuis un appointment
+async function createInterventionFromAppointment(appointmentId) {
+    try {
+        console.log('createInterventionFromAppointment - Chargement appointment:', appointmentId);
+        const { data: appointment, error: appError } = await window.supabase
+            .from('appointments')
+            .select('*')
+            .eq('id', appointmentId)
+            .single();
+        
+        if (appError) {
+            console.error('Erreur chargement appointment:', appError);
+            return;
+        }
+        
+        if (!appointment) {
+            console.error('Appointment non trouvé:', appointmentId);
+            return;
+        }
+        
+        console.log('Appointment chargé:', appointment);
+        
+        // Remplir TOUTES les données depuis l'appointment (même si vides)
+        const clientName = document.getElementById('client-name');
+        if (clientName) clientName.textContent = appointment.client_name || 'Client non renseigné';
+        
+        const clientPhone = document.getElementById('client-phone');
+        if (clientPhone) clientPhone.textContent = appointment.phone || '-';
+        
+        const addressEl = document.getElementById('client-address');
+        if (addressEl) {
+            const fullAddress = [appointment.address, appointment.npa, appointment.city]
+                .filter(Boolean)
+                .join(', ');
+            addressEl.textContent = fullAddress || 'Adresse non renseignée';
+        }
+        
+        // Type d'intervention
+        const activityLabel = document.getElementById('activity-label');
+        const activityBadge = document.getElementById('activity-badge');
+        if (activityLabel && activityBadge) {
+            if (appointment.activity) {
+                const activityMap = {
+                    'swisscom': 'Swisscom',
+                    'ftth_fr': 'FTTH France',
+                    'sig': 'SIG',
+                    'rea': 'REA',
+                    'smartmetering': 'Smart Metering'
+                };
+                activityLabel.textContent = activityMap[appointment.activity] || appointment.activity;
+                activityBadge.classList.remove('hidden');
+            } else {
+                activityBadge.classList.add('hidden');
+            }
+        }
+        
+        // Urgence
+        const urgentBadge = document.getElementById('urgent-badge');
+        if (urgentBadge) {
+            if (appointment.is_urgent) {
+                urgentBadge.classList.remove('hidden');
+            } else {
+                urgentBadge.classList.add('hidden');
+            }
+        }
+        
+        // Informations techniques
+        const mandateEl = document.getElementById('mandate-number');
+        if (mandateEl) mandateEl.textContent = appointment.mandate_number || '-';
+        
+        const ptoEl = document.getElementById('pto-reference');
+        if (ptoEl) ptoEl.textContent = appointment.pto_reference || '-';
+        
+        const cableEl = document.getElementById('cable-alim');
+        if (cableEl) cableEl.textContent = appointment.cable_alim || '-';
+        
+        const fibre1El = document.getElementById('fibre-1');
+        if (fibre1El) fibre1El.textContent = appointment.fibre_1 || '-';
+        
+        const fibre2El = document.getElementById('fibre-2');
+        if (fibre2El) fibre2El.textContent = appointment.fibre_2 || '-';
+        
+        const fibre3El = document.getElementById('fibre-3');
+        if (fibre3El) fibre3El.textContent = appointment.fibre_3 || '-';
+        
+        const fibre4El = document.getElementById('fibre-4');
+        if (fibre4El) fibre4El.textContent = appointment.fibre_4 || '-';
+        
+        // Note client
+        const noteText = document.getElementById('note-text');
+        const clientNote = document.getElementById('client-note');
+        if (noteText && clientNote) {
+            if (appointment.note) {
+                noteText.textContent = appointment.note;
+                clientNote.classList.remove('hidden');
+            } else {
+                clientNote.classList.add('hidden');
+            }
+        }
+        
+        // Vérifier si une intervention existe déjà pour cet appointment
+        // Note: Using select('id') + maybeSingle is more efficient and avoids issues
+        const { data: existingIntervention, error: checkError } = await window.supabase
+            .from('intervention_details')
+            .select('*')
+            .eq('appointment_id', appointmentId)
+            .limit(1)
+            .maybeSingle();
+
+        if (checkError) {
+             console.error("Error checking existing intervention:", JSON.stringify(checkError, null, 2));
+             // Don't stop if it's just a connection glitch? No, security/RLS error should stop us.
+             return;
+        }
+
+        if (existingIntervention) {
+             console.log('Intervention existante trouvée:', existingIntervention);
+             currentInterventionId = existingIntervention.id;
+             populateInterventionData(existingIntervention);
+             await loadInterventionPhotos(existingIntervention.id);
+             return;
+        }
+
+        const { data: intervention, error } = await window.supabase
+            .from('intervention_details')
+            .insert({
+                appointment_id: appointmentId,
+                mandate_number: appointment.mandate_number || '',
+                pto_reference: appointment.pto_reference || null,
+                cable_alim: appointment.cable_alim || null,
+                fibre_1: appointment.fibre_1 || null,
+                fibre_2: appointment.fibre_2 || null,
+                fibre_3: appointment.fibre_3 || null,
+                fibre_4: appointment.fibre_4 || null,
+                technician_id: appointment.employee_id,
+                status: 'in_progress',
+                // Copier les informations client depuis l'appointment
+                activity: appointment.activity || null,
+                is_urgent: appointment.is_urgent || false,
+                client_name: appointment.client_name || null,
+                phone: appointment.phone || null,
+                address: appointment.address || null,
+                npa: appointment.npa || null,
+                city: appointment.city || null,
+                client_note: appointment.note || null
+            })
+            .select()
+            .single();
+        
+        if (!error && intervention) {
+            currentInterventionId = intervention.id;
+            // Mettre à jour l'URL sans recharger la page
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('id', intervention.id);
+            window.history.replaceState({}, '', newUrl);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la création de l\'intervention:', error);
+    }
+}
+
+// Fonction pour remplir les données de l'intervention
+function populateInterventionData(intervention) {
+    // Informations client
+    if (intervention.client_name) {
+        const clientName = document.getElementById('client-name');
+        if (clientName) clientName.textContent = intervention.client_name;
+    }
+    if (intervention.phone) {
+        const clientPhone = document.getElementById('client-phone');
+        if (clientPhone) clientPhone.textContent = intervention.phone;
+    }
+    if (intervention.address) {
+        const addressEl = document.getElementById('client-address');
+        if (addressEl) {
+            // Si on a aussi npa et city, les combiner
+            const fullAddress = [intervention.address, intervention.npa, intervention.city]
+                .filter(Boolean)
+                .join(', ');
+            addressEl.textContent = fullAddress || intervention.address;
+        }
+    }
+    
+    // Type d'intervention (peut venir de intervention_details ou de l'appointment)
+    const activity = intervention.activity || (intervention.appointment && intervention.appointment.activity);
+    if (activity) {
+        const activityLabel = document.getElementById('activity-label');
+        const activityBadge = document.getElementById('activity-badge');
+        if (activityLabel && activityBadge) {
+            const activityMap = {
+                'swisscom': 'Swisscom',
+                'ftth_fr': 'FTTH France',
+                'sig': 'SIG',
+                'rea': 'REA',
+                'smartmetering': 'Smart Metering'
+            };
+            activityLabel.textContent = activityMap[activity] || activity;
+            activityBadge.classList.remove('hidden');
+        }
+    }
+    
+    // Urgence (peut venir de intervention_details ou de l'appointment)
+    const isUrgent = intervention.is_urgent || (intervention.appointment && intervention.appointment.is_urgent);
+    if (isUrgent) {
+        const urgentBadge = document.getElementById('urgent-badge');
+        if (urgentBadge) urgentBadge.classList.remove('hidden');
+    }
+    
+    // Informations techniques
+    if (intervention.mandate_number) {
+        document.getElementById('mandate-number').textContent = intervention.mandate_number;
+    }
+    if (intervention.pto_reference) {
+        document.getElementById('pto-reference').textContent = intervention.pto_reference;
+    }
+    if (intervention.cable_alim) {
+        document.getElementById('cable-alim').textContent = intervention.cable_alim;
+    }
+    if (intervention.fibre_1) {
+        document.getElementById('fibre-1').textContent = intervention.fibre_1;
+        applyFiberColor(1, intervention.fibre_1);
+    }
+    if (intervention.fibre_2) {
+        document.getElementById('fibre-2').textContent = intervention.fibre_2;
+        applyFiberColor(2, intervention.fibre_2);
+    }
+    if (intervention.fibre_3) {
+        document.getElementById('fibre-3').textContent = intervention.fibre_3;
+        applyFiberColor(3, intervention.fibre_3);
+    }
+    if (intervention.fibre_4) {
+        document.getElementById('fibre-4').textContent = intervention.fibre_4;
+        applyFiberColor(4, intervention.fibre_4);
+    }
+    if (intervention.client_note) {
+        const noteText = document.getElementById('note-text');
+        const clientNote = document.getElementById('client-note');
+        if (noteText && clientNote) {
+            noteText.textContent = intervention.client_note;
+            clientNote.classList.remove('hidden');
+        }
+    }
+    if (intervention.comments) {
+        document.getElementById('comments').value = intervention.comments;
+    }
+    
+    // Charger les matériaux utilisés
+    if (intervention.materials && Array.isArray(intervention.materials) && intervention.materials.length > 0) {
+        usedMaterials = intervention.materials.map(m => ({
+            equipment_key: m.equipment_key || m.reference || m.name,
+            name: m.name,
+            reference: m.reference || '',
+            quantity: m.quantity || 1,
+            max_quantity: 999, // On ne connaît pas la quantité max pour les matériaux déjà utilisés
+            source_ids: m.source_ids || []
+        }));
+        renderMaterialsList();
+    }
+}
+
+// Fonction pour charger les photos existantes de l'intervention
+async function loadInterventionPhotos(interventionId) {
+    if (!window.supabase) return;
+    
+    try {
+        console.log(`Loading photos for intervention ${interventionId}...`); 
+        
+        // Charger les photos
+        const { data: photosData, error } = await window.supabase
+            .from('intervention_photos')
+            .select('*')
+            .eq('intervention_detail_id', interventionId)
+            .order('uploaded_at', { ascending: true });
+        
+        if (error) {
+            console.error('Erreur lors du chargement des photos:', error);
+            return;
+        }
+
+        console.log('Photos data found:', photosData); // Debug log
+
+        if (!photosData || photosData.length === 0) {
+             console.log('No photos found for this intervention.');
+             return;
+        }
+        
+        // Charger chaque photo et mettre à jour UI
+        for (const photo of photosData) {
+            const photoKey = photo.photo_type;
+            const storagePath = photo.storage_path;
+
+            console.log(`Processing photo: key=${photoKey}, path=${storagePath}`); // Debug log
+
+            let publicUrl = '';
+            
+            // Déterminer le bucket en fonction du chemin stocké
+            // Nouvelles photos (après migration): chemin commence par UUID (intervention_detail_id)
+            // Anciennes photos: chemin commence par 'intervention-photos/'
+            
+            if (storagePath.startsWith('intervention-photos/')) {
+                // Anciennes photos dans le bucket public 'intervention-photos'
+                const { data: publicData } = window.supabase
+                    .storage
+                    .from('intervention-photos')
+                    .getPublicUrl(storagePath);
+                publicUrl = publicData.publicUrl;
+                console.log(`Updating UI for ${photoKey}: ${publicUrl}`);
+            } else if (storagePath.startsWith('interventions/')) {
+                // Photos dans 'private-uploads' (ancien système)
+                const { data: signedData, error: signedError } = await window.supabase
+                    .storage
+                    .from('private-uploads')
+                    .createSignedUrl(storagePath, 3600);
+                
+                if (signedData && signedData.signedUrl) {
+                    publicUrl = signedData.signedUrl;
+                } else {
+                    console.error(`Erreur signed URL pour ${storagePath}:`, signedError);
+                }
+            } else {
+                // Nouvelles photos dans 'intervention-photos-private'
+                const { data: signedData, error: signedError } = await window.supabase
+                    .storage
+                    .from('intervention-photos-private')
+                    .createSignedUrl(storagePath, 3600);
+                
+                if (signedData && signedData.signedUrl) {
+                    publicUrl = signedData.signedUrl;
+                } else {
+                    console.error(`Erreur signed URL pour ${storagePath}:`, signedError);
+                }
+            }
+
+            // Handle OTDR (PDF)
+            if (photoKey.startsWith('otdr-')) {
+                 const otdrNum = photoKey.replace('otdr-', '');
+                 // UI Elements
+                 const placeholder = document.getElementById(`otdr-placeholder-${otdrNum}`);
+                 const preview = document.getElementById(`otdr-preview-${otdrNum}`);
+                 const nameEl = document.getElementById(`otdr-name-${otdrNum}`);
+                 
+                 if (placeholder && preview && nameEl) {
+                     placeholder.classList.add('hidden');
+                     preview.classList.remove('hidden');
+                     nameEl.textContent = photo.file_name || `Document OTDR ${otdrNum}`;
+                     
+                     // Update global state if present
+                     if (typeof otdrFiles !== 'undefined') {
+                         otdrFiles[otdrNum] = { name: photo.file_name, url: publicUrl, saved: true };
+                     }
+                 }
+            }
+            // Handle Option Photos
+            else if (photoKey.startsWith('option-')) {
+                const optionId = photoKey.replace('option-', '');
+                const option = availableOptions.find(o => o.id === optionId);
+                
+                // Vérifier si l'option n'existe pas déjà
+                if (!optionPhotos.find(p => p.option === optionId)) {
+                    optionPhotos.push({
+                        option: optionId,
+                        optionLabel: option?.label || optionId,
+                        photo: {
+                            dataUrl: publicUrl,
+                            url: publicUrl,
+                            timestamp: photo.uploaded_at
+                        },
+                        photoId: photo.id,
+                        storagePath: photo.storage_path
+                    });
+                }
+            }
+            // Handle Standard/Other Photos
+            else {
+                // Determine if this is a standard photo
+                const isKnownPhoto = (typeof photos !== 'undefined' && photos.hasOwnProperty(photoKey));
+                
+                if (isKnownPhoto) {
+                    // Update global state
+                    photos[photoKey] = {
+                        url: publicUrl,
+                        saved: true,
+                        timestamp: photo.uploaded_at,
+                        dbId: photo.id,
+                        ai_score: photo.ai_score
+                    };
+
+                    // Update UI Elements
+                    const preview = document.getElementById(`preview-${photoKey}`);
+                    const placeholder = document.getElementById(`placeholder-${photoKey}`);
+                    const removeBtn = document.getElementById(`remove-${photoKey}`);
+                    const badge = document.getElementById(`score-badge-${photoKey}`);
+                    const card = preview ? preview.closest('.relative.aspect-square') : null;
+                    
+                    if (preview && placeholder) {
+                        console.log(`Updating UI for ${photoKey}: ${publicUrl}`); // Debug
+                        preview.src = publicUrl;
+                        // CSS FIX: Force absolute positioning
+                        preview.className = 'absolute inset-0 w-full h-full object-cover rounded-lg z-0';
+                        preview.classList.remove('hidden');
+                        
+                        placeholder.classList.add('hidden');
+                        if (removeBtn) removeBtn.classList.remove('hidden');
+                        
+                        // BORDER COLOR LOGIC selon is_valid
+                        const infoBtn = document.getElementById(`ai-info-btn-${photoKey}`);
+                        if (card) {
+                            card.classList.remove('border-dashed', 'border-gray-300', 'dark:border-gray-700', 'border-2');
+                            card.classList.add('border-4', 'border-solid');
+                            
+                            if (photo.is_valid === true) {
+                                // Bordure vert néon
+                                card.classList.add('border-green-400', 'shadow-lg', 'shadow-green-400/50');
+                                card.classList.remove('border-red-400', 'shadow-red-400/50', 'border-gray-400');
+                                if (infoBtn) {
+                                    infoBtn.classList.remove('hidden');
+                                    infoBtn.classList.add('bg-green-500/80');
+                                    infoBtn.classList.remove('bg-red-500/80', 'bg-gray-500/80');
+                                }
+                            } else if (photo.is_valid === false) {
+                                // Bordure rouge néon
+                                card.classList.add('border-red-400', 'shadow-lg', 'shadow-red-400/50');
+                                card.classList.remove('border-green-400', 'shadow-green-400/50', 'border-gray-400');
+                                if (infoBtn) {
+                                    infoBtn.classList.remove('hidden');
+                                    infoBtn.classList.add('bg-red-500/80');
+                                    infoBtn.classList.remove('bg-green-500/80', 'bg-gray-500/80');
+                                }
+                            } else {
+                                // Pas encore validé
+                                card.classList.add('border-gray-400');
+                                card.classList.remove('border-green-400', 'border-red-400', 'shadow-green-400/50', 'shadow-red-400/50');
+                                if (infoBtn) {
+                                    infoBtn.classList.remove('hidden');
+                                    infoBtn.classList.add('bg-gray-500/80');
+                                    infoBtn.classList.remove('bg-green-500/80', 'bg-red-500/80');
+                                }
+                            }
+                        }
+
+                        // Stocker les données pour le modal
+                        photos[photoKey].is_valid = photo.is_valid;
+                        photos[photoKey].ai_comment = photo.ai_comment;
+                        photos[photoKey].ai_score = photo.ai_score;
+                        photos[photoKey].uploaded_at = photo.uploaded_at;
+
+                        // BADGE CACHÉ (on utilise le bouton info à la place)
+                        if (badge) {
+                            badge.classList.add('hidden');
+                        }
+                    } else {
+                        console.error(`UI Elements missing for ${photoKey}`);
+                    }
+                }
+            }
+        }
+
+        // Update counters
+        if (typeof updatePhotosCount === 'function') updatePhotosCount();
+        if (typeof updateOTDRCount === 'function') updateOTDRCount();
+        
+        // Render option photos if any were loaded
+        if (optionPhotos.length > 0 && typeof renderOptionPhotos === 'function') {
+            renderOptionPhotos();
+        }
+
+    } catch (error) {
+        console.error('Erreur global loadInterventionPhotos:', error);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    await initSupabase();
+    
+    // Récupérer l'employee_id de l'utilisateur connecté
+    if (window.supabase) {
+        const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+        
+        if (!authError && user) {
+            const { data: roleData, error: roleError } = await window.supabase
+                .from('user_roles')
+                .select('employee_id')
+                .eq('user_id', user.id)
+                .single();
+            
+            if (!roleError && roleData && roleData.employee_id) {
+                currentEmployeeId = roleData.employee_id;
+                // Charger l'inventaire du technicien
+                await loadTechnicianInventory();
+            }
+        }
+    }
+    
+    await loadInterventionData();
+    updatePhotosCount();
+    renderMaterialsList(); // Afficher les matériaux déjà utilisés si l'intervention existe
+});
+
+// Navigation functions
+async function handleLogout() {
+    if (!window.supabase) return;
+    
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        await window.supabase.auth.signOut();
+        window.location.href = 'index.html';
+    }
+}
+
+function openProfile() {
+    window.location.href = 'acceuil_Personnel.html';
+}
+</script>
+<script src="realtime_upload.js"></script>
+</body></html>
+

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sélection Matériel - Gestionnaire de Stock</title>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B700%3B900&family=Noto+Sans%3Awght%40400%3B500%3B700%3B900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://sql.js.org/dist/sql-wasm.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#137fec",
+          "background-light": "#f6f7f8",
+          "background-dark": "#101922",
+        },
+        fontFamily: {
+          display: ["Inter"],
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      },
+    },
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+<div id="loading"></div>
+
+<div id="main-content" style="display: none;" class="flex flex-col min-h-screen">
+  <!-- Navigation bar horizontale -->
+  <nav class="bg-white dark:bg-background-dark/50 border-b border-gray-200 dark:border-gray-800">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <!-- Logo à gauche -->
+      <div class="flex items-center gap-3">
+        <img id="logo" src="" alt="Logo" class="h-8 w-auto" style="display:none;" onerror="this.style.display='none'" />
+        <span class="text-xl font-bold text-primary">Gestionnaire de Stock</span>
+      </div>
+      
+      <!-- Menu du milieu -->
+      <div class="flex items-center gap-1">
+        <a href="inventaire.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">warehouse</span>
+          <span>Inventaire</span>
+        </a>
+        <a href="collaborateurs.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">groups</span>
+          <span>Collaborateurs</span>
+        </a>
+        <a href="vehicule.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">directions_car</span>
+          <span>Véhicules</span>
+        </a>
+      </div>
+      
+      <!-- Profil utilisateur à droite -->
+      <div class="flex items-center gap-3 relative">
+        <div class="text-right">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">Jean-Christophe Normand</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Administrateur</p>
+        </div>
+        <div id="profile-btn" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-lg transition-shadow">
+          JCN
+        </div>
+        
+        <!-- Menu déroulant -->
+        <div id="profile-menu" class="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-background-dark/50 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 hidden z-50">
+          <a href="parametres.html" class="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 rounded-t-lg flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">settings</span>
+            <span>Paramètres</span>
+          </a>
+          <div class="border-t border-gray-200 dark:border-gray-700"></div>
+          <button class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-b-lg flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-base">logout</span>
+            <span>Déconnexion</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenu principal -->
+  <div class="flex-1 p-6 max-w-7xl mx-auto w-full">
+    <!-- En-tête -->
+    <div class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Sélectionner le matériel</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2" id="collaborateur-info">Chargement...</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="validate-btn" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors">
+          <span class="material-symbols-outlined">check</span>
+          <span>Ajouter à la fiche (<span id="selected-count">0</span>)</span>
+        </button>
+        <button onclick="window.history.back()" class="bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 dark:hover:bg-gray-600 flex items-center gap-2 transition-colors">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Retour</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="mb-6 flex gap-4">
+      <div class="flex-1">
+        <input type="text" id="search-input" placeholder="Rechercher un article..." class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+      </div>
+      <select id="category-filter" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">Toutes catégories</option>
+      </select>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="mb-4 flex gap-2">
+      <button id="load-template-btn" class="text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors">
+        <span class="material-symbols-outlined text-base">file_download</span>
+        Charger le template
+      </button>
+      <button id="save-template-btn" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors">
+        <span class="material-symbols-outlined text-base">save</span>
+        Sauvegarder le template
+      </button>
+      <div class="flex-1"></div>
+      <button id="select-all-btn" class="text-sm bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+        Tout sélectionner
+      </button>
+      <button id="deselect-all-btn" class="text-sm bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+        Tout désélectionner
+      </button>
+    </div>
+
+    <!-- Tableau des articles -->
+    <div class="bg-white dark:bg-background-dark/50 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-gray-50 dark:bg-background-dark/80 border-b border-gray-200 dark:border-gray-800">
+          <tr>
+            <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-16">
+              <input type="checkbox" id="select-all-checkbox" class="w-5 h-5 cursor-pointer" />
+            </th>
+            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Référence</th>
+            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Nom</th>
+            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Catégorie</th>
+            <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">Stock</th>
+            <th class="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">Quantité</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Aucun article trouvé.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="js/database.js"></script>
+<script>
+let collaborateurId = null;
+let selectedItems = new Map(); // Map<id, {reference, name, category, quantity}>
+let allInventoryItems = [];
+
+// Récupérer l'ID du collaborateur depuis l'URL
+function getCollaborateurId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('id');
+}
+
+async function loadData() {
+  const db = getDB();
+  if (!db) return;
+  
+  collaborateurId = getCollaborateurId();
+  if (!collaborateurId) {
+    alert('Collaborateur non trouvé');
+    window.history.back();
+    return;
+  }
+  
+  try {
+    // Charger les infos du collaborateur
+    const collabResults = db.exec(`SELECT nom, prenom FROM collaborateurs WHERE id = ?`, [collaborateurId]);
+    if (collabResults.length > 0) {
+      const [nom, prenom] = collabResults[0].values[0];
+      const fullName = `${prenom} ${nom}`;
+      document.getElementById('collaborateur-info').textContent = `Collaborateur: ${fullName}`;
+    }
+    
+    // Charger tout l'inventaire
+    const results = db.exec(`SELECT id, reference, name, category, quantity FROM inventaire ORDER BY category, name`);
+    allInventoryItems = results.length > 0 ? results[0].values.map(row => ({
+      id: row[0], reference: row[1], name: row[2], category: row[3], quantity: row[4]
+    })) : [];
+    
+    // Remplir le filtre des catégories
+    const categories = [...new Set(allInventoryItems.map(item => item.category))];
+    const categoryFilter = document.getElementById('category-filter');
+    categories.forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat;
+      option.textContent = cat;
+      categoryFilter.appendChild(option);
+    });
+    
+    renderTable(allInventoryItems);
+  } catch (error) {
+    console.error('Erreur:', error);
+  }
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  
+  if (data.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Aucun article trouvé.</td></tr>
+    `;
+    return;
+  }
+  
+  data.forEach(item => {
+    const isSelected = selectedItems.has(item.id);
+    const selectedQty = isSelected ? selectedItems.get(item.id).quantity : 1;
+    
+    const tr = document.createElement('tr');
+    tr.className = `border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50 ${isSelected ? 'bg-primary/5' : ''}`;
+    tr.innerHTML = `
+      <td class="px-6 py-4 text-center">
+        <input type="checkbox" 
+               class="item-checkbox w-5 h-5 cursor-pointer" 
+               data-id="${item.id}" 
+               data-reference="${item.reference}" 
+               data-name="${item.name}" 
+               data-category="${item.category}"
+               ${isSelected ? 'checked' : ''} />
+      </td>
+      <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">${item.reference}</td>
+      <td class="px-6 py-4">${item.name}</td>
+      <td class="px-6 py-4">${item.category}</td>
+      <td class="px-6 py-4 text-center">${item.quantity}</td>
+      <td class="px-6 py-4 text-center">
+        <input type="number" 
+               class="quantity-input w-20 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white text-center"
+               data-id="${item.id}"
+               min="1" 
+               value="${selectedQty}" 
+               ${!isSelected ? 'disabled' : ''} />
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  // Ajouter les event listeners
+  document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', handleCheckboxChange);
+  });
+  
+  document.querySelectorAll('.quantity-input').forEach(input => {
+    input.addEventListener('change', handleQuantityChange);
+  });
+}
+
+function handleCheckboxChange(e) {
+  const checkbox = e.target;
+  const id = parseInt(checkbox.dataset.id);
+  const reference = checkbox.dataset.reference;
+  const name = checkbox.dataset.name;
+  const category = checkbox.dataset.category;
+  
+  const quantityInput = document.querySelector(`.quantity-input[data-id="${id}"]`);
+  
+  if (checkbox.checked) {
+    const quantity = parseInt(quantityInput.value) || 1;
+    selectedItems.set(id, { reference, name, category, quantity });
+    quantityInput.disabled = false;
+    checkbox.closest('tr').classList.add('bg-primary/5');
+  } else {
+    selectedItems.delete(id);
+    quantityInput.disabled = true;
+    quantityInput.value = 1;
+    checkbox.closest('tr').classList.remove('bg-primary/5');
+  }
+  
+  updateSelectedCount();
+}
+
+function handleQuantityChange(e) {
+  const input = e.target;
+  const id = parseInt(input.dataset.id);
+  const quantity = parseInt(input.value) || 1;
+  
+  if (selectedItems.has(id)) {
+    const item = selectedItems.get(id);
+    item.quantity = quantity;
+    selectedItems.set(id, item);
+  }
+}
+
+function updateSelectedCount() {
+  document.getElementById('selected-count').textContent = selectedItems.size;
+}
+
+// Recherche et filtres
+document.getElementById('search-input').addEventListener('input', filterTable);
+document.getElementById('category-filter').addEventListener('change', filterTable);
+
+function filterTable() {
+  const searchTerm = document.getElementById('search-input').value.toLowerCase();
+  const categoryFilter = document.getElementById('category-filter').value;
+  
+  const filtered = allInventoryItems.filter(item => {
+    const matchesSearch = item.reference.toLowerCase().includes(searchTerm) ||
+                         item.name.toLowerCase().includes(searchTerm);
+    const matchesCategory = !categoryFilter || item.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+  
+  renderTable(filtered);
+}
+
+// Sélectionner tout / Désélectionner tout
+document.getElementById('select-all-btn').addEventListener('click', () => {
+  const visibleCheckboxes = document.querySelectorAll('.item-checkbox');
+  visibleCheckboxes.forEach(checkbox => {
+    if (!checkbox.checked) {
+      checkbox.checked = true;
+      handleCheckboxChange({ target: checkbox });
+    }
+  });
+});
+
+document.getElementById('deselect-all-btn').addEventListener('click', () => {
+  const visibleCheckboxes = document.querySelectorAll('.item-checkbox');
+  visibleCheckboxes.forEach(checkbox => {
+    if (checkbox.checked) {
+      checkbox.checked = false;
+      handleCheckboxChange({ target: checkbox });
+    }
+  });
+  selectedItems.clear();
+  updateSelectedCount();
+  renderTable(allInventoryItems);
+});
+
+// Checkbox "Tout sélectionner" dans le header
+document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
+  if (e.target.checked) {
+    document.getElementById('select-all-btn').click();
+  } else {
+    document.getElementById('deselect-all-btn').click();
+  }
+});
+
+// Charger le template sauvegardé
+document.getElementById('load-template-btn').addEventListener('click', () => {
+  const db = getDB();
+  if (!db) return;
+  
+  try {
+    const results = db.exec(`SELECT reference, name, category FROM materiel_template`);
+    
+    if (results.length === 0 || results[0].values.length === 0) {
+      alert('Aucun template sauvegardé. Utilisez "Sauvegarder le template" pour en créer un.');
+      return;
+    }
+    
+    // Désélectionner tout d'abord
+    selectedItems.clear();
+    document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.quantity-input').forEach(input => {
+      input.disabled = true;
+      input.value = 1;
+    });
+    
+    // Sélectionner les articles du template
+    results[0].values.forEach(row => {
+      const reference = row[0];
+      const name = row[1];
+      const category = row[2];
+      
+      // Trouver l'article dans le tableau
+      const checkbox = document.querySelector(`input[data-reference="${reference}"]`);
+      if (checkbox) {
+        const id = parseInt(checkbox.dataset.id);
+        checkbox.checked = true;
+        
+        // Activer le champ quantité
+        const quantityInput = checkbox.closest('tr').querySelector('.quantity-input');
+        if (quantityInput) {
+          quantityInput.disabled = false;
+          quantityInput.value = 1;
+        }
+        
+        // Ajouter à selectedItems
+        selectedItems.set(id, { reference, name, category, quantity: 1 });
+      }
+    });
+    
+    updateSelectedCount();
+    alert(`Template chargé avec succès ! ${selectedItems.size} article(s) sélectionné(s).`);
+  } catch (error) {
+    alert('Erreur lors du chargement du template: ' + error.message);
+  }
+});
+
+// Sauvegarder le template
+document.getElementById('save-template-btn').addEventListener('click', () => {
+  if (selectedItems.size === 0) {
+    alert('Veuillez sélectionner au moins un article avant de sauvegarder le template');
+    return;
+  }
+  
+  // Pop-up de confirmation
+  if (!confirm(`Voulez-vous sauvegarder la sélection actuelle comme template ?\n\n${selectedItems.size} article(s) sélectionné(s).\n\nAttention : Les anciennes données du template seront écrasées.`)) {
+    return;
+  }
+  
+  const db = getDB();
+  if (!db) return;
+  
+  try {
+    // Supprimer l'ancien template
+    db.run(`DELETE FROM materiel_template`);
+    
+    // Insérer les nouveaux articles
+    selectedItems.forEach((item, id) => {
+      db.run(
+        `INSERT INTO materiel_template (reference, name, category) VALUES (?,?,?)`,
+        [item.reference, item.name, item.category]
+      );
+    });
+    
+    saveDB();
+    alert(`Template sauvegardé avec succès !\n${selectedItems.size} article(s) enregistré(s).`);
+  } catch (error) {
+    alert('Erreur lors de la sauvegarde du template: ' + error.message);
+  }
+});
+
+// Valider et ajouter à la fiche
+document.getElementById('validate-btn').addEventListener('click', () => {
+  if (selectedItems.size === 0) {
+    alert('Veuillez sélectionner au moins un article');
+    return;
+  }
+  
+  const db = getDB();
+  if (!db) return;
+  
+  try {
+    // Insérer tous les articles sélectionnés
+    selectedItems.forEach((item, id) => {
+      db.run(
+        `INSERT INTO collaborateur_materiel (collaborateur_id, reference, name, category, quantity, delivered, notes) VALUES (?,?,?,?,?,?,?)`,
+        [collaborateurId, item.reference, item.name, item.category, item.quantity, 0, null]
+      );
+    });
+    
+    saveDB();
+    alert(`${selectedItems.size} article(s) ajouté(s) avec succès !`);
+    
+    // Rediriger vers la fiche du collaborateur
+    window.location.href = `materiel_collaborateur.html?id=${collaborateurId}`;
+  } catch (error) {
+    alert('Erreur: ' + error.message);
+  }
+});
+
+// Activer le lien actif dans la navbar
+function activateNavLink() {
+  const currentPage = window.location.pathname.split('/').pop() || 'template_materiel.html';
+  document.querySelectorAll('.nav-link').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href === currentPage) {
+      link.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+    } else {
+      link.classList.remove('bg-primary/10', 'text-primary', 'font-medium');
+    }
+  });
+}
+
+// Charger le logo depuis localStorage
+function loadLogo() {
+  const logoUrl = localStorage.getItem('company_logo_url') || '';
+  const logoElement = document.getElementById('logo');
+  if (logoUrl && logoElement) {
+    logoElement.src = logoUrl;
+    logoElement.style.display = 'block';
+  } else if (logoElement) {
+    logoElement.style.display = 'none';
+  }
+}
+
+// Gestion du menu profil
+const profileBtn = document.getElementById('profile-btn');
+const profileMenu = document.getElementById('profile-menu');
+if (profileBtn && profileMenu) {
+  profileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    profileMenu.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!profileMenu.contains(e.target) && e.target !== profileBtn) {
+      profileMenu.classList.add('hidden');
+    }
+  });
+}
+
+loadLogo();
+activateNavLink();
+initDB().then(loadData);
+</script>
+
+</body>
+</html>

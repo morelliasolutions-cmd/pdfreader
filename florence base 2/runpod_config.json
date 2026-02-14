@@ -1,0 +1,37 @@
+{
+  "name": "Florence-2 Base Serverless",
+  "description": "Microsoft Florence-2 base model for vision and language tasks",
+  "container_image": "ghcr.io/YOUR_USERNAME/florence-2-runpod:latest",
+  "container_disk_in_gb": 10,
+  "volume_in_gb": 0,
+  "volume_mount_path": "/workspace",
+  "docker_command": "python handler.py",
+  "ports": "8000/http",
+  "env": [
+    {
+      "key": "CUDA_VISIBLE_DEVICES",
+      "value": "0"
+    },
+    {
+      "key": "PYTHONUNBUFFERED",
+      "value": "1"
+    }
+  ],
+  "is_serverless": true,
+  "handler_path": "handler.handler",
+  "gpu_ids": [
+    "AMPERE_16",
+    "AMPERE_24",
+    "AMPERE_48",
+    "H100_80GB",
+    "L40S"
+  ],
+  "min_gpu_count": 1,
+  "max_gpu_count": 1,
+  "idle_timeout": 300,
+  "scale_type": "QUEUE_DELAY",
+  "scale_min": 0,
+  "scale_max": 3,
+  "workers_per_pod": 1
+}
+

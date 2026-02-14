@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commandes - Gestionnaire de Stock</title>
+<link rel="preconnect" href="https://fonts.gstatic.com/">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B700%3B900&family=Noto+Sans%3Awght%40400%3B500%3B700%3B900">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js?v=8"></script>
+<script src="../js/api.js?v=8"></script>
+<script src="../js/role-access-control.js?v=1"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#137fec",
+          "background-light": "#f6f7f8",
+          "background-dark": "#101922",
+        },
+        fontFamily: {
+          display: ["Inter"],
+        },
+        borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      },
+    },
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+<div id="loading" class="fixed inset-0 bg-background-light dark:bg-background-dark flex items-center justify-center z-50">
+  <div class="text-center">
+    <span class="material-symbols-outlined text-primary text-6xl animate-spin">refresh</span>
+    <p class="text-gray-600 dark:text-gray-400 mt-4">Chargement...</p>
+  </div>
+</div>
+
+<div id="main-content" style="display: none;" class="flex flex-col min-h-screen">
+  <!-- Navigation bar horizontale -->
+  <nav class="bg-white dark:bg-background-dark/50 border-b border-gray-200 dark:border-gray-800">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <!-- Logo à gauche -->
+      <div class="flex items-center gap-3">
+        <span class="text-xl font-bold text-primary">Gestionnaire de Stock</span>
+      </div>
+      
+      <!-- Menu du milieu -->
+      <div class="flex items-center gap-1">
+        <a href="inventaire.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">warehouse</span>
+          <span>Inventaire</span>
+        </a>
+        <a href="technicien.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">group</span>
+          <span>Technicien</span>
+        </a>
+        <a href="vehicule.html" class="nav-link px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span>Véhicules</span>
+        </a>
+        <a href="commandes.html" class="nav-link bg-primary/10 text-primary px-4 py-2 rounded-lg hover:bg-primary/20 transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <span>Commandes</span>
+        </a>
+      </div>
+      
+      <!-- Droite: Profil utilisateur -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 relative">
+          <div class="text-right">
+            <p id="user-name" class="text-sm font-medium text-gray-900 dark:text-white">Chargement...</p>
+            <p id="user-role" class="text-xs text-gray-500 dark:text-gray-400">Utilisateur</p>
+          </div>
+          <div id="profile-btn" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer hover:shadow-lg transition-shadow">
+            <span id="user-initials">...</span>
+          </div>
+          
+          <div id="profile-menu" class="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-background-dark/50 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 hidden z-50">
+            <a href="parametres.html" class="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20 rounded-t-lg flex items-center gap-2 transition-colors">
+              <span class="material-symbols-outlined text-base">settings</span>
+              <span>Paramètres</span>
+            </a>
+            <div class="border-t border-gray-200 dark:border-gray-700"></div>
+            <button onclick="logout()" class="w-full text-left px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-b-lg flex items-center gap-2 transition-colors">
+              <span class="material-symbols-outlined text-base">logout</span>
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-1 p-8">
+    <header class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Commandes</h1>
+      <button id="add-order-btn" class="bg-primary text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-700 transition-colors">
+        <span class="material-symbols-outlined">add</span>
+        Nouvelle commande
+      </button>
+    </header>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="bg-primary/10 p-3 rounded-full">
+            <span class="material-symbols-outlined text-primary">shopping_cart</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Commandes</p>
+            <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="bg-green-500/10 p-3 rounded-full">
+            <span class="material-symbols-outlined text-green-500">euro</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total TTC</p>
+            <p id="stat-ttc" class="text-2xl font-bold text-gray-900 dark:text-white">0 CHF</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="bg-blue-500/10 p-3 rounded-full">
+            <span class="material-symbols-outlined text-blue-500">euro</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total HT</p>
+            <p id="stat-ht" class="text-2xl font-bold text-gray-900 dark:text-white">0 CHF</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="bg-orange-500/10 p-3 rounded-full">
+            <span class="material-symbols-outlined text-orange-500">calendar_month</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Ce mois</p>
+            <p id="stat-month" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="bg-white dark:bg-background-dark/50 p-4 rounded-xl shadow-sm mb-6">
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-[200px]">
+          <input type="text" id="search-input" placeholder="Rechercher par n° commande..." class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        <select id="depot-filter" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+          <option value="">Tous les dépôts</option>
+        </select>
+        <input type="month" id="month-filter" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+    </div>
+
+    <!-- Table des commandes -->
+    <div class="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 dark:bg-gray-900/50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">N° Commande</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Revendeur</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dépôt</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prix TTC</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Prix HT</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">PDF</th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orders-table" class="bg-white dark:bg-background-dark/50 divide-y divide-gray-200 dark:divide-gray-800">
+            <tr>
+              <td colspan="8" class="px-6 py-8 text-center text-gray-400">
+                <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
+                <p>Chargement des commandes...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Ajouter/Modifier Commande -->
+<div id="order-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+  <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-gray-200 dark:border-gray-800">
+      <h2 id="modal-title" class="text-2xl font-bold text-gray-900 dark:text-white">Nouvelle commande</h2>
+    </div>
+    
+    <div class="p-6 space-y-4">
+      <!-- Formulaire -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">N° Commande *</label>
+          <input type="text" id="order-number" placeholder="CMD-2026-001" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Revendeur *</label>
+          <input type="text" id="order-supplier" placeholder="Nom du revendeur" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dépôt *</label>
+          <select id="order-depot" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="">Sélectionner...</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date *</label>
+          <input type="date" id="order-date" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix TTC (CHF) *</label>
+          <input type="number" id="order-ttc" placeholder="0.00" step="0.01" min="0" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prix HT (CHF) *</label>
+          <input type="number" id="order-ht" placeholder="0.00" step="0.01" min="0" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+      </div>
+
+      <!-- Zone Drag & Drop PDF -->
+      <div class="col-span-2">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PDF de la commande (optionnel)</label>
+        <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-5xl text-gray-400 mb-2">upload_file</span>
+          <p class="text-gray-600 dark:text-gray-400 mb-1">Glissez-déposez un PDF ici</p>
+          <p class="text-xs text-gray-400">ou cliquez pour sélectionner</p>
+          <input type="file" id="pdf-input" accept=".pdf" class="hidden">
+        </div>
+        <div id="pdf-preview" class="hidden mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-green-600">description</span>
+            <div>
+              <p id="pdf-name" class="text-sm font-medium text-gray-900 dark:text-white"></p>
+              <p id="pdf-size" class="text-xs text-gray-500"></p>
+            </div>
+          </div>
+          <button id="remove-pdf" class="text-red-500 hover:text-red-700">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div id="upload-progress" class="hidden mt-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-gray-600 dark:text-gray-400">Envoi en cours...</span>
+            <span id="progress-percent" class="text-sm font-medium text-primary">0%</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div id="progress-bar" class="bg-primary h-2 rounded-full transition-all" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="p-6 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-3">
+      <button id="cancel-btn" class="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+        Annuler
+      </button>
+      <button id="save-btn" class="px-6 py-2 rounded-lg bg-primary text-white hover:bg-blue-700 transition-colors flex items-center gap-2">
+        <span class="material-symbols-outlined">save</span>
+        Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Supabase déjà initialisé dans config.js
+let allOrders = [];
+let currentOrderId = null;
+let selectedFile = null;
+
+// N8N Webhook URL - À CONFIGURER
+const N8N_WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_URL_HERE';
+
+// Configuration du cache (74h)
+const CACHE_TTL = 74 * 60 * 60 * 1000;
+const CACHE_KEY_PREFIX = 'orders_v1_';
+
+function saveToCache(key, data) {
+  try {
+    const cacheItem = { timestamp: Date.now(), data: data };
+    localStorage.setItem(CACHE_KEY_PREFIX + key, JSON.stringify(cacheItem));
+  } catch (e) {
+    console.warn('Erreur sauvegarde cache:', e);
+  }
+}
+
+function loadFromCache(key) {
+  try {
+    const json = localStorage.getItem(CACHE_KEY_PREFIX + key);
+    if (!json) return null;
+    const cacheItem = JSON.parse(json);
+    if (Date.now() - cacheItem.timestamp < CACHE_TTL) {
+      console.log(`📦 Chargé depuis le cache: ${key}`);
+      return cacheItem.data;
+    }
+    return null;
+  } catch (e) {
+    console.warn('Erreur lecture cache:', e);
+    return null;
+  }
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        console.log('🚀 Initialisation page commandes...');
+        
+        // Chargement rapide depuis le cache si disponible
+        const cachedOrders = loadFromCache('orders');
+        const cachedDepots = loadFromCache('depots');
+        
+        if (cachedOrders || cachedDepots) {
+            console.log('🚀 Démarrage rapide via cache');
+            if (cachedDepots) populateDepotSelectors(cachedDepots);
+            if (cachedOrders) {
+                allOrders = cachedOrders;
+                renderOrders(allOrders);
+                updateStats();
+            }
+            document.getElementById('main-content').style.display = 'flex';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        await checkAuth();
+        await loadDepots();
+        await loadOrders();
+        setupEventListeners();
+        updateStats();
+        console.log('✅ Page commandes chargée avec succès');
+    } catch (error) {
+        console.error('❌ Erreur initialisation:', error);
+        if (!loadFromCache('orders')) {
+            alert('Erreur lors du chargement de la page. Consultez la console pour plus de détails.');
+        }
+    }
+});
+
+async function checkAuth() {
+    console.log('🔐 Vérification authentification...');
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) {
+        console.warn('⚠️ Utilisateur non authentifié, redirection...');
+        window.location.href = '../index.html';
+        return;
+    }
+    
+    console.log('✅ Utilisateur authentifié:', user.email);
+    document.getElementById('user-name').textContent = user.email.split('@')[0];
+    const initials = user.email.substring(0, 2).toUpperCase();
+    document.getElementById('user-initials').textContent = initials;
+    document.getElementById('main-content').style.display = 'flex';
+    document.getElementById('loading').style.display = 'none';
+}
+
+async function logout() {
+    await supabase.auth.signOut();
+    window.location.href = '../index.html';
+}
+
+async function loadDepots() {
+    console.log('📍 Chargement des dépôts...');
+    const { data: depots, error } = await supabase
+        .from('depots')
+        .select('name')
+        .order('name');
+    
+    if (error) {
+        console.error('❌ Erreur chargement dépôts:', error);
+        return;
+    }
+    
+    const uniqueDepots = (depots || []).map(d => d.name);
+    console.log(`✅ ${uniqueDepots.length} dépôts trouvés:`, uniqueDepots);
+    
+    const depotSelects = ['order-depot', 'depot-filter'];
+    
+    depotSelects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) {
+            console.warn(`⚠️ Select ${selectId} non trouvé`);
+            return;
+        }
+        
+        // Garder seulement la première option (placeholder)
+        const firstOption = select.querySelector('option:first-child');
+        select.innerHTML = '';
+        if (firstOption) {
+            select.appendChild(firstOption);
+        }
+        
+        // Ajouter les dépôts
+        uniqueDepots.forEach(depot => {
+            const option = document.createElement('option');
+            option.value = depot;
+            option.textContent = depot;
+            select.appendChild(option);
+        });
+    });
+    
+    console.log('✅ Dépôts chargés dans les selects');
+}
+
+async function loadOrders() {
+    console.log('📦 Chargement des commandes...');
+    
+    // Essayer le cache en premier
+    const cachedOrders = loadFromCache('orders');
+    if (cachedOrders) {
+        allOrders = cachedOrders;
+        renderOrders(allOrders);
+        updateStats();
+    }
+
+    const { data: orders, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('order_date', { ascending: false });
+    
+    if (error) {
+        console.error('❌ Erreur chargement commandes:', error);
+        console.error('Détails:', error.message);
+        // Si la table n'existe pas encore, afficher un message approprié
+        if (error.code === '42P01') {
+            console.warn('⚠️ Table "orders" non trouvée. Exécutez CREATE_ORDERS_TABLE.sql dans Supabase.');
+            if (!cachedOrders) {
+                allOrders = [];
+                renderOrders([]);
+            }
+            return;
+        }
+        if (!cachedOrders) return; // Mode offline silencieux
+        return;
+    }
+    
+    console.log(`✅ ${orders?.length || 0} commandes chargées`);
+    allOrders = orders || [];
+    saveToCache('orders', allOrders);
+    renderOrders(allOrders);
+    updateStats();
+}
+
+function renderOrders(orders) {
+    const tbody = document.getElementById('orders-table');
+    
+    if (orders.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="px-6 py-8 text-center text-gray-400">
+                    <span class="material-symbols-outlined text-4xl mb-2">inventory_2</span>
+                    <p>Aucune commande trouvée</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = orders.map(order => `
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${order.order_number}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">${order.supplier_name || '-'}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">${order.depot}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">${formatDate(order.order_date)}</td>
+            <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">${order.price_ttc.toFixed(2)} CHF</td>
+            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">${order.price_ht.toFixed(2)} CHF</td>
+            <td class="px-6 py-4 text-sm">
+                ${order.pdf_url ? `
+                    <a href="${order.pdf_url}" target="_blank" class="text-primary hover:underline flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">description</span>
+                        Voir PDF
+                    </a>
+                ` : '<span class="text-gray-400">-</span>'}
+            </td>
+            <td class="px-6 py-4 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <button onclick="editOrder('${order.id}')" class="text-primary hover:text-blue-700 transition-colors" title="Modifier">
+                        <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button onclick="deleteOrder('${order.id}')" class="text-red-500 hover:text-red-700 transition-colors" title="Supprimer">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function updateStats() {
+    const total = allOrders.length;
+    const totalTTC = allOrders.reduce((sum, o) => sum + parseFloat(o.price_ttc || 0), 0);
+    const totalHT = allOrders.reduce((sum, o) => sum + parseFloat(o.price_ht || 0), 0);
+    
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const monthOrders = allOrders.filter(o => o.order_date.startsWith(currentMonth));
+    
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-ttc').textContent = totalTTC.toFixed(2) + ' CHF';
+    document.getElementById('stat-ht').textContent = totalHT.toFixed(2) + ' CHF';
+    document.getElementById('stat-month').textContent = monthOrders.length;
+}
+
+function setupEventListeners() {
+    // Modal
+    document.getElementById('add-order-btn').addEventListener('click', openModal);
+    document.getElementById('cancel-btn').addEventListener('click', closeModal);
+    document.getElementById('save-btn').addEventListener('click', saveOrder);
+    
+    // Drag & Drop
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('pdf-input');
+    
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-primary', 'bg-primary/5');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-primary', 'bg-primary/5');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-primary', 'bg-primary/5');
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type === 'application/pdf') {
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+    
+    document.getElementById('remove-pdf').addEventListener('click', () => {
+        selectedFile = null;
+        fileInput.value = '';
+        document.getElementById('pdf-preview').classList.add('hidden');
+    });
+    
+    // Filtres
+    document.getElementById('search-input').addEventListener('input', applyFilters);
+    document.getElementById('depot-filter').addEventListener('change', applyFilters);
+    document.getElementById('month-filter').addEventListener('change', applyFilters);
+    
+    // Profile menu
+    document.getElementById('profile-btn').addEventListener('click', () => {
+        document.getElementById('profile-menu').classList.toggle('hidden');
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#profile-btn') && !e.target.closest('#profile-menu')) {
+            document.getElementById('profile-menu').classList.add('hidden');
+        }
+    });
+}
+
+function handleFileSelect(file) {
+    selectedFile = file;
+    document.getElementById('pdf-name').textContent = file.name;
+    document.getElementById('pdf-size').textContent = (file.size / 1024).toFixed(2) + ' KB';
+    document.getElementById('pdf-preview').classList.remove('hidden');
+}
+
+function openModal() {
+    currentOrderId = null;
+    selectedFile = null;
+    document.getElementById('modal-title').textContent = 'Nouvelle commande';
+    document.getElementById('order-number').value = '';
+    document.getElementById('order-supplier').value = '';
+    document.getElementById('order-depot').value = '';
+    document.getElementById('order-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('order-ttc').value = '';
+    document.getElementById('order-ht').value = '';
+    document.getElementById('pdf-input').value = '';
+    document.getElementById('pdf-preview').classList.add('hidden');
+    document.getElementById('order-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('order-modal').classList.add('hidden');
+}
+
+async function editOrder(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) return;
+    
+    currentOrderId = orderId;
+    document.getElementById('modal-title').textContent = 'Modifier la commande';
+    document.getElementById('order-number').value = order.order_number;
+    document.getElementById('order-supplier').value = order.supplier_name || '';
+    document.getElementById('order-depot').value = order.depot;
+    document.getElementById('order-date').value = order.order_date;
+    document.getElementById('order-ttc').value = order.price_ttc;
+    document.getElementById('order-ht').value = order.price_ht;
+    
+    if (order.pdf_url) {
+        // Afficher qu'un PDF existe déjà
+        document.getElementById('pdf-name').textContent = 'PDF existant';
+        document.getElementById('pdf-size').textContent = 'Déjà téléchargé';
+        document.getElementById('pdf-preview').classList.remove('hidden');
+    }
+    
+    document.getElementById('order-modal').classList.remove('hidden');
+}
+
+async function saveOrder() {
+    const orderNumber = document.getElementById('order-number').value.trim();
+    const supplierName = document.getElementById('order-supplier').value.trim();
+    const depot = document.getElementById('order-depot').value;
+    const orderDate = document.getElementById('order-date').value;
+    const priceTTC = parseFloat(document.getElementById('order-ttc').value);
+    const priceHT = parseFloat(document.getElementById('order-ht').value);
+    
+    if (!orderNumber || !supplierName || !depot || !orderDate || isNaN(priceTTC) || isNaN(priceHT)) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        return;
+    }
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const orderData = {
+        order_number: orderNumber,
+        supplier_name: supplierName,
+        depot: depot,
+        order_date: orderDate,
+        price_ttc: priceTTC,
+        price_ht: priceHT,
+        created_by: user.id
+    };
+    
+    // Envoi du PDF vers n8n si un fichier est sélectionné
+    if (selectedFile) {
+        try {
+            await uploadPDFToN8N(selectedFile, orderNumber);
+            orderData.pdf_url = `PDF envoyé vers n8n pour ${orderNumber}`;
+        } catch (error) {
+            console.error('Erreur envoi PDF:', error);
+            if (!confirm('Erreur lors de l\'envoi du PDF. Continuer sans PDF ?')) {
+                return;
+            }
+        }
+    }
+    
+    let result;
+    if (currentOrderId) {
+        // Mise à jour
+        result = await supabase
+            .from('orders')
+            .update(orderData)
+            .eq('id', currentOrderId);
+    } else {
+        // Création
+        result = await supabase
+            .from('orders')
+            .insert([orderData]);
+    }
+    
+    if (result.error) {
+        console.error('Erreur sauvegarde:', result.error);
+        alert('Erreur lors de la sauvegarde');
+        return;
+    }
+    
+    closeModal();
+    await loadOrders();
+}
+
+async function uploadPDFToN8N(file, orderNumber) {
+    if (!N8N_WEBHOOK_URL || N8N_WEBHOOK_URL === 'YOUR_N8N_WEBHOOK_URL_HERE') {
+        console.warn('URL webhook n8n non configurée');
+        return;
+    }
+    
+    document.getElementById('upload-progress').classList.remove('hidden');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('order_number', orderNumber);
+    formData.append('timestamp', new Date().toISOString());
+    
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                document.getElementById('progress-percent').textContent = percent + '%';
+                document.getElementById('progress-bar').style.width = percent + '%';
+            }
+        });
+        
+        xhr.addEventListener('load', () => {
+            document.getElementById('upload-progress').classList.add('hidden');
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(xhr.response);
+            } else {
+                reject(new Error('Erreur HTTP: ' + xhr.status));
+            }
+        });
+        
+        xhr.addEventListener('error', () => {
+            document.getElementById('upload-progress').classList.add('hidden');
+            reject(new Error('Erreur réseau'));
+        });
+        
+        xhr.open('POST', N8N_WEBHOOK_URL);
+        xhr.send(formData);
+    });
+}
+
+async function deleteOrder(orderId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+        return;
+    }
+    
+    const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+    
+    if (error) {
+        console.error('Erreur suppression:', error);
+        alert('Erreur lors de la suppression');
+        return;
+    }
+    
+    await loadOrders();
+}
+
+function applyFilters() {
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const depotFilter = document.getElementById('depot-filter').value;
+    const monthFilter = document.getElementById('month-filter').value;
+    
+    let filtered = allOrders;
+    
+    if (search) {
+        filtered = filtered.filter(o => o.order_number.toLowerCase().includes(search));
+    }
+    
+    if (depotFilter) {
+        filtered = filtered.filter(o => o.depot === depotFilter);
+    }
+    
+    if (monthFilter) {
+        filtered = filtered.filter(o => o.order_date.startsWith(monthFilter));
+    }
+    
+    renderOrders(filtered);
+}
+
+</script>
+
+</body>
+</html>

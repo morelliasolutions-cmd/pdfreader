@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="theme-color" content="#135bec"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>Mes Rendez-vous du Jour</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+<script src="../js/config.js?v=7" defer></script>
+<script src="../js/api.js?v=7" defer></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1c2433",
+                        "text-main-light": "#111318",
+                        "text-main-dark": "#e2e8f0",
+                        "text-sub-light": "#616f89",
+                        "text-sub-dark": "#94a3b8",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#2d3748"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.375rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark antialiased selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-xl overflow-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur-md border-b border-border-light dark:border-border-dark px-4 pt-12 pb-4 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<button onclick="handleLogout()" class="p-2 rounded-full hover:bg-background-light dark:hover:bg-background-dark text-text-main-light dark:text-text-main-dark transition-colors" title="Déconnexion">
+<span class="material-symbols-outlined">logout</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight">Mes Rendez-vous</h1>
+<div class="flex items-center gap-2">
+<div class="h-8 w-8 rounded-full overflow-hidden border border-border-light dark:border-border-dark">
+<img alt="User Avatar" class="h-full w-full object-cover" data-alt="Portrait of a technician" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_HJW0sqXFbN57zpm1jJ4KuK-sUqfnrTX9xQpSUkc0oUXL3XlEXRBfnhLx5qOnsHCcgngUp3q3tQoUg54tZ5Lzd3Ss3aPS1xv6Ou2qrwOhgA3RVuIOjNdlclW7WHsYaUrb3i_Y9cIrrz01HimQ98CTdUKuqfVmx_ejD_RbJl724Wg1b3XZ0oqDMGAN4XCEnUhpkhJ8FTeAlYW3NHApWuuLqldUnD6__fQzDYEnghBC342r7cUjW44eSlwJz7bF4VSpleK4QMFuxjQ"/>
+</div>
+</div>
+</div>
+<!-- Date Display avec navigation -->
+<div class="flex items-center justify-between bg-background-light dark:bg-background-dark rounded-xl p-3">
+<button onclick="changeDate(-1)" class="p-2 rounded-full hover:bg-surface-light dark:hover:bg-surface-dark text-text-main-light dark:text-text-main-dark transition-colors" title="Jour précédent">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="flex flex-col items-center flex-1">
+<span id="date-label" class="text-xs font-semibold text-primary uppercase tracking-wider">Aujourd'hui</span>
+<span id="date-display" class="text-sm font-bold text-text-main-light dark:text-text-main-dark">Chargement...</span>
+</div>
+<button onclick="changeDate(1)" class="p-2 rounded-full hover:bg-surface-light dark:hover:bg-surface-dark text-text-main-light dark:text-text-main-dark transition-colors" title="Jour suivant">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto pb-24 px-4 pt-6">
+<!-- Progress Bar -->
+<div class="mb-8 bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
+<div class="flex justify-between items-end mb-2">
+<div>
+<p class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark">Progression du jour</p>
+<h3 id="progress-text" class="text-xl font-bold text-text-main-light dark:text-text-main-dark mt-1">0/0 <span class="text-sm font-normal text-text-sub-light dark:text-text-sub-dark">Interventions</span></h3>
+</div>
+<div class="bg-primary/10 dark:bg-primary/20 p-2 rounded-lg text-primary">
+<span class="material-symbols-outlined" style="font-size: 20px;">trending_up</span>
+</div>
+</div>
+<div class="h-2 w-full bg-background-light dark:bg-background-dark rounded-full overflow-hidden">
+<div id="progress-bar" class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+</div>
+</div>
+<!-- Timeline -->
+<div id="appointments-timeline" class="space-y-6">
+<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark">
+<span class="material-symbols-outlined text-4xl mb-2 opacity-50">schedule</span>
+<p>Chargement des rendez-vous...</p>
+</div>
+</div>
+<!-- Les rendez-vous sont chargés dynamiquement depuis Supabase -->
+<!-- Empty space at bottom -->
+<div class="h-10"></div>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark pb-safe pt-2 px-2 z-30 pb-4">
+<div class="grid grid-cols-4 gap-1">
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-primary">
+<span class="material-symbols-outlined filled">calendar_today</span>
+<span class="text-[10px] font-medium mt-1">Agenda</span>
+</button>
+<a href="invetaire_technicien.html" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-medium mt-1">Stock</span>
+</a>
+<button onclick="openProfile()" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium mt-1">Profil</span>
+</button>
+<button onclick="handleLogout()" class="flex flex-col items-center justify-center p-2 rounded-xl text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-[10px] font-medium mt-1">Déconnexion</span>
+</button>
+</div>
+</nav>
+</div>
+
+<script>
+// Initialiser la date à aujourd'hui
+let currentDate = new Date();
+let currentEmployeeId = null;
+let appointments = [];
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', async function() {
+    await initializeApp();
+});
+
+async function initializeApp() {
+    // Attendre que Supabase soit initialisé
+    let attempts = 0;
+    while ((!window.supabase || typeof window.supabase.auth === 'undefined') && attempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (!window.supabase) {
+        console.error('Supabase non initialisé');
+        document.getElementById('appointments-timeline').innerHTML = '<div class="text-center py-8 text-red-500">Erreur: Supabase non initialisé</div>';
+        return;
+    }
+    
+    // Vérifier l'authentification
+    const { data: { user }, error: authError } = await window.supabase.auth.getUser();
+    
+    if (authError || !user) {
+        // Rediriger vers la page de connexion mobile si non authentifié
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    // Vérifier que l'utilisateur a le rôle technicien
+    const { data: roleData, error: roleError } = await window.supabase
+        .from('user_roles')
+        .select('employee_id, role')
+        .eq('user_id', user.id)
+        .single();
+    
+    if (roleError || !roleData || !roleData.employee_id) {
+        console.error('Employee ID non trouvé pour l\'utilisateur');
+        document.getElementById('appointments-timeline').innerHTML = '<div class="text-center py-8 text-red-500">Erreur: Profil technicien non trouvé</div>';
+        return;
+    }
+    
+    if (roleData.role !== 'technicien') {
+        // Rediriger vers la page de connexion si pas technicien
+        await window.supabase.auth.signOut();
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    currentEmployeeId = roleData.employee_id;
+    updateDateDisplay();
+    await loadAppointments();
+}
+
+function updateDateDisplay() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(currentDate);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    const dateDisplay = document.getElementById('date-display');
+    const dateLabel = document.getElementById('date-label');
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    
+    // Vérifier si la date sélectionnée est aujourd'hui
+    if (selectedDate.getTime() === today.getTime()) {
+        dateLabel.textContent = 'Aujourd\'hui';
+        dateLabel.classList.add('text-primary');
+        dateLabel.classList.remove('text-text-sub-light', 'dark:text-text-sub-dark');
+    } else {
+        // Calculer la différence en jours
+        const diffTime = selectedDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === -1) {
+            dateLabel.textContent = 'Hier';
+        } else if (diffDays === 1) {
+            dateLabel.textContent = 'Demain';
+        } else {
+            dateLabel.textContent = '';
+        }
+        dateLabel.classList.remove('text-primary');
+        dateLabel.classList.add('text-text-sub-light', 'dark:text-text-sub-dark');
+    }
+    
+    dateDisplay.textContent = currentDate.toLocaleDateString('fr-FR', options);
+}
+
+function changeDate(delta) {
+    // Ajouter ou soustraire un jour
+    currentDate.setDate(currentDate.getDate() + delta);
+    updateDateDisplay();
+    loadAppointments();
+}
+
+async function loadAppointments() {
+    if (!currentEmployeeId || !window.supabase) return;
+    
+    const timeline = document.getElementById('appointments-timeline');
+    timeline.innerHTML = '<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark"><span class="material-symbols-outlined text-4xl mb-2 opacity-50">schedule</span><p>Chargement...</p></div>';
+    
+    try {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        
+        // Charger les rendez-vous pour cette date et ce technicien
+        const { data: appointmentsData, error } = await window.supabase
+            .from('appointments')
+            .select('id, date, start_time, end_time, employee_id, note, activity, address, mandate_number, client_name, phone, is_urgent')
+            .eq('employee_id', currentEmployeeId)
+            .eq('date', dateStr)
+            .order('start_time', { ascending: true });
+        
+        if (error) {
+            console.error('Erreur lors du chargement des rendez-vous:', error);
+            timeline.innerHTML = '<div class="text-center py-8 text-red-500">Erreur lors du chargement</div>';
+            return;
+        }
+        
+        appointments = appointmentsData || [];
+        console.log('Rendez-vous chargés:', appointments); // Debug: vérifier les données chargées
+        
+        // Charger les interventions existantes pour déterminer le statut
+        const appointmentIds = appointments.map(a => a.id);
+        let interventions = [];
+        
+        if (appointmentIds.length > 0) {
+            const { data: interventionsData } = await window.supabase
+                .from('intervention_details')
+                .select('appointment_id, status')
+                .in('appointment_id', appointmentIds);
+            
+            interventions = interventionsData || [];
+        }
+        
+        // Créer un map des statuts d'intervention avec gestion de priorité pour les doublons
+        const interventionStatusMap = {};
+        // Priority: validated > completed > in_progress > others
+        const statusPriority = { 'validated': 5, 'completed': 4, 'blocked': 3, 'partial': 2, 'in_progress': 1 };
+        
+        interventions.forEach(int => {
+            const currentStatus = interventionStatusMap[int.appointment_id];
+            const oldP = statusPriority[currentStatus] || 0;
+            const newP = statusPriority[int.status] || 0;
+            
+            if (newP >= oldP) {
+                interventionStatusMap[int.appointment_id] = int.status;
+            }
+        });
+        
+        // Filter unique completed interventions for the counter
+        const uniqueInterventions = {};
+        interventions.forEach(i => {
+             // Only keep the "best" status for each appointment for the count
+             const current = uniqueInterventions[i.appointment_id];
+             const oldP = current ? (statusPriority[current.status] || 0) : -1;
+             const newP = statusPriority[i.status] || 0;
+             if (newP >= oldP) {
+                 uniqueInterventions[i.appointment_id] = i;
+             }
+        });
+        
+        renderAppointments(appointments, interventionStatusMap);
+        updateProgress(appointments, Object.values(uniqueInterventions));
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        timeline.innerHTML = '<div class="text-center py-8 text-red-500">Erreur lors du chargement</div>';
+    }
+}
+
+function renderAppointments(appointments, interventionStatusMap) {
+    const timeline = document.getElementById('appointments-timeline');
+    
+    if (appointments.length === 0) {
+        timeline.innerHTML = '<div class="text-center py-8 text-text-sub-light dark:text-text-sub-dark"><span class="material-symbols-outlined text-4xl mb-2 opacity-50">event_busy</span><p>Aucun rendez-vous pour cette date</p></div>';
+        return;
+    }
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+    const isToday = selectedDate.getTime() === today.getTime();
+    
+    let html = '';
+    
+    appointments.forEach((appointment, index) => {
+        const startTime = new Date(`${appointment.date}T${appointment.start_time}`);
+        const endTime = new Date(`${appointment.date}T${appointment.end_time}`);
+        const isLast = index === appointments.length - 1;
+        
+        // Déterminer le statut basé sur l'intervention, pas sur l'heure
+        const interventionStatus = interventionStatusMap[appointment.id];
+        const hasIntervention = !!interventionStatus;
+        
+        let status = 'upcoming';
+        let statusText = 'À venir';
+        let statusClass = 'border-border-light dark:border-border-dark';
+        let dotClass = 'border-border-light dark:border-border-dark';
+        let cardClass = 'bg-surface-light dark:bg-surface-dark';
+        
+        // Si une intervention existe, utiliser son statut
+        if (hasIntervention) {
+            if (interventionStatus === 'completed' || interventionStatus === 'validated') {
+                status = 'completed';
+                statusText = interventionStatus === 'validated' ? 'Validé' : 'Terminé';
+                statusClass = 'border-green-500';
+                dotClass = 'border-green-500 bg-green-500';
+                cardClass = 'bg-surface-light dark:bg-surface-dark opacity-60';
+            } else if (interventionStatus === 'blocked') {
+                status = 'blocked';
+                statusText = 'Problème technique';
+                statusClass = 'border-orange-500';
+                dotClass = 'border-orange-500 bg-orange-500';
+                cardClass = 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800';
+            } else if (interventionStatus === 'in_progress') {
+                status = 'active';
+                statusText = ''; // ne rien afficher pour "En cours"
+                statusClass = 'border-primary';
+                dotClass = 'border-primary bg-primary';
+                cardClass = 'bg-surface-light dark:bg-surface-dark border-primary/30 shadow-lg shadow-primary/5';
+            }
+        } else if (isToday) {
+            // Si pas d'intervention mais que c'est aujourd'hui, vérifier l'heure pour "En cours"
+            if (now >= startTime && now < endTime) {
+                status = 'active';
+                statusText = ''; // ne rien afficher pour "En cours"
+                statusClass = 'border-primary';
+                dotClass = 'border-primary bg-primary';
+                cardClass = 'bg-surface-light dark:bg-surface-dark border-primary/30 shadow-lg shadow-primary/5';
+            }
+        }
+        
+        // Format de l'adresse complète
+        const fullAddress = [appointment.address, appointment.npa, appointment.city]
+            .filter(Boolean)
+            .join(', ');
+        
+        // Format de l'heure
+        const timeStr = appointment.start_time.substring(0, 5);
+        const endTimeStr = appointment.end_time.substring(0, 5);
+        
+        html += `
+            <div class="relative pl-6 group">
+                ${!isLast ? '<div class="absolute left-[7px] top-8 bottom-[-24px] w-0.5 bg-border-light dark:bg-border-dark"></div>' : ''}
+                ${status === 'active' ? `
+                    <div class="absolute left-[-2px] top-2.5 z-10">
+                        <span class="flex h-5 w-5 items-center justify-center">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-30"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                        </span>
+                    </div>
+                ` : `
+                    <div class="absolute left-0 top-3 h-4 w-4 rounded-full border-2 ${dotClass} bg-surface-light dark:bg-surface-dark flex items-center justify-center z-10">
+                        ${status === 'completed' ? '<div class="h-2 w-2 rounded-full bg-green-500"></div>' : ''}
+                    </div>
+                `}
+                <div class="flex flex-col gap-1 ${status === 'completed' ? 'opacity-60 hover:opacity-100 transition-opacity' : ''}">
+                    <div class="flex items-baseline gap-2">
+                        <span class="font-bold ${status === 'active' ? 'text-primary text-xl' : 'text-text-main-light dark:text-text-main-dark text-lg'}">${timeStr}</span>
+                        ${statusText ? `<span class="text-sm ${status === 'active' ? 'font-medium text-primary' : 'text-text-sub-light dark:text-text-sub-dark'}">${statusText}</span>` : ''}
+                    </div>
+                    ${status === 'active' ? `
+                        <div class="${cardClass} p-0 rounded-xl border ${statusClass} overflow-hidden">
+                            <div class="p-5 border-l-4 border-primary">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-text-main-light dark:text-text-main-dark">${appointment.client_name || 'Client'}</h4>
+                                        <p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">${appointment.activity || ''}</p>
+                                    </div>
+                                    ${appointment.is_urgent ? '<div class="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-lg"><span class="material-symbols-outlined">priority_high</span></div>' : ''}
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-text-main-light dark:text-text-main-dark bg-background-light dark:bg-background-dark/50 p-2.5 rounded-lg mb-4">
+                                    <span class="material-symbols-outlined text-primary text-lg">location_on</span>
+                                    <span class="font-medium truncate">${fullAddress}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <button onclick="openNavigation('${fullAddress}')" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary text-white font-semibold text-sm shadow-md hover:bg-blue-600 transition-colors">
+                                        <span class="material-symbols-outlined text-lg">navigation</span>
+                                        Itinéraire
+                                    </button>
+                                    ${appointment.phone ? `<button onclick="callClient('${appointment.phone}')" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors border border-border-light dark:border-border-dark">
+                                        <span class="material-symbols-outlined text-lg">call</span>
+                                        Appeler
+                                    </button>` : ''}
+                                </div>
+                                <a href="details_intervention.html?appointment_id=${appointment.id}&mandate=${encodeURIComponent(appointment.mandate_number || '')}&pto=${encodeURIComponent(appointment.pto_reference || '')}&cableAlim=${encodeURIComponent(appointment.cable_alim || '')}&fibre1=${encodeURIComponent(appointment.fibre_1 || '')}&fibre2=${encodeURIComponent(appointment.fibre_2 || '')}&fibre3=${encodeURIComponent(appointment.fibre_3 || '')}&fibre4=${encodeURIComponent(appointment.fibre_4 || '')}&client=${encodeURIComponent(appointment.client_name || '')}&phone=${encodeURIComponent(appointment.phone || '')}&note=${encodeURIComponent(appointment.note || '')}&address=${encodeURIComponent(fullAddress)}&activity=${encodeURIComponent(appointment.activity || '')}&urgent=${appointment.is_urgent || false}&time=${timeStr}-${endTimeStr}" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-background-light dark:bg-background-dark text-primary font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors border border-primary/30">
+                                    <span class="material-symbols-outlined text-lg">visibility</span>
+                                    Voir les détails
+                                </a>
+                            </div>
+                        </div>
+                    ` : `
+                        <a href="details_intervention.html?appointment_id=${appointment.id}&mandate=${encodeURIComponent(appointment.mandate_number || '')}&pto=${encodeURIComponent(appointment.pto_reference || '')}&cableAlim=${encodeURIComponent(appointment.cable_alim || '')}&fibre1=${encodeURIComponent(appointment.fibre_1 || '')}&fibre2=${encodeURIComponent(appointment.fibre_2 || '')}&fibre3=${encodeURIComponent(appointment.fibre_3 || '')}&fibre4=${encodeURIComponent(appointment.fibre_4 || '')}&client=${encodeURIComponent(appointment.client_name || '')}&phone=${encodeURIComponent(appointment.phone || '')}&note=${encodeURIComponent(appointment.note || '')}&address=${encodeURIComponent(fullAddress)}&activity=${encodeURIComponent(appointment.activity || '')}&urgent=${appointment.is_urgent || false}&time=${timeStr}-${endTimeStr}" class="${cardClass} p-4 rounded-xl border ${statusClass} shadow-sm hover:border-primary/50 transition-colors cursor-pointer block">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-bold text-text-main-light dark:text-text-main-dark ${status === 'completed' ? 'line-through decoration-text-sub-light/50' : ''}">${appointment.client_name || 'Client'}</h4>
+                                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-xs">location_on</span>
+                                        ${fullAddress}
+                                    </p>
+                                </div>
+                                ${status === 'completed' ? `<span class="inline-flex items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-300 gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span>${statusText}</span>` : '<span class="material-symbols-outlined text-text-sub-light dark:text-text-sub-dark">chevron_right</span>'}
+                            </div>
+                        </a>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+    
+    timeline.innerHTML = html;
+}
+
+function updateProgress(appointments, interventions) {
+    const completed = interventions.filter(i => i.status === 'completed' || i.status === 'validated').length;
+    const blocked = interventions.filter(i => i.status === 'blocked').length;
+    const total = appointments.length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    
+    document.getElementById('progress-text').textContent = `${completed}/${total} Interventions`;
+    document.getElementById('progress-bar').style.width = `${percentage}%`;
+}
+
+function openNavigation(address) {
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        window.open(`maps://maps.apple.com/?q=${encodeURIComponent(address)}`);
+    } else {
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`);
+    }
+}
+
+function callClient(phoneNumber) {
+    window.location.href = `tel:${phoneNumber}`;
+}
+
+async function handleLogout() {
+    if (!window.supabase) return;
+    
+    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        await window.supabase.auth.signOut();
+        window.location.href = 'index.html';
+    }
+}
+
+function openProfile() {
+    window.location.href = 'acceuil_Personnel.html';
+}
+</script>
+</body></html>

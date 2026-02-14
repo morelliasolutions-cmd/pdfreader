@@ -1,0 +1,2353 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=1920, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes" name="viewport"/>
+<meta name="theme-color" content="#ea2a33"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>Dashboard de planification des techniciens</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.min.js" defer></script>
+<!-- Config & API -->
+<script src="js/config.js?v=7" defer></script>
+<script src="js/api.js?v=7" defer></script>
+<script src="js/role-access-control.js?v=1"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ea2a33",
+                        "primary-dark": "#c82229",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#211111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2a2a2a",
+                        "card-light": "#ffffff",
+                        "card-dark": "#2a1a1a",
+                        "text-dark": "#0f172a",
+                        "text-muted": "#64748b",
+                        "border-color": "#e2e8f0"
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+        body { 
+            font-family: 'Spline Sans', sans-serif;
+        }
+        
+        /* Responsive scaling pour adapter la page aux différentes tailles d'écran */
+        @media screen and (max-width: 1920px) {
+            body {
+                zoom: calc(100vw / 1920);
+                -moz-transform: scale(calc(100vw / 1920));
+                -moz-transform-origin: 0 0;
+            }
+        }
+        
+        @media screen and (min-width: 1921px) {
+            body {
+                zoom: 1;
+            }
+        }
+        
+        /* Ajustement pour tablettes en mode paysage */
+        @media screen and (max-width: 1366px) and (min-width: 1024px) {
+            body {
+                zoom: calc(100vw / 1920);
+            }
+        }
+        
+        /* Assurer que le contenu reste centré et proportionnel */
+        html, body {
+            overflow-x: auto;
+            min-width: 100%;
+        }
+        
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Barre de scroll horizontale visible */
+        .custom-scrollbar {
+            scrollbar-width: auto;
+        }
+        
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        .animate-draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 2s ease-out forwards; }
+        
+        /* Styles pour le modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        
+        /* Panel de détails */
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100%;
+            background-color: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 999;
+            overflow-y: auto;
+        }
+        .detail-panel.active {
+            right: 0;
+        }
+        
+        /* Bouton d'ajout */
+        .add-btn {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #ea2a33;
+            color: white;
+            border: none;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+        tr:hover .add-btn {
+            display: flex;
+        }
+        .add-btn:hover {
+            background-color: #c82229;
+        }
+        
+        /* Style pour le menu déroulant des mandats */
+        #mandateDropdown {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .mandate-option:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .mandate-option:active {
+            background-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body class="bg-background-light text-text-dark h-screen flex" style="min-width: 1800px;">
+    <!-- Sidebar -->
+    <aside class="flex w-72 flex-col border-r border-border-color bg-surface-light h-full hidden lg:flex shrink-0 transition-all duration-300">
+        <div class="flex flex-col h-full p-4 justify-between">
+            <div class="flex flex-col gap-8">
+                <div class="flex gap-3 items-center px-2">
+                    <div class="size-8 text-primary">
+                        <svg class="w-full h-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+                            <path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-lg font-bold leading-tight text-gray-900">ConnectFiber</h1>
+                        <p class="text-text-muted text-xs font-medium uppercase tracking-wider">Gestion Chantier</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a id="nav-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="dashboard.html">
+                        <span class="material-symbols-outlined text-2xl">dashboard</span>
+                        <span class="text-sm font-medium">Tableau de bord</span>
+                    </a>
+                    <a id="nav-pointage" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="pointage.html">
+                        <span class="material-symbols-outlined text-2xl">timer</span>
+                        <span class="text-sm font-medium">Pointage</span>
+                    </a>
+                    <a id="nav-production" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="production.html">
+                        <span class="material-symbols-outlined text-2xl">factory</span>
+                        <span class="text-sm font-medium">Production</span>
+                    </a>
+                    <a id="nav-personnel" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="personnel.html">
+                        <span class="material-symbols-outlined text-2xl">group</span>
+                        <span class="text-sm font-medium">Personnel</span>
+                    </a>
+                    <a id="nav-planning" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors bg-primary/10 text-primary" href="planif.html">
+                        <span class="material-symbols-outlined text-2xl">calendar_month</span>
+                        <span class="text-sm font-bold">Planning</span>
+                    </a>
+                    <a id="nav-mandat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="mandats.html">
+                        <span class="material-symbols-outlined text-2xl">assignment</span>
+                        <span class="text-sm font-medium">Mandat</span>
+                    </a>
+                    <a id="nav-inventaire" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="inventaire/inventaire.html" target="_blank">
+                        <span class="material-symbols-outlined text-2xl">inventory</span>
+                        <span class="text-sm font-medium">Inventaire</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-background-light text-text-muted hover:text-text-dark" href="parametres.html">
+                        <span class="material-symbols-outlined text-2xl">settings</span>
+                        <span class="text-sm font-medium">Paramètres</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+    
+    <main class="flex-1 flex flex-col h-full overflow-y-auto relative">
+        <!-- Header -->
+        <header class="bg-surface-light border-b border-[#f4f0f0] sticky top-0 z-50 shrink-0">
+            <div class="w-full px-4 sm:px-6 lg:px-8" style="min-width: 1500px;">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3 lg:hidden">
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                        <span class="text-lg font-bold text-gray-900">ConnectFiber</span>
+                    </div>
+                    <div class="hidden lg:flex flex-col gap-1">
+                        <h2 class="text-xl font-bold text-gray-900">Planning Techniciens</h2>
+                        <div class="flex items-center gap-2 text-gray-500 text-sm">
+                            <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                            <span id="currentDateDisplay">Chargement...</span>
+                        </div>
+                    </div>
+                    <!-- Boutons d'activité -->
+                    <div class="hidden lg:flex items-center gap-3">
+                        <button onclick="openActivityLock('swisscom')" class="group relative w-28 px-3 py-2 bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 text-sm font-bold rounded-lg transition-colors shadow-sm flex items-center justify-between">
+                            <span>Swisscom</span>
+                            <button onclick="event.stopPropagation(); sendActivityMail('swisscom')" class="transition-opacity" title="Envoyer le rapport par email">
+                                <span class="material-symbols-outlined text-[16px] text-gray-600">mail</span>
+                            </button>
+                        </button>
+                        <button onclick="openActivityLock('ftth_fr')" class="group relative w-28 px-3 py-2 bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 text-sm font-bold rounded-lg transition-colors shadow-sm flex items-center justify-between">
+                            <span>FTTH FR</span>
+                            <button onclick="event.stopPropagation(); sendActivityMail('ftth_fr')" class="transition-opacity" title="Envoyer le rapport par email">
+                                <span class="material-symbols-outlined text-[16px] text-gray-600">mail</span>
+                            </button>
+                        </button>
+                        <button onclick="openActivityLock('sig')" class="group relative w-28 px-3 py-2 bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 text-sm font-bold rounded-lg transition-colors shadow-sm flex items-center justify-between">
+                            <span>SIG</span>
+                            <button onclick="event.stopPropagation(); sendActivityMail('sig')" class="transition-opacity" title="Envoyer le rapport par email">
+                                <span class="material-symbols-outlined text-[16px] text-gray-600">mail</span>
+                            </button>
+                        </button>
+                        <button onclick="openActivityLock('rea')" class="group relative w-28 px-3 py-2 bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 text-sm font-bold rounded-lg transition-colors shadow-sm flex items-center justify-between">
+                            <span>REA</span>
+                            <button onclick="event.stopPropagation(); sendActivityMail('rea')" class="transition-opacity" title="Envoyer le rapport par email">
+                                <span class="material-symbols-outlined text-[16px] text-gray-600">mail</span>
+                            </button>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Navigation de date -->
+                        <div class="hidden lg:flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                            <button id="prevDayBtn" class="p-1.5 rounded hover:bg-white text-gray-700 transition-colors">
+                                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                            </button>
+                            <button id="todayBtn" class="px-3 py-1.5 rounded hover:bg-white text-gray-800 text-sm font-semibold transition-colors">
+                                Aujourd'hui
+                            </button>
+                            <button id="nextDayBtn" class="p-1.5 rounded hover:bg-white text-gray-700 transition-colors">
+                                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                            </button>
+                            <input type="date" id="datePicker" class="ml-2 px-2 py-1 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                        <div class="h-8 w-[1px] bg-gray-200 mx-1"></div>
+                        <button onclick="window.open('gantt-mensuel.html', '_blank')" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Vue Gantt mensuelle">
+                            <span class="material-symbols-outlined">view_timeline</span>
+                        </button>
+                        <button onclick="openMapModal()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Voir la carte des rendez-vous">
+                            <span class="material-symbols-outlined">map</span>
+                        </button>
+                        <div class="h-8 w-[1px] bg-gray-200 mx-1"></div>
+                        <button onclick="toggleNotifications()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative" id="notificationBtn">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span id="notificationBadge" class="hidden absolute top-2 right-2 size-5 bg-primary rounded-full border-2 border-white text-white text-xs font-bold flex items-center justify-center">0</span>
+                        </button>
+                        <div class="h-8 w-[1px] bg-gray-200 mx-1"></div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <p id="userName" class="text-sm font-bold leading-none"></p>
+                                <p class="text-xs text-gray-500 leading-none mt-1">Admin RH</p>
+                            </div>
+                            <button onclick="logout()" class="size-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                <span class="material-symbols-outlined text-gray-600">logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Modal Verrouillage Activité -->
+        <div id="activityLockModal" class="modal">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+                <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">lock</span>
+                        <h3 class="text-lg font-bold text-gray-900">Bloquer calendrier</h3>
+                    </div>
+                    <button onclick="closeActivityLock()" class="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-gray-500">close</span>
+                    </button>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700 mb-2">Activité:</p>
+                        <p id="activityName" class="text-lg font-bold text-primary"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700 mb-2">Date:</p>
+                        <p id="activityDate" class="text-base font-semibold text-gray-900"></p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-yellow-500">light_mode</span>
+                                <span class="font-semibold text-gray-900">Matin</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="morningSwitch" class="sr-only peer" onchange="updateActivityLock()">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-blue-500">bedtime</span>
+                                <span class="font-semibold text-gray-900">Après-midi</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="afternoonSwitch" class="sr-only peer" onchange="updateActivityLock()">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Notifications RDV -->
+        <div id="notificationsModal" class="modal">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-primary/10 p-2 rounded-lg">
+                            <span class="material-symbols-outlined text-primary">notifications</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">Demandes de RDV</h2>
+                            <p class="text-sm text-gray-500" id="rdvCount">0 nouvelle(s) demande(s)</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleNotifications()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-gray-500">close</span>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    <div id="rdvList" class="space-y-4">
+                        <!-- Liste des RDV générée dynamiquement -->
+                    </div>
+                    <div id="emptyRdv" class="hidden text-center py-12">
+                        <div class="inline-flex items-center justify-center size-16 bg-gray-100 rounded-full mb-4">
+                            <span class="material-symbols-outlined text-gray-400 text-3xl">inbox</span>
+                        </div>
+                        <p class="text-gray-500 font-medium">Aucune demande de RDV</p>
+                        <p class="text-gray-400 text-sm mt-1">Les nouvelles demandes apparaîtront ici</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 p-4 sm:p-6 lg:p-8">
+<!-- Gantt Chart Container -->
+<div class="flex flex-col flex-1 min-h-0 bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-lg">
+<!-- Timeline Header -->
+<div class="flex flex-col h-full">
+<table class="w-full min-w-[1200px] border-collapse h-full">
+<thead class="sticky top-0 z-10 bg-blue-600 shadow-md">
+<tr>
+<!-- Corner Cell -->
+<th class="sticky left-0 z-20 bg-blue-600 border-b border-r border-blue-500 p-4 w-[240px] text-left text-sm font-bold text-white">
+                                Techniciens (5)
+                            </th>
+<!-- Time Slots -->
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">07:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">08:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">09:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">10:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">11:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">12:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">13:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">14:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">15:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">16:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">17:00</th>
+<th class="border-b border-blue-500 border-r border-blue-400 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">18:00</th>
+<th class="border-b border-blue-500 min-w-[100px] py-3 text-blue-100 text-xs font-semibold uppercase tracking-wider">19:00</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 bg-white">
+<!-- Technician 1 Row -->
+<tr class="group hover:bg-blue-50 transition-colors">
+<td class="sticky left-0 z-10 bg-blue-50 border-r border-gray-200 p-3 group-hover:bg-blue-100 relative">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border border-white/10" data-alt="Portrait of technician Marc L." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCstdJTjSnx84r8Elc4L6Xge5P-cVudd0lcDXoLAHA8AluD2Azh6ICyLmOnAGLY4sxcGk3kjn9oQUTR6ag6absTtuXJ7DlbtdPNCqNOrb2-1Nv_TK27IK0ClR19fAuEATH5tq1sbSgHCdwUTdas2NBW_qESo3NWZHHpIlJYdagTQBIJfbpnFgnDzePdeBJhAxZwVE_n7BQNdTN3g64w9LVUb52k9Wy1iyC8F4x0ncFcXlkNNjToy08o70k-0NWicwH9N9U7aOc1-5ac");'></div>
+<div class="absolute bottom-0 right-0 size-2.5 bg-primary border-2 border-[#152211] rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-blue-900">Marc L.</p>
+<p class="text-xs text-blue-700">Installation Fibre</p>
+</div>
+</div>
+<button class="add-btn" onclick="openAddModal(1)">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</td>
+<!-- Timeline cells for tech 1 - dynamic interventions will be rendered here -->
+<td id="tech-1-timeline" colspan="13" class="p-0 relative" style="height: 60px;">
+<div class="absolute inset-0" style="pointer-events: none;">
+<!-- Hour separators -->
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 7.69%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 15.38%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 23.08%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 30.77%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 38.46%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 46.15%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 53.85%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 61.54%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 69.23%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 76.92%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 84.62%; pointer-events: none;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 92.31%; pointer-events: none;"></div>
+</div>
+</td>
+</tr>
+<!-- Technician 2 Row -->
+<tr class="group hover:bg-blue-50 transition-colors">
+<td class="sticky left-0 z-10 bg-blue-50 border-r border-gray-200 p-3 group-hover:bg-blue-100 relative">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border border-gray-200" data-alt="Portrait of technician Sophie M." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBCEehL-4pSKIvJN-MeQ1tc96avqirdPNcTKDhI7oiUN9ZX3v6KIXmf9719OPdEynSVLgwqVIyvw0-5ef3vuQxfcLNIsfQF016pv4Qw6TFoyt3i_CqO-qBA3ch3rbWOjggQxjvRkyPNE7sW5E_2rXKcTXsenpF-DydroQRkVqrz78avZb6IBIBBXh0kp3GHGNcMankgWMO7XqBSjdNzQGDBJ6jlaeJmo8r_iBZCI6AhyrGb4_oGBZV7t5z8LlorekNq_BArgoB-UhGR");'></div>
+<div class="absolute bottom-0 right-0 size-2.5 bg-yellow-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-blue-900">Sophie M.</p>
+<p class="text-xs text-blue-700">Raccordement</p>
+</div>
+</div>
+<button class="add-btn" onclick="openAddModal(2)">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</td>
+<td id="tech-2-timeline" colspan="13" class="p-0 relative" style="height: 60px;">
+<div class="absolute inset-0" style="pointer-events: none;">
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 7.69%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 15.38%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 23.08%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 30.77%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 38.46%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 46.15%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 53.85%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 61.54%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 69.23%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 76.92%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 84.62%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 92.31%;"></div>
+</div>
+</td>
+</tr>
+<!-- Technician 3 Row -->
+<tr class="group hover:bg-blue-50 transition-colors">
+<td class="sticky left-0 z-10 bg-blue-50 border-r border-gray-200 p-3 group-hover:bg-blue-100 relative">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border border-gray-200" data-alt="Portrait of technician Thomas B." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDgbB-tw44_clfrLE2Su6Knjt_2JgkN88MDZQ0e0S35NobnOsLOMCbyyAqdrAYK6t_0773Ww3JZ24YSzSnKsfqq7_mAR7hOJKNtrFWGeGFcJGPdAG1dogh2ftGqElmwJz1eHDq4X39w13keHeq2_q_7gSce4NSZuGV43gKpHeypWiBROD3VVFDIGoE2F4dPPZ_xaaykA7yasm4iRZxy9IgO4xgG52jvy8t7u-_MZTtZYMsWrkaC5FjMHiTqnl0OMhohbGQEzDie-K1N");'></div>
+<div class="absolute bottom-0 right-0 size-2.5 bg-gray-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-blue-900">Thomas B.</p>
+<p class="text-xs text-blue-700">Support Niveau 2</p>
+</div>
+</div>
+<button class="add-btn" onclick="openAddModal(3)">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</td>
+<td id="tech-3-timeline" colspan="13" class="p-0 relative" style="height: 60px;">
+<div class="absolute inset-0" style="pointer-events: none;">
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 7.69%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 15.38%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 23.08%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 30.77%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 38.46%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 46.15%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 53.85%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 61.54%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 69.23%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 76.92%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 84.62%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 92.31%;"></div>
+</div>
+</td>
+</tr>
+<!-- Dynamic interventions for tech 3 -->
+<tr id="tech-3-dynamic" style="display: none;"></tr>
+<!-- Technician 4 Row -->
+<tr class="group hover:bg-blue-50 transition-colors">
+<td class="sticky left-0 z-10 bg-blue-50 border-r border-gray-200 p-3 group-hover:bg-blue-100 relative">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border border-gray-200" data-alt="Portrait of technician Sarah L." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAmPUWHPhX3zRSyCpGgJLDAu4GQxng1gBTb5q9OH9NF3ie5Rxpi2sl7gyvDtHEKvQC6xRVG0-GpBtWwnFn93mGNzVKePA_uwYIMMzvNtm9XaO14rb6OZZo6wCIDCY_w2Ys5KCx-s4vfcuJ2OcZl0afE7zZcGgNabbnXoglW3tZnXF0Ia7Tf9M6T6w90A8qpmmXti8LXmyPWZHL9qfRrU68nzxR_LfvH0uPHFBlWAITQlIzV7E5fLhkV5n9RLyDT1CSYyvFFI86hEzzp");'></div>
+<div class="absolute bottom-0 right-0 size-2.5 bg-primary border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-blue-900">Sarah L.</p>
+<p class="text-xs text-blue-700">Installation Fibre</p>
+</div>
+</div>
+<button class="add-btn" onclick="openAddModal(4)">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</td>
+<td id="tech-4-timeline" colspan="13" class="p-0 relative" style="height: 60px;">
+<div class="absolute inset-0" style="pointer-events: none;">
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 7.69%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 15.38%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 23.08%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 30.77%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 38.46%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 46.15%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 53.85%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 61.54%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 69.23%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 76.92%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 84.62%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 92.31%;"></div>
+</div>
+</td>
+</tr>
+<!-- Technician 5 Row -->
+<tr class="group hover:bg-blue-50 transition-colors">
+<td class="sticky left-0 z-10 bg-blue-50 border-r border-gray-200 p-3 group-hover:bg-blue-100 relative">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border border-gray-200" data-alt="Portrait of technician Karim A." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDGBCuRD_HLFTsIsO_WcKvsNW4cn4F5jk5lhdQyyo0kXhLhBa7q1R1MkQMcQsYxu7l0VbYMP81y5jf6VS2cbliOu3zC6XQXHDWlyUZAu1s_FyL-xcANoz5iQ-1I0WG4MPXzqOUcf93_yCRCz3SKIzk9804TVMy-UhKRPS2-8spXz6h7U81owFU7SPdqbMrnesVnF0PK39yShL0eNQslQQtW106Tk-BkQxeLYhs44JHeuV8F_O75dwc8Aj7GlhD9uoktEvc9PkoL8z8u");'></div>
+<div class="absolute bottom-0 right-0 size-2.5 bg-primary border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-blue-900">Karim A.</p>
+<p class="text-xs text-blue-700">Expert Réseau</p>
+</div>
+</div>
+<button class="add-btn" onclick="openAddModal(5)">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</td>
+<td id="tech-5-timeline" colspan="13" class="p-0 relative" style="height: 60px;">
+<div class="absolute inset-0" style="pointer-events: none;">
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 7.69%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 15.38%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 23.08%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 30.77%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 38.46%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 46.15%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 53.85%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 61.54%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 69.23%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 76.92%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 84.62%;"></div>
+<div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 92.31%;"></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- Modal Ajout/Édition Intervention -->
+<div id="interventionModal" class="modal">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-5">
+        <div class="flex items-center justify-between mb-6">
+            <h2 id="modalTitle" class="text-xl font-bold text-gray-800">Ajouter une intervention</h2>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <form id="interventionForm" class="space-y-4">
+            <input type="hidden" id="interventionId">
+            <input type="hidden" id="technicianId">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Activité</label>
+                    <select id="activity" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Sélectionner...</option>
+                        <option value="swisscom">Swisscom</option>
+                        <option value="swiss4net">Swiss4net</option>
+                        <option value="col_montante">Col. Montante</option>
+                        <option value="rollout">Rollout</option>
+                        <option value="manchon">Manchon</option>
+                    </select>
+                </div>
+                
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de mandat</label>
+                    <div class="relative">
+                        <input type="text" 
+                               id="mandateNumberSearch" 
+                               placeholder="Rechercher un mandat..." 
+                               autocomplete="off"
+                               class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               oninput="filterMandateOptions()"
+                               onfocus="showMandateDropdown()"
+                               onclick="showMandateDropdown()">
+                        <span class="material-symbols-outlined absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">search</span>
+                        <input type="hidden" id="mandateNumber" required>
+                        <div id="mandateDropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto" style="top: 100%;">
+                            <div id="mandateOptions" class="py-1">
+                                <!-- Options chargées dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom du client</label>
+                    <input type="text" id="clientName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                    <input type="tel" id="phone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                <input type="text" id="address" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">NPA</label>
+                    <input type="text" id="npa" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                    <input type="text" id="city" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Heure début</label>
+                    <input type="time" id="startTime" required min="07:00" max="19:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Heure fin</label>
+                    <input type="time" id="endTime" required min="07:00" max="19:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <div class="flex items-center gap-2 pb-2">
+                        <input type="checkbox" id="isUrgent" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                        <label for="isUrgent" class="text-sm text-gray-700 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-red-600 text-base">warning</span>
+                            Urgence
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Note (optionnel)</label>
+                <textarea id="note" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+            
+            <!-- Informations techniques -->
+            <div class="border-t border-gray-200 pt-4 mt-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">Informations techniques</h3>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Référence Prise (OTO)</label>
+                        <input type="text" id="ptoReference" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: FI-2938-A">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de câble d'alim</label>
+                        <input type="text" id="cableAlim" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: CA-12345">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Crochets Fibres (BEP)</label>
+                    <div class="grid grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Fibre 1</label>
+                            <input type="text" id="fibre1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="-">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Fibre 2</label>
+                            <input type="text" id="fibre2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="-">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Fibre 3</label>
+                            <input type="text" id="fibre3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="-">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Fibre 4</label>
+                            <input type="text" id="fibre4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="-">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 pt-3">
+                <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Annuler
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Panel de détails -->
+<div id="detailPanel" class="detail-panel">
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-800">Détails de l'intervention</h2>
+            <button onclick="closeDetailPanel()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div id="detailContent" class="space-y-4">
+            <!-- Contenu généré dynamiquement -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal Carte des rendez-vous -->
+<div id="mapModal" class="modal">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-800">Carte des rendez-vous - <span id="mapModalDate"></span></h2>
+            <button onclick="closeMapModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div id="mapContainer" class="flex-1 min-h-[500px] bg-gray-100"></div>
+    </div>
+</div>
+
+
+<script>
+    // currentUser est déjà déclaré dans role-access-control.js
+    // let currentUser = null; // Supprimé pour éviter la duplication
+    let isChecking = false;
+
+    // ======== AUTHENTIFICATION ========
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (isChecking) return;
+        isChecking = true;
+        
+        console.log('Planning - Vérification authentification...');
+        
+        let attempts = 0;
+        while (!window.VeloxAPI && attempts < 10) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (!window.VeloxAPI) {
+            console.error('❌ API VeloxAPI introuvable');
+            alert('Erreur: API non chargée. Veuillez recharger la page.');
+            return;
+        }
+        
+        try {
+            const session = await window.VeloxAPI.getSession();
+            
+            if (!session || !session.user) {
+                console.log('❌ Pas de session, redirection vers login');
+                window.location.replace('index.html');
+                return;
+            }
+            
+            console.log('✅ Session valide, chargement de la page...');
+            currentUser = session.user;
+            
+            // Initialiser la page
+            await init();
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            window.location.replace('index.html');
+        }
+    });
+    
+    // Déconnexion
+    async function logout() {
+        await window.VeloxAPI.signOut();
+        window.location.href = 'index.html';
+    }
+
+    // Techniciens (chargés dynamiquement depuis Supabase)
+    let technicians = [];
+
+    // Couleurs et noms des activités
+    const activityConfig = {
+        swisscom: { color: 'border-blue-500', borderLeft: 'border-l-blue-500', name: 'Swisscom' },
+        swiss4net: { color: 'border-orange-500', borderLeft: 'border-l-orange-500', name: 'Swiss4net' },
+        col_montante: { color: 'border-purple-500', borderLeft: 'border-l-purple-500', name: 'Col. Montante' },
+        rollout: { color: 'border-green-500', borderLeft: 'border-l-green-500', name: 'Rollout' },
+        manchon: { color: 'border-indigo-500', borderLeft: 'border-l-indigo-500', name: 'Manchon' },
+        // Anciennes valeurs pour compatibilité
+        ftth_fr: { color: 'border-purple-500', borderLeft: 'border-l-purple-500', name: 'FTTH FR' },
+        sig: { color: 'border-green-500', borderLeft: 'border-l-green-500', name: 'SIG' },
+        rea: { color: 'border-orange-500', borderLeft: 'border-l-orange-500', name: 'REA' },
+        smartmetering: { color: 'border-indigo-500', borderLeft: 'border-l-indigo-500', name: 'Smart' }
+    };
+
+    // Date courante
+    let currentDate = new Date();
+    
+    // Formatter la date pour l'affichage
+    function formatDate(date) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('fr-FR', options);
+    }
+    
+    // Mettre à jour l'affichage de la date
+    function updateDateDisplay() {
+        document.getElementById('currentDateDisplay').textContent = formatDate(currentDate);
+        document.getElementById('datePicker').valueAsDate = currentDate;
+    }
+    
+    // Navigation de date
+    document.addEventListener('DOMContentLoaded', () => {
+        // Bouton jour précédent
+        document.getElementById('prevDayBtn').addEventListener('click', async () => {
+            currentDate.setDate(currentDate.getDate() - 1);
+            updateDateDisplay();
+            await loadTechniciansForDate(currentDate);
+            renderTechniciansTable();
+            await renderInterventions();
+        });
+        
+        // Bouton aujourd'hui
+        document.getElementById('todayBtn').addEventListener('click', async () => {
+            currentDate = new Date();
+            updateDateDisplay();
+            await loadTechniciansForDate(currentDate);
+            renderTechniciansTable();
+            await renderInterventions();
+        });
+        
+        // Bouton jour suivant
+        document.getElementById('nextDayBtn').addEventListener('click', async () => {
+            currentDate.setDate(currentDate.getDate() + 1);
+            updateDateDisplay();
+            await loadTechniciansForDate(currentDate);
+            renderTechniciansTable();
+            await renderInterventions();
+        });
+        
+        // Sélecteur de date
+        document.getElementById('datePicker').addEventListener('change', async (e) => {
+            currentDate = e.target.valueAsDate || new Date();
+            updateDateDisplay();
+            await loadTechniciansForDate(currentDate);
+            renderTechniciansTable();
+            await renderInterventions();
+        });
+        
+        // Initialiser l'affichage
+        updateDateDisplay();
+    });
+    
+    // ======== INITIALISATION ========
+    async function init() {
+        try {
+            await loadTechniciansForDate(currentDate);
+            
+            // Rendre le tableau avec les techniciens
+            renderTechniciansTable();
+            
+            // Charger les rendez-vous
+            await renderInterventions();
+        } catch (error) {
+            console.error('Erreur chargement:', error);
+            alert('Erreur lors du chargement des données');
+        }
+    }
+    
+    // Charger les techniciens non absents pour une date donnée
+    async function loadTechniciansForDate(date) {
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Charger uniquement les techniciens actifs (pas les employés de bureau)
+        const { data: employees, error: employeesError } = await supabase
+            .from('employees')
+            .select('id, first_name, last_name, type')
+            .eq('status', 'Actif')
+            .eq('type', 'Technicien')
+            .order('last_name');
+        
+        if (employeesError) throw employeesError;
+        
+        // Charger les absences pour cette date
+        const { data: absences, error: absencesError } = await supabase
+            .from('events')
+            .select('employee_id')
+            .eq('date', dateStr)
+            .in('type', ['absent', 'vacation', 'sickness', 'paid_leave', 'public_holiday']);
+        
+        if (absencesError) throw absencesError;
+        
+        // Créer un Set des IDs des employés absents
+        const absentEmployeeIds = new Set((absences || []).map(a => a.employee_id));
+        
+        // Filtrer les employés pour ne garder que ceux qui ne sont pas absents
+        const availableEmployees = employees.filter(emp => !absentEmployeeIds.has(emp.id));
+        
+        // Transformer en format technicians
+        technicians = availableEmployees.map((emp, index) => ({
+            id: emp.id,
+            name: `${emp.first_name} ${emp.last_name.charAt(0)}.`,
+            specialty: emp.type === 'atelier' ? 'Atelier' : 'Terrain'
+        }));
+        
+        console.log('✅ Techniciens disponibles:', technicians.length, 'sur', employees.length, 'employés actifs');
+    }
+    
+    // ======== FONCTIONS SUPABASE ========
+    
+    // Récupérer les rendez-vous d'une date
+    async function getInterventionsByDate(date) {
+        const dateStr = date.toISOString().split('T')[0];
+        const { data, error } = await supabase
+            .from('appointments')
+            .select('*')
+            .eq('date', dateStr);
+        
+        if (error) {
+            console.error('Erreur récupération appointments:', error);
+            return [];
+        }
+        
+        return data || [];
+    }
+    
+    // Sauvegarder un rendez-vous
+    async function saveAppointment(appointment) {
+        if (appointment.id) {
+            // UPDATE
+            const { error } = await supabase
+                .from('appointments')
+                .update(appointment)
+                .eq('id', appointment.id);
+            
+            if (error) throw error;
+        } else {
+            // INSERT
+            appointment.created_by = currentUser.email;
+            const { error } = await supabase
+                .from('appointments')
+                .insert(appointment);
+            
+            if (error) throw error;
+        }
+    }
+    
+    // Supprimer un rendez-vous
+    async function deleteAppointment(id) {
+        const { error } = await supabase
+            .from('appointments')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+    }
+
+    // Fonction pour afficher les interventions dans le Gantt
+    async function renderInterventions() {
+        const interventions = await getInterventionsByDate(currentDate);
+        
+        // Grouper par technicien (employee_id)
+        const interventionsByTech = {};
+        interventions.forEach(intervention => {
+            if (!interventionsByTech[intervention.employee_id]) {
+                interventionsByTech[intervention.employee_id] = [];
+            }
+            interventionsByTech[intervention.employee_id].push(intervention);
+        });
+        
+        // Afficher pour chaque technicien
+        technicians.forEach(tech => {
+            const timeline = document.getElementById(`tech-${tech.id}-timeline`);
+            if (!timeline) return;
+            
+            const techInterventions = interventionsByTech[tech.id] || [];
+            
+            // Nettoyer les interventions existantes
+            const existingInterventions = timeline.querySelectorAll('[data-intervention]');
+            existingInterventions.forEach(el => el.remove());
+            
+            // Ajouter les nouvelles interventions
+            techInterventions.forEach(intervention => {
+                const config = activityConfig[intervention.activity] || { color: 'border-gray-500', borderLeft: 'border-l-gray-500', name: intervention.activity };
+                const [startHour, startMin] = intervention.start_time.split(':').map(Number);
+                const [endHour, endMin] = intervention.end_time.split(':').map(Number);
+                
+                // Le Gantt affiche 13 colonnes horaires (07:00, 08:00, ..., 19:00)
+                // Chaque colonne = 100/13 = 7.6923% de largeur
+                // Position = (heures depuis 7h) * (100/13)
+                const hoursFromStart = (startHour - 7) + startMin / 60;
+                const hoursFromEnd = (endHour - 7) + endMin / 60;
+                const durationHours = hoursFromEnd - hoursFromStart;
+                
+                const columnWidth = 100 / 13; // 7.6923%
+                const leftPercent = hoursFromStart * columnWidth;
+                const widthPercent = durationHours * columnWidth;
+                
+                const interventionDiv = document.createElement('div');
+                interventionDiv.setAttribute('data-intervention', intervention.id);
+                interventionDiv.onclick = () => showInterventionDetail(intervention.id);
+                interventionDiv.style.position = 'absolute';
+                interventionDiv.style.left = `${leftPercent}%`;
+                interventionDiv.style.width = `${widthPercent}%`;
+                interventionDiv.style.top = '8px';
+                interventionDiv.style.bottom = '8px';
+                interventionDiv.style.pointerEvents = 'auto';
+                
+                // Style: fond blanc avec bordure colorée à gauche
+                // Les urgences sont toujours en rouge, sinon on utilise la couleur de l'activité
+                const isUrgent = intervention.is_urgent;
+                const borderClass = isUrgent ? 'border-red-600' : config.color;
+                const borderLeftClass = isUrgent ? 'border-l-red-600' : config.borderLeft;
+                interventionDiv.className = `bg-white border ${borderClass} ${borderLeftClass} border-l-4 rounded-xl px-3 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center relative`;
+
+                interventionDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-xs font-bold text-gray-800">${config.name} #${intervention.mandate_number}</span>
+                        ${isUrgent ? '<span class="material-symbols-outlined text-red-600 text-sm ml-2">warning</span>' : ''}
+                    </div>
+                    <span class="text-xs text-gray-600 truncate">${intervention.address}, ${intervention.npa} ${intervention.city}</span>
+                    <button onclick="event.stopPropagation(); copyMandate('${(intervention.mandate_number||'').replace(/'/g, "\\'")}', this)" title="Copier le numéro de mandat" class="text-gray-500 hover:text-gray-700 p-1 rounded absolute" style="right:12px; top:50%; transform:translateY(-50%);">
+                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                    </button>
+                `;
+                
+                timeline.appendChild(interventionDiv);
+            });
+        });
+    }
+
+    // Variables pour les mandats
+    let availableMandats = [];
+    let allMandats = [];
+
+// Copier le numéro de mandat dans le presse-papiers et afficher une confirmation temporaire
+function copyMandate(mandateNumber, btn) {
+    if (!mandateNumber) return;
+    // Utiliser l'API Clipboard
+    navigator.clipboard?.writeText(mandateNumber).then(() => {
+        // Créer un petit retour visuel
+        try {
+            const tip = document.createElement('span');
+            tip.textContent = 'Copié !';
+            tip.className = 'ml-2 text-xs text-green-600 font-semibold';
+            btn.parentNode.appendChild(tip);
+            setTimeout(() => tip.remove(), 1800);
+        } catch (e) { console.log('copied', mandateNumber); }
+    }).catch(err => {
+        console.error('Erreur copie mandat:', err);
+        alert('Impossible de copier le numéro');
+    });
+}
+
+    // Charger les mandats assignés au technicien avec statut "assigne"
+    async function loadMandatsForTechnician(technicianId) {
+        try {
+            // Récupérer les IDs des mandats assignés à ce technicien
+            const { data: assignments, error: assignError } = await window.supabase
+                .from('mandat_techniciens')
+                .select('appointment_id')
+                .eq('employee_id', technicianId);
+            
+            if (assignError) throw assignError;
+            
+            if (!assignments || assignments.length === 0) {
+                availableMandats = [];
+                allMandats = [];
+                renderMandateOptions();
+                console.log('⚠️ Aucun mandat assigné au technicien', technicianId);
+                return;
+            }
+            
+            const appointmentIds = assignments.map(a => a.appointment_id);
+            
+            // Récupérer les appointments assignés sans date (backlog)
+            const { data: appointments, error: appointmentError } = await window.supabase
+                .from('appointments')
+                .select('*')
+                .in('id', appointmentIds)
+                .is('date', null)
+                .order('activity', { ascending: true, nullsFirst: false })
+                .order('mandate_number', { ascending: true });
+            
+            if (appointmentError) throw appointmentError;
+            
+            // Mapper vers format mandats pour compatibilité avec l'affichage
+            const mappedMandats = (appointments || []).map(apt => ({
+                id: apt.id,
+                numero_mandat: apt.mandate_number,
+                nom_client: apt.client_name,
+                prenom_client: null,
+                telephone: apt.phone,
+                email: apt.email,
+                adresse: apt.address,
+                npa: apt.npa,
+                ville: apt.city,
+                type_intervention: apt.activity,
+                pto_reference: apt.pto_reference,
+                cable_alim: apt.cable_alim,
+                fibre_1: apt.fibre_1,
+                fibre_2: apt.fibre_2,
+                fibre_3: apt.fibre_3,
+                fibre_4: apt.fibre_4
+            }));
+            
+            // Trier manuellement pour gérer les nulls (les mettre à la fin)
+            const sortedMandats = mappedMandats.sort((a, b) => {
+                // Si les deux ont un type, trier par type
+                if (a.type_intervention && b.type_intervention) {
+                    if (a.type_intervention !== b.type_intervention) {
+                        return a.type_intervention.localeCompare(b.type_intervention);
+                    }
+                }
+                // Si un seul a un type, celui avec type vient en premier
+                if (a.type_intervention && !b.type_intervention) return -1;
+                if (!a.type_intervention && b.type_intervention) return 1;
+                // Si les deux sont null ou même type, trier par numéro
+                return a.numero_mandat.localeCompare(b.numero_mandat);
+            });
+            
+            availableMandats = sortedMandats;
+            allMandats = sortedMandats;
+            renderMandateOptions();
+            
+            console.log('✅ Mandats assignés chargés pour technicien', technicianId, ':', availableMandats.length);
+        } catch (error) {
+            console.error('Erreur chargement mandats:', error);
+            availableMandats = [];
+            allMandats = [];
+            renderMandateOptions();
+        }
+    }
+
+    // Afficher le menu déroulant des mandats
+    function showMandateDropdown() {
+        const dropdown = document.getElementById('mandateDropdown');
+        // Toujours afficher le menu déroulant, même s'il est vide (pour montrer le message)
+        dropdown.classList.remove('hidden');
+    }
+
+    // Masquer le menu déroulant
+    function hideMandateDropdown() {
+        // Petit délai pour permettre le clic sur une option
+        setTimeout(() => {
+            document.getElementById('mandateDropdown').classList.add('hidden');
+        }, 200);
+    }
+
+    // Filtrer les options de mandats par recherche ET par activité
+    function filterMandateOptions() {
+        const searchTerm = document.getElementById('mandateNumberSearch').value.toLowerCase();
+        const selectedActivity = document.getElementById('activity').value;
+        
+        let filtered = allMandats;
+        
+        // Filtrer par activité si une activité est sélectionnée
+        if (selectedActivity) {
+            // Mapper l'activité vers le type_intervention
+            const activityToTypeMap = {
+                'swisscom': 'swisscom',
+                'ftth_fr': 'ftth_fr',
+                'sig': 'sig',
+                'rea': 'rea',
+                'smartmetering': 'smartmetering'
+            };
+            
+            const targetType = activityToTypeMap[selectedActivity];
+            
+            if (targetType) {
+                // Montrer les mandats avec le type correspondant OU null (null = tous les types)
+                filtered = allMandats.filter(mandat => 
+                    mandat.type_intervention === targetType || 
+                    mandat.type_intervention === null ||
+                    mandat.type_intervention === undefined
+                );
+            }
+        }
+        
+        // Filtrer par terme de recherche
+        if (searchTerm !== '') {
+            filtered = filtered.filter(mandat => 
+                mandat.numero_mandat.toLowerCase().includes(searchTerm) ||
+                (mandat.nom_client && mandat.nom_client.toLowerCase().includes(searchTerm)) ||
+                (mandat.prenom_client && mandat.prenom_client.toLowerCase().includes(searchTerm)) ||
+                (mandat.ville && mandat.ville.toLowerCase().includes(searchTerm))
+            );
+        }
+        
+        availableMandats = filtered;
+        renderMandateOptions();
+        showMandateDropdown();
+    }
+    
+    // Initialiser l'écouteur pour le changement d'activité
+    function setupActivityChangeListener() {
+        const activitySelect = document.getElementById('activity');
+        if (activitySelect) {
+            // Retirer l'ancien écouteur s'il existe
+            const newSelect = activitySelect.cloneNode(true);
+            activitySelect.parentNode.replaceChild(newSelect, activitySelect);
+            
+            // Ajouter le nouvel écouteur
+            newSelect.addEventListener('change', () => {
+                filterMandateOptions();
+            });
+        }
+    }
+
+    // Rendre les options de mandats avec affichage du type
+    function renderMandateOptions() {
+        const container = document.getElementById('mandateOptions');
+        
+        if (availableMandats.length === 0) {
+            const selectedActivity = document.getElementById('activity').value;
+            let message = 'Aucun mandat assigné à ce technicien';
+            if (selectedActivity) {
+                message += ' pour cette activité';
+            }
+            container.innerHTML = `<div class="px-3 py-2 text-sm text-gray-500">${message}</div>`;
+            return;
+        }
+        
+        // Labels pour les types d'intervention
+        const typeLabels = {
+            'swisscom': 'Swisscom',
+            'ftth_fr': 'FTTH FR',
+            'sig': 'SIG',
+            'rea': 'REA',
+            'smartmetering': 'Smart Metering'
+        };
+        
+        // Grouper par type pour un meilleur affichage
+        const groupedByType = {};
+        availableMandats.forEach(mandat => {
+            const type = mandat.type_intervention || 'Tous';
+            if (!groupedByType[type]) {
+                groupedByType[type] = [];
+            }
+            groupedByType[type].push(mandat);
+        });
+        
+        // Construire le HTML avec séparateurs par type
+        let html = '';
+        const sortedTypes = Object.keys(groupedByType).sort((a, b) => {
+            if (a === 'Tous') return 1;
+            if (b === 'Tous') return -1;
+            return a.localeCompare(b);
+        });
+        
+        sortedTypes.forEach(type => {
+            // Ajouter un en-tête de groupe si plusieurs types
+            if (sortedTypes.length > 1) {
+                const typeLabel = type === 'Tous' ? 'Tous types' : (typeLabels[type] || type);
+                html += `<div class="px-3 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50 border-b border-gray-200">${typeLabel}</div>`;
+            }
+            
+            groupedByType[type].forEach(mandat => {
+                const nomComplet = [mandat.nom_client, mandat.prenom_client].filter(Boolean).join(' ');
+                html += `
+                    <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer mandate-option" 
+                         onclick="selectMandate('${mandat.id}', '${mandat.numero_mandat.replace(/'/g, "\\'")}')"
+                         data-mandat-id="${mandat.id}">
+                        <div class="flex items-center justify-between">
+                            <div class="font-medium text-gray-900">${mandat.numero_mandat}</div>
+                            ${mandat.type_intervention ? `<span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700">${typeLabels[mandat.type_intervention] || mandat.type_intervention}</span>` : '<span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">Tous</span>'}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-0.5">
+                            ${nomComplet}${mandat.ville ? ' - ' + mandat.ville : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        });
+        
+        container.innerHTML = html;
+    }
+
+    // Sélectionner un mandat et pré-remplir les champs
+    async function selectMandate(mandatId, mandateNumber) {
+        try {
+            // Récupérer les détails complets depuis appointments
+            const { data: appointment, error } = await window.supabase
+                .from('appointments')
+                .select('*')
+                .eq('id', mandatId)
+                .single();
+            
+            if (error) throw error;
+            
+            // Mapper vers format mandat pour compatibilité
+            const mandat = {
+                id: appointment.id,
+                numero_mandat: appointment.mandate_number,
+                nom_client: appointment.client_name,
+                prenom_client: null,
+                telephone: appointment.phone,
+                email: appointment.email,
+                adresse: appointment.address,
+                npa: appointment.npa,
+                ville: appointment.city,
+                type_intervention: appointment.activity,
+                pto_reference: appointment.pto_reference,
+                cable_alim: appointment.cable_alim,
+                fibre_1: appointment.fibre_1,
+                fibre_2: appointment.fibre_2,
+                fibre_3: appointment.fibre_3,
+                fibre_4: appointment.fibre_4
+            };
+            
+            // Remplir le champ de recherche et le champ caché
+            document.getElementById('mandateNumberSearch').value = mandateNumber;
+            document.getElementById('mandateNumber').value = mandateNumber;
+            
+            // ✅ IMPORTANT : Stocker l'ID de l'appointment existant pour faire un UPDATE au lieu d'un INSERT
+            document.getElementById('interventionId').value = appointment.id;
+            
+            // Pré-remplir TOUTES les infos personnelles du client
+            // Combiner nom et prénom dans le champ clientName
+            const nomComplet = [mandat.nom_client, mandat.prenom_client]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+            document.getElementById('clientName').value = nomComplet || mandat.nom_client || '';
+            
+            // Téléphone
+            document.getElementById('phone').value = mandat.telephone || '';
+            
+            // Email
+            document.getElementById('email').value = mandat.email || '';
+            
+            // Adresse complète
+            document.getElementById('address').value = mandat.adresse || '';
+            document.getElementById('npa').value = mandat.npa || '';
+            document.getElementById('city').value = mandat.ville || '';
+            
+            // Urgence
+            document.getElementById('isUrgent').checked = mandat.priorite || false;
+            
+            // Remplir les champs techniques (déjà disponibles dans mandat)
+            document.getElementById('ptoReference').value = mandat.pto_reference || '';
+            document.getElementById('cableAlim').value = mandat.cable_alim || '';
+            document.getElementById('fibre1').value = mandat.fibre_1 || '';
+            document.getElementById('fibre2').value = mandat.fibre_2 || '';
+            document.getElementById('fibre3').value = mandat.fibre_3 || '';
+            document.getElementById('fibre4').value = mandat.fibre_4 || '';
+            console.log('✅ Infos techniques chargées:', mandat);
+            
+            // Si l'activité n'est pas encore sélectionnée, la pré-remplir aussi
+            const activitySelect = document.getElementById('activity');
+            if (!activitySelect.value && mandat.type_intervention) {
+                // Mapper les types d'intervention aux activités (nouveaux et anciens noms)
+                const activityMap = {
+                    'swisscom': 'swisscom',
+                    'swiss4net': 'swiss4net',
+                    'col_montante': 'col_montante',
+                    'rollout': 'rollout',
+                    'manchon': 'manchon',
+                    // Anciennes valeurs pour compatibilité
+                    'ftth_fr': 'col_montante',
+                    'sig': 'rollout',
+                    'rea': 'swiss4net',
+                    'smartmetering': 'manchon'
+                };
+                if (activityMap[mandat.type_intervention]) {
+                    activitySelect.value = activityMap[mandat.type_intervention];
+                }
+            }
+            
+            // Masquer le menu déroulant
+            hideMandateDropdown();
+            
+            console.log('✅ Mandat sélectionné:', mandateNumber, '- Infos client pré-remplies');
+        } catch (error) {
+            console.error('Erreur sélection mandat:', error);
+            alert('Erreur lors du chargement du mandat');
+        }
+    }
+
+    // Gérer la saisie manuelle du numéro de mandat
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('mandateNumberSearch');
+        if (searchInput) {
+            searchInput.addEventListener('blur', () => {
+                // Quand on quitte le champ, mettre à jour le champ caché
+                const value = searchInput.value.trim();
+                if (value) {
+                    document.getElementById('mandateNumber').value = value;
+                }
+            });
+        }
+    });
+
+    // Ouvrir le modal d'ajout
+    async function openAddModal(technicianId) {
+        document.getElementById('modalTitle').textContent = 'Ajouter une intervention';
+        document.getElementById('interventionForm').reset();
+        document.getElementById('interventionId').value = '';
+        document.getElementById('technicianId').value = technicianId || 1;
+        document.getElementById('startTime').value = '07:00';
+        document.getElementById('endTime').value = '08:00';
+        document.getElementById('mandateNumberSearch').value = '';
+        document.getElementById('mandateNumber').value = '';
+        document.getElementById('mandateDropdown').classList.add('hidden');
+        
+        // Configurer l'écouteur pour le changement d'activité
+        setupActivityChangeListener();
+        
+        // Charger les mandats assignés au technicien (statut "assigne" uniquement)
+        await loadMandatsForTechnician(technicianId || 1);
+        
+        document.getElementById('interventionModal').classList.add('active');
+    }
+
+    // Ouvrir le modal d'édition
+    function openEditModal(intervention) {
+        document.getElementById('modalTitle').textContent = 'Modifier l\'intervention';
+        document.getElementById('interventionId').value = intervention.id;
+        document.getElementById('technicianId').value = intervention.employee_id;
+        document.getElementById('activity').value = intervention.activity;
+        document.getElementById('mandateNumber').value = intervention.mandate_number;
+        document.getElementById('clientName').value = intervention.client_name || '';
+        document.getElementById('phone').value = intervention.phone || '';
+        document.getElementById('email').value = intervention.email || '';
+        document.getElementById('address').value = intervention.address;
+        document.getElementById('npa').value = intervention.npa || '';
+        document.getElementById('city').value = intervention.city || '';
+        document.getElementById('startTime').value = intervention.start_time;
+        document.getElementById('endTime').value = intervention.end_time;
+        document.getElementById('note').value = intervention.note || '';
+        document.getElementById('isUrgent').checked = intervention.is_urgent || false;
+        // Nouveaux champs techniques
+        document.getElementById('ptoReference').value = intervention.pto_reference || '';
+        document.getElementById('cableAlim').value = intervention.cable_alim || '';
+        document.getElementById('fibre1').value = intervention.fibre_1 || '';
+        document.getElementById('fibre2').value = intervention.fibre_2 || '';
+        document.getElementById('fibre3').value = intervention.fibre_3 || '';
+        document.getElementById('fibre4').value = intervention.fibre_4 || '';
+        document.getElementById('interventionModal').classList.add('active');
+    }
+
+    // Fermer le modal
+    function closeModal() {
+        document.getElementById('interventionModal').classList.remove('active');
+        document.getElementById('mandateDropdown').classList.add('hidden');
+    }
+
+    // Fermer le menu déroulant quand on clique en dehors (après chargement du DOM)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setupMandateDropdownClose();
+        });
+    } else {
+        setupMandateDropdownClose();
+    }
+
+    function setupMandateDropdownClose() {
+        document.addEventListener('click', (e) => {
+            const searchInput = document.getElementById('mandateNumberSearch');
+            const dropdown = document.getElementById('mandateDropdown');
+            
+            if (searchInput && dropdown) {
+                const isClickInside = searchInput.contains(e.target) || dropdown.contains(e.target);
+                if (!isClickInside) {
+                    hideMandateDropdown();
+                }
+            }
+        });
+    }
+
+    // Sauvegarder l'intervention
+    document.getElementById('interventionForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const id = document.getElementById('interventionId').value;
+        const appointment = {
+            employee_id: document.getElementById('technicianId').value,
+            date: currentDate.toISOString().split('T')[0],
+            activity: document.getElementById('activity').value,
+            mandate_number: document.getElementById('mandateNumber').value || document.getElementById('mandateNumberSearch').value,
+            client_name: document.getElementById('clientName').value,
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value || null,
+            address: document.getElementById('address').value,
+            npa: document.getElementById('npa').value,
+            city: document.getElementById('city').value,
+            start_time: document.getElementById('startTime').value,
+            end_time: document.getElementById('endTime').value,
+            note: document.getElementById('note').value,
+            is_urgent: document.getElementById('isUrgent').checked,
+            // Nouveaux champs techniques
+            pto_reference: document.getElementById('ptoReference').value || null,
+            cable_alim: document.getElementById('cableAlim').value || null,
+            fibre_1: document.getElementById('fibre1').value || null,
+            fibre_2: document.getElementById('fibre2').value || null,
+            fibre_3: document.getElementById('fibre3').value || null,
+            fibre_4: document.getElementById('fibre4').value || null
+        };
+        
+        if (id) {
+            appointment.id = id;
+        }
+        
+        try {
+            await saveAppointment(appointment);
+            closeModal();
+            await renderInterventions();
+        } catch (error) {
+            console.error('Erreur sauvegarde:', error);
+            alert('Erreur lors de la sauvegarde');
+        }
+    });
+
+    // Afficher les détails d'une intervention statique (exemple)
+    function showStaticDetail(techId, title, address, activity) {
+        const tech = technicians.find(t => t.id === techId);
+        const config = activityConfig[activity] || { color: 'border-l-blue-500', name: activity };
+        
+        document.getElementById('detailContent').innerHTML = `
+            <div class="space-y-4">
+                <div class="flex items-center gap-3 pb-4 border-b border-gray-200">
+                    <div class="w-12 h-12 rounded-full ${config.color.replace('border-l-', 'bg-')} flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white">work</span>
+                    </div>
+                    <div>
+                        <div class="font-bold text-lg text-gray-800">${title}</div>
+                        <div class="text-sm text-gray-500">Exemple statique</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="text-sm font-medium text-gray-600 mb-1">Activité</div>
+                    <div class="text-gray-800">${config.name}</div>
+                </div>
+                
+                <div>
+                    <div class="text-sm font-medium text-gray-600 mb-1">Client</div>
+                    <div class="text-gray-800">${intervention.clientName || '-'}</div>
+                </div>
+                
+                <div>
+                    <div class="text-sm font-medium text-gray-600 mb-1">Téléphone</div>
+                    <div class="text-gray-800">${address}</div>
+                </div>
+                
+                <div class="pt-4 border-t border-gray-200">
+                    <div class="text-sm text-gray-500 italic">Ceci est un exemple statique. Ajoutez de vraies interventions via le bouton + à droite de chaque technicien.</div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('detailPanel').classList.add('active');
+    }
+    
+    // Afficher les détails d'une intervention
+    async function showInterventionDetail(id) {
+        try {
+            const { data: intervention, error } = await supabase
+                .from('appointments')
+                .select('*')
+                .eq('id', id)
+                .single();
+            
+            if (error) throw error;
+            
+            const tech = technicians.find(t => t.id === intervention.employee_id);
+            const config = activityConfig[intervention.activity] || { 
+                color: 'border-gray-500', 
+                borderLeft: 'border-l-gray-500', 
+                name: intervention.activity || 'Activité inconnue'
+            };
+            
+            document.getElementById('detailContent').innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 pb-4 border-b border-gray-200">
+                        <div class="w-12 h-12 rounded-full ${config.color.replace('border-', 'bg-').replace('-l-', '-')} flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white">work</span>
+                        </div>
+                        <div>
+                            <div class="font-bold text-lg text-gray-800">${config.name}</div>
+                            <div class="text-sm text-gray-500">#${intervention.mandate_number}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm font-medium text-gray-600 mb-1">Technicien</div>
+                        <div class="text-gray-800">${tech ? tech.name : 'N/A'}</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm font-medium text-gray-600 mb-1">Client</div>
+                        <div class="text-gray-800">${intervention.client_name || 'Non renseigné'}</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm font-medium text-gray-600 mb-1">Téléphone</div>
+                        <div class="text-gray-800">${intervention.phone || 'Non renseigné'}</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm font-medium text-gray-600 mb-1">Horaire</div>
+                        <div class="text-gray-800">${intervention.start_time} - ${intervention.end_time}</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm font-medium text-gray-600 mb-1">Adresse</div>
+                        <div class="text-gray-800">${intervention.address}</div>
+                        <div class="text-gray-600 text-sm">${intervention.npa} ${intervention.city}</div>
+                    </div>
+                    
+                    ${intervention.note ? `
+                    <div>
+                        <div class="text-sm font-medium text-gray-600 mb-1">Note</div>
+                        <div class="text-gray-800">${intervention.note}</div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="pt-4 border-t border-gray-200">
+                        <div class="text-sm font-medium text-gray-600 mb-2">Localisation</div>
+                        <div id="map" class="bg-gray-100 rounded-lg h-48 w-full"></div>
+                    </div>
+                    
+                    <div class="flex gap-3 pt-4">
+                        <button onclick='openEditModal(${JSON.stringify(intervention).replace(/'/g, "\\'")})'
+                                class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-sm">edit</span> Modifier
+                        </button>
+                        <button onclick="deleteIntervention('${id}')" 
+                                class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-sm">delete</span> Supprimer
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('detailPanel').classList.add('active');
+            
+            // Initialiser OpenStreetMap avec Leaflet
+            setTimeout(() => {
+                const fullAddress = `${intervention.address}, ${intervention.npa} ${intervention.city}, Switzerland`;
+                const mapDiv = document.getElementById('map');
+                
+                if (!mapDiv) return;
+                
+                mapDiv.innerHTML = '';
+                
+                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&countrycodes=ch&limit=1`;
+                
+                fetch(geocodeUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            const lat = parseFloat(data[0].lat);
+                            const lon = parseFloat(data[0].lon);
+                            
+                            const map = L.map(mapDiv).setView([lat, lon], 15);
+                            
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors',
+                                maxZoom: 19
+                            }).addTo(map);
+                            
+                            L.marker([lat, lon]).addTo(map)
+                                .bindPopup(`<b>${intervention.address}</b><br>${intervention.npa} ${intervention.city}`)
+                                .openPopup();
+                        } else {
+                            mapDiv.innerHTML = `<div class="flex items-center justify-center h-full text-gray-500"><span>Impossible de localiser l'adresse</span></div>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur geocoding:', error);
+                        mapDiv.innerHTML = `<div class="flex items-center justify-center h-full text-gray-500"><span>Erreur de chargement de la carte</span></div>`;
+                    });
+            }, 100);
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur lors du chargement des détails');
+        }
+    }
+
+    // Fermer le panel de détails
+    function closeDetailPanel() {
+        document.getElementById('detailPanel').classList.remove('active');
+    }
+
+    // ======== MODAL CARTE ========
+    let mapInstance = null;
+    let mapMarkers = [];
+
+    // Ouvrir le modal de la carte
+    async function openMapModal() {
+        const modal = document.getElementById('mapModal');
+        modal.classList.add('active');
+        
+        // Afficher la date
+        const dateStr = formatDate(currentDate);
+        document.getElementById('mapModalDate').textContent = dateStr;
+        
+        // Initialiser la carte si elle n'existe pas encore
+        if (!mapInstance) {
+            // Centrer sur la Suisse
+            mapInstance = L.map('mapContainer').setView([46.8182, 8.2275], 8);
+            
+            // Ajouter les tuiles OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(mapInstance);
+        }
+        
+        // Charger et afficher les rendez-vous
+        await loadMapAppointments();
+    }
+
+    // Fermer le modal de la carte
+    function closeMapModal() {
+        document.getElementById('mapModal').classList.remove('active');
+    }
+
+
+    // Charger les rendez-vous et les afficher sur la carte
+    async function loadMapAppointments() {
+        // Nettoyer les marqueurs existants
+        mapMarkers.forEach(marker => mapInstance.removeLayer(marker));
+        mapMarkers = [];
+        
+        // Charger les rendez-vous de la journée
+        const appointments = await getInterventionsByDate(currentDate);
+        
+        if (appointments.length === 0) {
+            // Aucun rendez-vous, centrer sur la Suisse
+            mapInstance.setView([46.8182, 8.2275], 8);
+            return;
+        }
+        
+        // Préparer toutes les données pour le géocodage en parallèle
+        const geocodePromises = appointments.map(async (appointment) => {
+            // Trouver le technicien
+            const tech = technicians.find(t => t.id === appointment.employee_id);
+            if (!tech) return null;
+            
+            // Extraire les initiales
+            const initials = tech.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            
+            // Construire l'adresse complète
+            const fullAddress = `${appointment.address}, ${appointment.npa || ''} ${appointment.city || ''}, Switzerland`;
+            
+            try {
+                // Géocoder l'adresse
+                const coords = await geocodeAddress(fullAddress);
+                
+                if (coords) {
+                    return {
+                        coords,
+                        initials,
+                        appointment,
+                        tech
+                    };
+                }
+            } catch (error) {
+                console.error('Erreur géocodage pour', fullAddress, error);
+            }
+            
+            return null;
+        });
+        
+        // Géocoder toutes les adresses en parallèle
+        const geocodedData = await Promise.all(geocodePromises);
+        
+        // Filtrer les résultats null et créer tous les marqueurs
+        const validData = geocodedData.filter(data => data !== null);
+        const bounds = [];
+        
+        // Ajouter tous les marqueurs d'un coup
+        validData.forEach(({ coords, initials, appointment, tech }) => {
+            const marker = createMapMarker(coords, initials, appointment, tech);
+            marker.addTo(mapInstance);
+            mapMarkers.push(marker);
+            bounds.push(coords);
+        });
+        
+        // Ajuster la vue pour voir tous les marqueurs
+        if (bounds.length > 0) {
+            mapInstance.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }
+
+    // Géocoder une adresse
+    async function geocodeAddress(address) {
+        const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=ch&limit=1`;
+        
+        try {
+            const response = await fetch(geocodeUrl);
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+                return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+            }
+        } catch (error) {
+            console.error('Erreur géocodage:', error);
+        }
+        
+        return null;
+    }
+
+    // Créer un marqueur personnalisé avec les initiales
+    function createMapMarker(coords, initials, appointment, tech) {
+        // Créer une icône personnalisée avec les initiales
+        const iconHtml = `
+            <div class="map-marker-initials" style="
+                width: 40px;
+                height: 40px;
+                background-color: #ea2a33;
+                color: white;
+                border-radius: 50%;
+                border: 3px solid white;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 14px;
+                cursor: pointer;
+            ">${initials}</div>
+        `;
+        
+        const customIcon = L.divIcon({
+            html: iconHtml,
+            className: 'custom-marker',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        });
+        
+        // Créer le marqueur
+        const marker = L.marker(coords, { icon: customIcon });
+        
+        // Créer le contenu du popup
+        const popupContent = `
+            <div style="min-width: 200px;">
+                <div style="font-weight: bold; margin-bottom: 8px; color: #ea2a33;">
+                    ${tech.name}
+                </div>
+                <div style="margin-bottom: 4px;">
+                    <strong>Horaire:</strong> ${appointment.start_time} - ${appointment.end_time}
+                </div>
+                <div style="margin-bottom: 4px;">
+                    <strong>Activité:</strong> ${activityConfig[appointment.activity]?.name || appointment.activity}
+                </div>
+                <div style="margin-bottom: 4px;">
+                    <strong>Client:</strong> ${appointment.client_name || 'N/A'}
+                </div>
+                <div style="font-size: 12px; color: #666;">
+                    ${appointment.address}<br>
+                    ${appointment.npa} ${appointment.city}
+                </div>
+                ${appointment.is_urgent ? '<div style="color: red; margin-top: 4px;">⚠️ Urgent</div>' : ''}
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        
+        // Ajouter un tooltip au survol avec l'heure
+        marker.bindTooltip(`
+            <div style="text-align: center;">
+                <div style="font-weight: bold;">${initials}</div>
+                <div style="font-size: 11px;">${appointment.start_time}</div>
+            </div>
+        `, {
+            permanent: false,
+            direction: 'top',
+            offset: [0, -10]
+        });
+        
+        return marker;
+    }
+
+    // Supprimer une intervention
+    async function deleteIntervention(id) {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cette intervention ?')) return;
+        
+        try {
+            await deleteAppointment(id);
+            closeDetailPanel();
+            await renderInterventions();
+        } catch (error) {
+            console.error('Erreur suppression:', error);
+            alert('Erreur lors de la suppression');
+        }
+    }
+    
+    // ===== SYSTÈME DE VERROUILLAGE D'ACTIVITÉ =====
+    let currentActivity = null;
+    let activityLocks = [];
+
+    // Noms d'affichage des activités
+    const activityNames = {
+        'swisscom': 'Swisscom',
+        'ftth_fr': 'FTTH FR',
+        'sig': 'SIG',
+        'rea': 'REA'
+    };
+
+    // Ouvrir le modal de verrouillage
+    function openActivityLock(activity) {
+        currentActivity = activity;
+        const modal = document.getElementById('activityLockModal');
+        const activityName = document.getElementById('activityName');
+        const activityDate = document.getElementById('activityDate');
+        const morningSwitch = document.getElementById('morningSwitch');
+        const afternoonSwitch = document.getElementById('afternoonSwitch');
+
+        activityName.textContent = activityNames[activity];
+        activityDate.textContent = new Date(currentDate).toLocaleDateString('fr-FR', { 
+            weekday: 'long', 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric' 
+        });
+
+        // Charger l'état actuel
+        loadActivityLockState(activity, currentDate);
+        
+        modal.classList.add('active');
+    }
+
+    // Fermer le modal
+    function closeActivityLock() {
+        document.getElementById('activityLockModal').classList.remove('active');
+        currentActivity = null;
+    }
+
+    // Charger l'état de verrouillage depuis Supabase
+    async function loadActivityLockState(activity, date) {
+        if (!window.supabase) return;
+
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        
+        try {
+            const { data, error } = await window.supabase
+                .from('activity_locks')
+                .select('*')
+                .eq('activity', activity)
+                .eq('date', dateStr)
+                .single();
+
+            const morningSwitch = document.getElementById('morningSwitch');
+            const afternoonSwitch = document.getElementById('afternoonSwitch');
+
+            if (data) {
+                morningSwitch.checked = data.morning_locked || false;
+                afternoonSwitch.checked = data.afternoon_locked || false;
+            } else {
+                morningSwitch.checked = false;
+                afternoonSwitch.checked = false;
+            }
+        } catch (err) {
+            console.error('Erreur chargement verrouillage:', err);
+        }
+    }
+
+    // Mettre à jour le verrouillage
+    async function updateActivityLock() {
+        if (!window.supabase || !currentActivity) return;
+
+        const morningSwitch = document.getElementById('morningSwitch');
+        const afternoonSwitch = document.getElementById('afternoonSwitch');
+        const dateStr = new Date(currentDate).toISOString().split('T')[0];
+
+        try {
+            const { data, error } = await window.supabase
+                .from('activity_locks')
+                .upsert({
+                    activity: currentActivity,
+                    date: dateStr,
+                    morning_locked: morningSwitch.checked,
+                    afternoon_locked: afternoonSwitch.checked,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'activity,date'
+                });
+
+            if (error) {
+                console.error('Erreur sauvegarde:', error);
+                showToast('❌ Erreur lors de la sauvegarde');
+            } else {
+                showToast('✓ Verrouillage mis à jour');
+            }
+        } catch (err) {
+            console.error('Erreur:', err);
+        }
+    }
+
+    // ===== SYSTÈME D'ENVOI DE MAIL PAR ACTIVITÉ =====
+    function sendActivityMail(activity) {
+        // Récupérer le texte configuré pour cette activité depuis localStorage
+        const storageKey = `activityText_${activity}`;
+        const customText = localStorage.getItem(storageKey) || `Texte par défaut pour ${activityNames[activity]} - à configurer dans les paramètres`;
+        
+        // Préparer le sujet et le corps du mail
+        const subject = `Rapport ${activityNames[activity]}`;
+        const body = encodeURIComponent(customText);
+        
+        // Ouvrir le client mail par défaut (Outlook, etc.)
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+        
+        showToast(`📧 Ouverture du client mail pour ${activityNames[activity]}...`);
+    }
+
+    // ===== SYSTÈME DE NOTIFICATIONS RDV =====
+    let rdvNotifications = [];
+    let rdvSubscription = null;
+
+    // Fonction pour basculer le modal des notifications
+    function toggleNotifications() {
+        const modal = document.getElementById('notificationsModal');
+        modal.classList.toggle('active');
+        if (modal.classList.contains('active')) {
+            loadRdvNotifications();
+        }
+    }
+
+    // Charger les demandes de RDV non traitées
+    async function loadRdvNotifications() {
+        if (!window.supabase) {
+            console.error('Supabase non initialisé');
+            return;
+        }
+
+        try {
+            const { data, error } = await window.supabase
+                .from('RDV')
+                .select('*')
+                .eq('traite', false)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Erreur chargement RDV:', error);
+                return;
+            }
+
+            rdvNotifications = data || [];
+            renderRdvList();
+            updateNotificationBadge();
+        } catch (err) {
+            console.error('Erreur:', err);
+        }
+    }
+
+    // Afficher la liste des RDV
+    function renderRdvList() {
+        const list = document.getElementById('rdvList');
+        const empty = document.getElementById('emptyRdv');
+        const count = document.getElementById('rdvCount');
+
+        count.textContent = `${rdvNotifications.length} nouvelle(s) demande(s)`;
+
+        if (rdvNotifications.length === 0) {
+            list.innerHTML = '';
+            empty.classList.remove('hidden');
+            return;
+        }
+
+        empty.classList.add('hidden');
+        list.innerHTML = rdvNotifications.map(rdv => {
+            const date = new Date(rdv.calendrier || rdv.created_at);
+            const dateStr = date.toLocaleDateString('fr-FR', { 
+                weekday: 'short', 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 hover:border-primary/50 transition-all">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-primary text-sm">event</span>
+                                <p class="text-sm font-semibold text-gray-900">Mandat: ${rdv.numero_mandat || 'N/A'}</p>
+                            </div>
+                            <div class="space-y-1.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-gray-400 text-sm">person</span>
+                                    <p class="text-sm text-gray-700">${rdv.nom || ''} ${rdv.prenom || ''}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-gray-400 text-sm">phone</span>
+                                    <p class="text-sm text-gray-700">${rdv.telephone || 'N/A'}</p>
+                                </div>
+                                ${rdv.email ? `
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-gray-400 text-sm">mail</span>
+                                    <p class="text-sm text-gray-700 truncate">${rdv.email}</p>
+                                </div>
+                                ` : ''}
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-gray-400 text-sm">schedule</span>
+                                    <p class="text-sm text-gray-500">${dateStr}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button 
+                            onclick="markRdvAsProcessed('${rdv.id}')" 
+                            class="flex-shrink-0 size-10 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center justify-center transition-colors shadow-sm"
+                            title="Marquer comme traité"
+                        >
+                            <span class="material-symbols-outlined text-xl">check</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Marquer un RDV comme traité
+    async function markRdvAsProcessed(rdvId) {
+        if (!window.supabase) return;
+
+        try {
+            const { error } = await window.supabase
+                .from('RDV')
+                .update({ traite: true })
+                .eq('id', rdvId);
+
+            if (error) {
+                console.error('Erreur mise à jour RDV:', error);
+                alert('Erreur lors de la mise à jour');
+                return;
+            }
+
+            // Retirer de la liste locale
+            rdvNotifications = rdvNotifications.filter(rdv => rdv.id !== rdvId);
+            renderRdvList();
+            updateNotificationBadge();
+
+            // Animation de succès
+            showToast('RDV marqué comme traité ✓');
+        } catch (err) {
+            console.error('Erreur:', err);
+        }
+    }
+
+    // Mettre à jour le badge de notification
+    function updateNotificationBadge() {
+        const badge = document.getElementById('notificationBadge');
+        const count = rdvNotifications.length;
+
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    // Écouter les changements en temps réel
+    function subscribeToRdvChanges() {
+        if (!window.supabase) return;
+
+        rdvSubscription = window.supabase
+            .channel('rdv_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'RDV'
+                },
+                (payload) => {
+                    console.log('Changement RDV détecté:', payload);
+                    
+                    if (payload.eventType === 'INSERT') {
+                        // Nouvelle demande
+                        if (!payload.new.traite) {
+                            rdvNotifications.unshift(payload.new);
+                            renderRdvList();
+                            updateNotificationBadge();
+                            showToast('📬 Nouvelle demande de RDV reçue!');
+                        }
+                    } else if (payload.eventType === 'UPDATE') {
+                        // Mise à jour
+                        loadRdvNotifications();
+                    } else if (payload.eventType === 'DELETE') {
+                        // Suppression
+                        rdvNotifications = rdvNotifications.filter(rdv => rdv.id !== payload.old.id);
+                        renderRdvList();
+                        updateNotificationBadge();
+                    }
+                }
+            )
+            .subscribe();
+    }
+
+    // Toast de notification
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Fonction pour rendre la table des techniciens (dynamique)
+    function renderTechniciansTable() {
+        const tbody = document.querySelector('tbody');
+        tbody.innerHTML = '';
+        
+        technicians.forEach((tech, index) => {
+            const tr = document.createElement('tr');
+            tr.className = 'group hover:bg-blue-50 transition-colors';
+            
+            const techNumber = index + 1;
+            
+            tr.innerHTML = `
+                <td class="sticky left-0 z-10 bg-blue-50 border-r border-gray-200 p-3 group-hover:bg-blue-100 relative">
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <div class="bg-gradient-to-br from-primary to-blue-700 rounded-full size-10 border border-white/10 flex items-center justify-center text-white font-bold text-sm">
+                                ${tech.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                            </div>
+                            <div class="absolute bottom-0 right-0 size-2.5 bg-primary border-2 border-white rounded-full"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-blue-900">${tech.name}</p>
+                            <p class="text-xs text-blue-700">${tech.specialty}</p>
+                        </div>
+                    </div>
+                    <button class="add-btn" onclick="openAddModal('${tech.id}')">
+                        <span class="material-symbols-outlined text-lg">add</span>
+                    </button>
+                </td>
+                <td id="tech-${tech.id}-timeline" colspan="13" class="p-0 relative" style="height: 60px;">
+                    <div class="absolute inset-0" style="pointer-events: none;">
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 7.69%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 15.38%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 23.08%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 30.77%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 38.46%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 46.15%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 53.85%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 61.54%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 69.23%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 76.92%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 84.62%;"></div>
+                        <div class="absolute top-0 bottom-0 border-r border-gray-200" style="left: 92.31%;"></div>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(tr);
+        });
+        
+        // Mettre à jour le compteur
+        const headerTech = document.querySelector('thead th');
+        if (headerTech) {
+            headerTech.textContent = `Techniciens (${technicians.length})`;
+        }
+    }
+
+    // Initialiser les notifications au chargement
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Attendre que Supabase soit prêt
+        if (window.supabase) {
+            await loadRdvNotifications();
+            subscribeToRdvChanges();
+        }
+    });
+
+    // Nettoyer la souscription au déchargement
+    window.addEventListener('beforeunload', () => {
+        if (rdvSubscription) {
+            rdvSubscription.unsubscribe();
+        }
+    });
+
+    // Register Service Worker (cache 74h)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .catch(() => {});
+        });
+    }
+</script>
+
+        </div>
+    </main>
+</body>
+</html>
