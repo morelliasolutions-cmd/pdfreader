@@ -17,6 +17,7 @@
     <script src="js/config.js?v=7" defer></script>
     <script src="js/api.js?v=7" defer></script>
     <script src="js/role-access-control.js?v=1" defer></script>
+    <script src="js/webhook-config.js?v=1" defer></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -201,9 +202,9 @@
                     <button onclick="loadMandats(true)" class="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors" title="Rafraîchir les données">
                         <span class="material-symbols-outlined text-lg">refresh</span>
                     </button>
-                    <button onclick="exportMandatsToExcel()" class="flex items-center justify-center gap-2 bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-800 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors" title="Exporter en Excel">
-                        <span class="material-symbols-outlined text-lg">download</span>
-                        <span>Exporter Excel</span>
+                    <button onclick="window.open('vue-generale.html', '_blank', 'width=1400,height=900')" class="flex items-center justify-center gap-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors" title="Ouvrir la vue générale dans une nouvelle fenêtre">
+                        <span class="material-symbols-outlined text-lg">open_in_new</span>
+                        <span>Vue générale</span>
                     </button>
                     <button id="btn-add-mandat" onclick="openModal('addMandatModal')" class="flex items-center justify-center gap-2 bg-primary hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-primary/20">
                         <span class="material-symbols-outlined text-xl">add</span>
@@ -225,6 +226,7 @@
                         <option value="All">Tous les statuts</option>
                         <option value="en_attente">En attente</option>
                         <option value="assigne">Assigné</option>
+                        <option value="planifie">Planifié</option>
                         <option value="en_cours">En cours</option>
                         <option value="termine">Terminé</option>
                         <option value="annule">Annulé</option>
@@ -232,10 +234,10 @@
                     <select id="typeFilter" onchange="filterTable()" class="px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors">
                         <option value="All">Tous les types</option>
                         <option value="swisscom">Swisscom</option>
-                        <option value="ftth_fr">FTTH FR</option>
-                        <option value="sig">SIG</option>
-                        <option value="rea">REA</option>
-                        <option value="smartmetering">Smart Metering</option>
+                        <option value="swiss4net">Swiss4net</option>
+                        <option value="col_montante">Col. Montante</option>
+                        <option value="rollout">Rollout</option>
+                        <option value="manchon">Manchon</option>
                     </select>
                     <div class="h-6 w-[1px] bg-gray-300 dark:bg-gray-700 mx-2"></div>
                     <button onclick="resetFilters()" class="text-sm text-primary font-bold whitespace-nowrap hover:underline">Réinitialiser</button>
@@ -244,39 +246,68 @@
 
             <!-- Import Zones -->
             <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm mb-6">
+                <!-- Type de mandat pour l'import -->
+                <div class="mb-4 flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Type de mandat pour l'import</label>
+                    <select id="importTypeSelect" class="w-full lg:w-64 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors">
+                        <option value="swisscom">Swisscom</option>
+                        <option value="swiss4net">Swiss4net</option>
+                        <option value="col_montante">Col. Montante</option>
+                        <option value="rollout">Rollout</option>
+                        <option value="manchon">Manchon</option>
+                    </select>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Ce type sera appliqué à toutes les lignes importées.</p>
+                </div>
+                
+                <!-- Zones de drag & drop -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div class="flex flex-col gap-2">
-                        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Type de mandat pour l'import</label>
-                        <select id="importTypeSelect" class="px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors">
-                            <option value="swisscom">Swisscom</option>
-                            <option value="ftth_fr">FTTH FR</option>
-                            <option value="sig">SIG</option>
-                            <option value="rea">REA</option>
-                            <option value="smartmetering">Smart Metering</option>
-                        </select>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Ce type sera appliqué à toutes les lignes importées.</p>
+                    <!-- Zone SAR PDF (extraction d'adresse) -->
+                    <div>
+                        <div id="sarPdfDropZone" class="drop-zone rounded-xl p-4 bg-white dark:bg-gray-900/30 flex items-center justify-between gap-4 cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-3xl text-primary">location_on</span>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white">Extraction SAR</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Fichiers SAR.pdf</p>
+                                </div>
+                            </div>
+                            <span id="sarPdfDropHint" class="text-xs text-gray-400">Glisser-déposer</span>
+                            <input id="sarPdfInput" type="file" accept="application/pdf" multiple class="hidden" />
+                        </div>
+                        <!-- Résultats d'extraction SAR -->
+                        <div id="sarPdfResults" class="hidden mt-4 space-y-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Adresses extraites</h4>
+                                <button onclick="closeSarPdfResults()" class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">Fermer</button>
+                            </div>
+                            <div id="sarPdfResultsContent" class="space-y-2"></div>
+                        </div>
                     </div>
+                    
+                    <!-- Zone PDF mandats -->
                     <div>
                         <div id="pdfDropZone" class="drop-zone rounded-xl p-4 bg-white dark:bg-gray-900/30 flex items-center justify-between gap-4 cursor-pointer">
                             <div class="flex items-center gap-3">
                                 <span class="material-symbols-outlined text-3xl text-primary">picture_as_pdf</span>
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900 dark:text-white">Analyser des PDF</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Glissez-déposez vos PDF de mandats</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">PDF de mandats</p>
                                 </div>
                             </div>
-                            <span id="pdfDropHint" class="text-xs text-gray-400">Glisser-déposer ou cliquer</span>
+                            <span id="pdfDropHint" class="text-xs text-gray-400">Glisser-déposer</span>
                             <input id="pdfInput" type="file" accept="application/pdf" multiple class="hidden" />
                         </div>
                         <!-- Résultats d'analyse PDF -->
                         <div id="pdfAnalysisResults" class="hidden mt-4 space-y-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
                             <div class="flex items-center justify-between">
                                 <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Résultats d'analyse</h4>
-                                <button onclick="closePdfAnalysis()" class="text-xs text-gray-500 hover:text-gray-700">Fermer</button>
+                                <button onclick="closePdfAnalysis()" class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">Fermer</button>
                             </div>
                             <div id="pdfAnalysisContent" class="space-y-2"></div>
                         </div>
                     </div>
+                    
+                    <!-- Zone Excel/CSV -->
                     <div>
                         <div id="excelDropZone" class="drop-zone rounded-xl p-4 bg-white dark:bg-gray-900/30 flex items-center justify-between gap-4 cursor-pointer">
                             <div class="flex items-center gap-3">
@@ -449,6 +480,17 @@
                     </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Mandat: <span id="assignMandatNumber" class="font-bold text-primary"></span></p>
                     
+                    <!-- Case "Tout sélectionner" -->
+                    <div class="flex items-center p-3 mb-2 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <input type="checkbox" 
+                               id="selectAllTechs" 
+                               onchange="toggleAllTechnicians(this.checked)"
+                               class="rounded border-gray-300 text-primary focus:ring-primary">
+                        <label for="selectAllTechs" class="ml-3 flex-1 cursor-pointer">
+                            <div class="text-sm font-bold text-gray-900 dark:text-white">Tout sélectionner / Tout désélectionner</div>
+                        </label>
+                    </div>
+                    
                     <div id="techniciansList" class="space-y-2 max-h-96 overflow-y-auto">
                         <!-- Will be filled dynamically -->
                     </div>
@@ -469,6 +511,9 @@
         let currentMandatId = null;
 
         let isChecking = false;
+        
+        // Stockage des fichiers SAR pour sauvegarde ultérieure sur OneDrive
+        let sarFilesData = new Map(); // Map<filename, {file: File, extractedData: Object}>
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (isChecking) return;
@@ -659,6 +704,7 @@
         async function loadMandatsFromSupabase(silent = false) {
             try {
                 // Lire directement depuis appointments qui contient TOUTES les données (PDF + planif)
+                // On a besoin de npa, city pour l'affichage complet
                 const { data: appointments, error } = await window.supabase
                     .from('appointments')
                     .select(`
@@ -674,96 +720,82 @@
                 
                 console.log('📥 Appointments chargés depuis Supabase:', appointments?.length || 0);
                 
-                // DEBUG: Afficher les 3 premiers appointments pour vérifier les données
-                if (appointments && appointments.length > 0) {
-                    console.log('🔍 DEBUG - Premier appointment:', {
-                        mandate_number: appointments[0].mandate_number,
-                        phone: appointments[0].phone,
-                        email: appointments[0].email,
-                        address: appointments[0].address,
-                        client_name: appointments[0].client_name,
-                        pto_reference: appointments[0].pto_reference,
-                        cable_alim: appointments[0].cable_alim
-                    });
-                }
-                
-                // Mapper appointments vers le format mandats pour compatibilité affichage
+                // Mapper appointments vers le format mandats pour affichage
                 mandats = (appointments || []).map(apt => {
                     // Extraire notes techniques
-                    let notes = [];
-                    if (apt.pto_reference) notes.push(`PTO: ${apt.pto_reference}`);
-                    if (apt.cable_alim) notes.push(`Câble: ${apt.cable_alim}`);
-                    const fibers = [apt.fibre_1, apt.fibre_2, apt.fibre_3, apt.fibre_4]
-                        .filter(f => f)
-                        .map((f, i) => `SP${i+1}:${f}`);
-                    if (fibers.length > 0) notes.push(`Fibres: ${fibers.join(', ')}`);
+                    let notes = apt.note || apt.notes || ''; 
+                    // Si notes est un tableau (legacy), joindre
+                    if (Array.isArray(notes)) notes = notes.join(' | ');
                     
-                    // Extraire nom/prénom du client_name
-                    let nom_client = apt.client_name || 'Client ' + apt.mandate_number;
-                    let prenom_client = '';
-                    if (apt.client_name) {
-                        const parts = apt.client_name.trim().split(' ');
-                        if (parts.length >= 2) {
-                            prenom_client = parts[0];
-                            nom_client = parts.slice(1).join(' ');
-                        }
+                    // Si on a les colonnes pto/cable/fibres dans appointments, on les ajoute aux notes pour affichage si pas déjà présents
+                    let techInfo = [];
+                    if (apt.pto_reference && !notes.includes(apt.pto_reference)) techInfo.push(`PTO: ${apt.pto_reference}`);
+                    if (apt.cable_alim && !notes.includes(apt.cable_alim)) techInfo.push(`Câble: ${apt.cable_alim}`);
+                    
+                    if (techInfo.length > 0) {
+                        notes = notes ? `${notes} | ${techInfo.join(' | ')}` : techInfo.join(' | ');
                     }
-                    
+
+                    // Extraire Order Type des notes si présent (pour affichage spécifique demandé)
+                    // Format attendu dans notes: "Order Type: xxx"
+                    const orderTypeMatch = notes.match(/Order Type:\s*([^|]+)/);
+                    const orderType = orderTypeMatch ? orderTypeMatch[1].trim() : '';
+
+                    // Construction du mandat
                     return {
                         id: apt.id,
                         numero_mandat: apt.mandate_number,
-                        nom_client: nom_client,
-                        prenom_client: prenom_client,
+                        // Colonne Client
+                        nom_client: apt.client_name || 'Client',
+                        order_type: orderType, // Prop dédiée pour affichage facile
+                        // Colonne Contact
                         telephone: apt.phone || '',
                         email: apt.email || '',
+                        // Colonne Adresse
                         adresse: apt.address || '',
-                        npa: '', // Non disponible dans appointments
-                        ville: '', // Non disponible dans appointments
-                        type_intervention: 'swisscom', // Par défaut
+                        npa: apt.npa || '',
+                        ville: apt.city || '',
+                        // Colonne Type
+                        type_intervention: apt.activity || 'swisscom',
+                        // Colonne Planifié
                         date_intervention: apt.date || null,
-                        notes: notes.join(' | '),
-                        tu: null,
-                        tu_valide: false,
-                        priorite: false,
-                        statut: apt.date ? 'planifie' : (apt.employee_id ? 'assigne' : 'en_attente'),
+                        tech_name: apt.employee ? `${apt.employee.first_name || ''} ${apt.employee.last_name || ''}`.trim() : null,
+                        // Colonne Statut & Backlog logic
+                        statut: determineStatus(apt),
+                        
                         created_at: apt.created_at,
                         updated_at: apt.updated_at,
-                        // Données supplémentaires pour l'affichage
-                        _employee_nom: apt.employee?.first_name || '',
-                        _employee_prenom: apt.employee?.last_name || ''
+                        notes: notes,
+                        tu: apt.tu || null,
+                        canton: apt.canton || null
                     };
                 });
-                
-                // DEBUG: Afficher le mapping du premier mandat
-                if (mandats.length > 0) {
-                    console.log('🔍 DEBUG - Premier mandat mappé:', {
-                        numero_mandat: mandats[0].numero_mandat,
-                        telephone: mandats[0].telephone,
-                        email: mandats[0].email,
-                        adresse: mandats[0].adresse,
-                        nom_client: mandats[0].nom_client
-                    });
-                }
                 
                 // Mettre à jour le cache
                 setCachedMandats(mandats);
                 
                 console.log('✅ Mandats mappés:', mandats.length);
                 
-                // Mettre à jour l'affichage si ce n'est pas un rechargement silencieux
-                if (!silent) {
-                    await renderMandatsTable();
-                } else {
-                    console.log('🔄 Cache mis à jour en arrière-plan');
+                await renderMandatsTable(mandats);
+
+                if (!silent && mandats.length === 0) {
+                    showErrorToast('Aucun mandat trouvé.');
                 }
             } catch (error) {
                 console.error('Erreur chargement depuis Supabase:', error);
-                if (!silent) {
-                    const tbody = document.getElementById('mandatsTableBody');
-                    tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Erreur: ${error.message}</td></tr>`;
-                }
-                throw error;
+                if (!silent) showErrorToast('Erreur lors du chargement des mandats.');
             }
+        }
+
+        function determineStatus(apt) {
+            // Logique de statut stricte demandée
+            // 1. Si date existe -> Planifié (peu importe employee_id, car planif.html met une date)
+            if (apt.date) return 'planifie';
+            // 2. Si employee_id sans date -> Assigné (rare, mais possible si drag & drop sans date ?)
+            // Dans le nouveau système, backlog = pas de date, pas de tech.
+            if (apt.employee_id) return 'assigne'; 
+            // 3. Sinon -> En attente (Backlog)
+            return 'en_attente';
         }
 
         function setupImportZones() {
@@ -771,12 +803,17 @@
             const excelInput = document.getElementById('excelInput');
             const pdfZone = document.getElementById('pdfDropZone');
             const pdfInput = document.getElementById('pdfInput');
+            const sarPdfZone = document.getElementById('sarPdfDropZone');
+            const sarPdfInput = document.getElementById('sarPdfInput');
 
             if (excelZone && excelInput) {
                 setupDropZone(excelZone, excelInput, handleExcelFiles);
             }
             if (pdfZone && pdfInput) {
                 setupDropZone(pdfZone, pdfInput, handlePdfFiles);
+            }
+            if (sarPdfZone && sarPdfInput) {
+                setupDropZone(sarPdfZone, sarPdfInput, handleSarPdfFiles);
             }
         }
 
@@ -970,18 +1007,19 @@
                         await archivePdfsToOneDrive(files, data.results);
                         
                         // Insérer/mettre à jour dans Supabase avec fusion intelligente
-                        const { createdCount, updatedCount } = await insertOrUpdateAppointmentsFromPdf(data.results);
+                        const { updatedCount, ignoredCount } = await insertOrUpdateAppointmentsFromPdf(data.results);
                         
                         // Toast discret de confirmation
-                        showSuccessToast(`✅ ${data.count} mandats traités (${createdCount} créés, ${updatedCount} mis à jour)`);
+                        const totalProcessed = updatedCount + ignoredCount;
+                        showSuccessToast(`✅ ${data.count} PDF analysés : ${updatedCount} mis à jour, ${ignoredCount} ignorés`);
                         
                         // Popup de résumé détaillé avec informations d'extraction IA
                         const lowConfidenceFiles = data.results.filter(r => r.confidence < 1.0);
                         const aiContributedFiles = data.results.filter(r => r.extraction_sources?.ai_contributed);
                         
                         let summaryMessage = `📊 Résumé du traitement\n\n`;
-                        summaryMessage += `✅ ${createdCount} mandat(s) créé(s)\n`;
                         summaryMessage += `🔄 ${updatedCount} mandat(s) mis à jour\n`;
+                        summaryMessage += `⏭️ ${ignoredCount} PDF ignoré(s) (mandat inexistant)\n`;
                         summaryMessage += `📄 ${data.count} PDF analysé(s)\n`;
                         summaryMessage += `🤖 ${aiContributedFiles.length} fichier(s) enrichi(s) par IA\n`;
                         
@@ -1074,6 +1112,7 @@
             let createdCount = 0;
             let updatedCount = 0;
             let errorCount = 0;
+            let ignoredCount = 0; // PDFs ignorés car mandat inexistant
 
             console.log('📋 Traitement de', results.length, 'résultat(s) PDF');
 
@@ -1182,69 +1221,24 @@
                         console.log('✅ Appointment mis à jour:', mandateNumber);
                     }
                 } else {
-                    // INSERT : nouveau mandat - récupérer un employee_id par défaut
-                    console.log('➕ Création nouveau appointment');
-                    
-                    // Récupérer le premier employé disponible
-                    const { data: employees, error: empError } = await supabase
-                        .from('employees')
-                        .select('id')
-                        .limit(1)
-                        .single();
-                    
-                    if (empError || !employees) {
-                        console.error('❌ Impossible de récupérer un employee_id:', empError);
-                        errorCount++;
-                        continue;
-                    }
-                    
-                    // Construire les données INSERT
-                    const insertData = {
-                        mandate_number: mandateNumber,
-                        employee_id: employees.id,
-                        date: new Date().toISOString().split('T')[0],
-                        start_time: '08:00:00',
-                        end_time: '17:00:00',
-                        activity: 'Installation FTTH',
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                        // Données PDF
-                        phone: pdfData.phone || null,
-                        email: pdfData.email || null,
-                        address: pdfData.address || 'À compléter',
-                        client_name: pdfData.client_name || 'Client ' + mandateNumber,
-                        pto_reference: pdfData.socket_label || null,
-                        cable_alim: pdfData.cable || null,
-                        fibre_1: pdfData.fiber_1 || null,
-                        fibre_2: pdfData.fiber_2 || null,
-                        fibre_3: pdfData.fiber_3 || null,
-                        fibre_4: pdfData.fiber_4 || null
-                    };
-                    
-                    console.log('💾 Données INSERT complètes:', insertData);
-
-                    const { data: inserted, error } = await supabase
-                        .from('appointments')
-                        .insert([insertData])
-                        .select();
-
-                    if (error) {
-                        console.error('❌ Erreur création appointment:', error);
-                        errorCount++;
-                    } else {
-                        createdCount++;
-                        console.log('✅ Appointment créé:', mandateNumber, inserted);
-                    }
+                    // Le mandat n'existe pas : IGNORER le PDF (ne pas créer de nouveau mandat)
+                    console.warn(`⏭️ PDF ignoré: mandat ${mandateNumber} n'existe pas en base (${result.file_name})`);
+                    ignoredCount++;
                 }
             }
 
-            console.log(`📊 Résumé: ${createdCount} créés, ${updatedCount} mis à jour, ${errorCount} erreurs`);
+            console.log(`📊 Résumé: ${updatedCount} mis à jour, ${ignoredCount} ignorés (mandat inexistant), ${errorCount} erreurs`);
             
             // Invalider le cache et recharger
             invalidateMandatsCache();
             await loadMandats(true);
             
-            return { createdCount, updatedCount };
+            // Afficher un message si des PDFs ont été ignorés
+            if (ignoredCount > 0) {
+                showErrorToast(`${ignoredCount} PDF(s) ignoré(s) : numéro de mandat non trouvé en base.`);
+            }
+            
+            return { updatedCount, ignoredCount };
         }
 
         async function handleExcelFiles(files) {
@@ -1262,12 +1256,298 @@
                     return;
                 }
 
-                // const typeIntervention = document.getElementById('importTypeSelect')?.value || 'swisscom';
-                const appointments = mapRowsToAppointments(rows);
+                const typeIntervention = document.getElementById('importTypeSelect')?.value || 'swisscom';
+                const appointments = mapRowsToAppointments(rows, typeIntervention);
                 await importAppointmentsToSupabase(appointments);
             } catch (error) {
                 console.error('Erreur import Excel/CSV:', error);
                 showErrorToast('Erreur lors de la lecture du fichier Excel/CSV.');
+            }
+        }
+
+        // Fonction pour gérer les fichiers SAR PDF (extraction d'adresse)
+        async function handleSarPdfFiles(files) {
+            if (!files || files.length === 0) return;
+            
+            const hint = document.getElementById('sarPdfDropHint');
+            const resultsDiv = document.getElementById('sarPdfResults');
+            const resultsContent = document.getElementById('sarPdfResultsContent');
+            
+            if (hint) {
+                hint.textContent = `Analyse en cours de ${files.length} fichier(s)...`;
+            }
+            
+            try {
+                // Stocker les fichiers originaux pour envoi ultérieur
+                const filesArray = Array.from(files);
+                
+                // Créer FormData pour envoyer les PDF
+                const formData = new FormData();
+                filesArray.forEach((file, index) => {
+                    formData.append('pdfs', file);
+                });
+
+                // Récupérer l'URL de l'API depuis la configuration sécurisée
+                // Conforme à AGENTS.md : Pas d'URL en dur, récupération dynamique depuis le backend
+                const apiUrl = typeof getSarExtractionUrl === 'function' 
+                    ? getSarExtractionUrl() 
+                    : 'http://localhost:5001/api/extract-sar-address'; // Fallback dev
+                
+                console.log('📡 [SAR] Appel API:', apiUrl);
+
+                // Appeler l'API d'extraction SAR
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 1 minute
+                
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        body: formData,
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        throw new Error('Erreur serveur lors de l\'extraction');
+                    }
+
+                    const data = await response.json();
+                
+                    if (data.success && data.results) {
+                        // 🔐 Stocker les fichiers avec leurs données extraites
+                        // Pour envoi sécurisé vers backend proxy puis OneDrive
+                        data.results.forEach((result, index) => {
+                            if (result.success && result.file_name) {
+                                const originalFile = filesArray.find(f => f.name === result.file_name);
+                                if (originalFile) {
+                                    sarFilesData.set(result.file_name, {
+                                        file: originalFile,
+                                        extractedData: result.data
+                                    });
+                                }
+                            }
+                        });
+                        
+                        // Afficher les résultats avec boutons d'enregistrement
+                        displaySarResults(data.results, resultsContent, resultsDiv);
+                        
+                        showSuccessToast(`✅ ${data.success_count}/${data.results.length} adresse(s) extraite(s)`);
+                        
+                        if (hint) {
+                            hint.textContent = `${data.results.length} fichier(s) traité(s) ✓`;
+                        }
+                    } else {
+                        throw new Error('Aucun résultat d\'extraction');
+                    }
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
+                    throw fetchError;
+                }
+            } catch (error) {
+                console.error('Erreur extraction SAR:', error);
+                if (hint) {
+                    hint.textContent = 'Erreur d\'extraction';
+                }
+                
+                if (error.name === 'AbortError') {
+                    showErrorToast('⏱️ Timeout : L\'extraction prend trop de temps.');
+                } else if (error.message.includes('Failed to fetch')) {
+                    showErrorToast('🌐 Impossible de contacter le serveur. Vérifiez que le serveur Python est lancé sur le port 5001.');
+                } else {
+                    showErrorToast('❌ Erreur lors de l\'extraction : ' + error.message);
+                }
+            }
+        }
+
+        // Fonction pour afficher les résultats d'extraction SAR
+        function displaySarResults(results, contentDiv, containerDiv) {
+            if (!contentDiv || !containerDiv) return;
+            
+            contentDiv.innerHTML = '';
+            
+            results.forEach((result, index) => {
+                const resultCard = document.createElement('div');
+                resultCard.className = 'bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700';
+                
+                const statusIcon = result.success ? '✅' : '❌';
+                const statusText = result.success ? 'Succès' : 'Échec';
+                
+                let content = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">${result.file_name}</span>
+                        <span class="text-xs font-bold ${result.success ? 'text-green-600' : 'text-red-600'}">${statusIcon} ${statusText}</span>
+                    </div>
+                `;
+                
+                if (result.success && result.data) {
+                    content += `
+                        <div class="space-y-1 text-sm">
+                            <div class="flex items-start gap-2">
+                                <span class="text-gray-500 dark:text-gray-400 font-medium min-w-[80px]">Adresse:</span>
+                                <span class="text-gray-900 dark:text-white font-semibold">${result.data.address || 'N/A'}</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-gray-500 dark:text-gray-400 font-medium min-w-[80px]">NPA:</span>
+                                <span class="text-gray-900 dark:text-white font-semibold">${result.data.npa || 'N/A'}</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-gray-500 dark:text-gray-400 font-medium min-w-[80px]">Commune:</span>
+                                <span class="text-gray-900 dark:text-white font-semibold">${result.data.commune || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <button 
+                                onclick="saveSarToOneDrive('${result.file_name}')"
+                                id="save-btn-${result.file_name.replace(/[^a-zA-Z0-9]/g, '_')}"
+                                class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+                            >
+                                <span class="material-symbols-outlined text-lg">cloud_upload</span>
+                                <span>Enregistrer sur OneDrive</span>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    content += `<p class="text-xs text-red-600 dark:text-red-400">Erreur: ${result.error || 'Extraction échouée'}</p>`;
+                }
+                
+                resultCard.innerHTML = content;
+                contentDiv.appendChild(resultCard);
+            });
+            
+            containerDiv.classList.remove('hidden');
+        }
+
+        // Fonction pour fermer les résultats SAR
+        function closeSarPdfResults() {
+            const resultsDiv = document.getElementById('sarPdfResults');
+            if (resultsDiv) {
+                resultsDiv.classList.add('hidden');
+            }
+            const hint = document.getElementById('sarPdfDropHint');
+            if (hint) {
+                hint.textContent = 'Glisser-déposer ou cliquer';
+            }
+        }
+
+        // 🔐 Fonction SÉCURISÉE pour enregistrer un fichier SAR sur OneDrive
+        // Architecture conforme à AGENTS.md :
+        // Frontend (ici) → Backend proxy /api/save-sar (avec JWT) → Webhook n8n → OneDrive
+        // Les secrets (JWT, webhook URL) restent côté backend, JAMAIS exposés au client
+        async function saveSarToOneDrive(filename) {
+            console.log('💾 [SAR] Enregistrement sur OneDrive:', filename);
+            
+            // Vérifier que le fichier existe dans notre Map
+            if (!sarFilesData.has(filename)) {
+                showErrorToast('❌ Fichier introuvable en mémoire');
+                return;
+            }
+            
+            const fileData = sarFilesData.get(filename);
+            const buttonId = `save-btn-${filename.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const button = document.getElementById(buttonId);
+            
+            // Désactiver le bouton pendant l'envoi
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = `
+                    <span class="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                    <span>Envoi en cours...</span>
+                `;
+            }
+            
+            try {
+                // Préparer les données pour le backend proxy
+                const formData = new FormData();
+                formData.append('pdf', fileData.file);
+                formData.append('data', JSON.stringify({
+                    ...fileData.extractedData,
+                    file_name: filename
+                }));
+                
+                // Récupérer l'URL du backend proxy (sécurisé)
+                const saveUrl = typeof getSarExtractionUrl === 'function'
+                    ? getSarExtractionUrl().replace('/extract-sar-address', '/save-sar')
+                    : 'http://localhost:5001/api/save-sar'; // Fallback dev
+                
+                console.log('🌐 [SAR] Envoi vers backend proxy:', saveUrl);
+                
+                // Appeler le backend proxy qui gèrera l'authentification n8n
+                const response = await fetch(saveUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    console.log('✅ [SAR] Fichier enregistré sur OneDrive avec succès');
+                    showSuccessToast('✅ Fichier enregistré sur OneDrive');
+                    
+                    // Mettre à jour le bouton pour indiquer le succès
+                    if (button) {
+                        button.disabled = true;
+                        button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        button.classList.add('bg-gray-400', 'cursor-not-allowed');
+                        button.innerHTML = `
+                            <span class="material-symbols-outlined text-lg">check_circle</span>
+                            <span>Enregistré ✓</span>
+                        `;
+                    }
+                    
+                    // Retirer le fichier de la Map (déjà enregistré)
+                    sarFilesData.delete(filename);
+                    
+                } else {
+                    throw new Error(result.error || 'Erreur lors de l\'enregistrement');
+                }
+                
+            } catch (error) {
+                console.error('❌ [SAR] Erreur enregistrement:', error);
+                showErrorToast('❌ Erreur lors de l\'enregistrement : ' + error.message);
+                
+                // Réactiver le bouton en cas d'erreur
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = `
+                        <span class="material-symbols-outlined text-lg">cloud_upload</span>
+                        <span>Enregistrer sur OneDrive</span>
+                    `;
+                }
+            }
+        }
+
+        // Fonction pour envoyer les résultats vers un webhook
+        async function sendToWebhook(results) {
+            // Configuration du webhook (à adapter selon vos besoins)
+            const WEBHOOK_URL = 'https://velox-n8n.yhmr4j.easypanel.host/webhook-test/sar-address-extraction';
+            
+            try {
+                const payload = {
+                    timestamp: new Date().toISOString(),
+                    results: results.filter(r => r.success).map(r => ({
+                        file_name: r.file_name,
+                        address: r.data.address,
+                        npa: r.data.npa,
+                        commune: r.data.commune
+                    }))
+                };
+                
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Données envoyées au webhook avec succès');
+                } else {
+                    console.warn('⚠️ Erreur lors de l\'envoi au webhook:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ Erreur webhook:', error);
+                // Ne pas bloquer l'interface si le webhook échoue
             }
         }
 
@@ -1282,28 +1562,45 @@
                 return;
             }
 
-            // Récupérer un employee_id par défaut (obligatoire pour appointments)
-            let defaultEmpId = null;
-            const { data: emp, error: empErr } = await window.supabase
-                .from('employees')
-                .select('id')
-                .limit(1)
-                .maybeSingle();
+            // Récupérer tous les appointments existants avec leurs données complètes
+            const mandateNumbers = appointments.map(a => a.mandate_number).filter(Boolean);
+            const { data: existing, error: checkError } = await window.supabase
+                .from('appointments')
+                .select('*')
+                .in('mandate_number', mandateNumbers);
+
+            if (checkError) {
+                console.error('Erreur vérification doublons:', checkError);
+                showErrorToast('Erreur lors de la vérification des doublons.');
+                return;
+            }
+
+            // Créer un map des mandats existants par mandate_number
+            const existingMap = new Map((existing || []).map(e => [e.mandate_number, e]));
             
-            if (emp) defaultEmpId = emp.id;
-            else console.warn('⚠️ Aucun employé trouvé pour assignation par défaut');
+            const toInsert = [];
+            const toUpdate = [];
+
+            // Séparer les nouveaux mandats et les mises à jour
+            appointments.forEach(apt => {
+                if (existingMap.has(apt.mandate_number)) {
+                    toUpdate.push({ new: apt, existing: existingMap.get(apt.mandate_number) });
+                } else {
+                    toInsert.push(apt);
+                }
+            });
+
+            console.log(`📥 ${toInsert.length} nouveaux mandats, ${toUpdate.length} mises à jour`);
 
             const batchSize = 100;
             let inserted = 0;
+            let updated = 0;
 
-            for (let i = 0; i < appointments.length; i += batchSize) {
-                const batch = appointments.slice(i, i + batchSize).map(row => {
+            // INSERT des nouveaux mandats
+            for (let i = 0; i < toInsert.length; i += batchSize) {
+                const batch = toInsert.slice(i, i + batchSize).map(row => {
                     return {
                         ...row,
-                        employee_id: defaultEmpId, // FK obligatoire
-                        start_time: '08:00:00',
-                        end_time: '17:00:00',
-                        activity: 'Installation FTTH',
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     };
@@ -1311,11 +1608,7 @@
 
                 const { error, data } = await window.supabase
                     .from('appointments')
-                    .upsert(batch, { 
-                        onConflict: 'mandate_number',
-                        ignoreDuplicates: false 
-                    })
-                    .select('id');
+                    .insert(batch)
                     .select('id');
 
                 if (error) {
@@ -1327,7 +1620,48 @@
                 inserted += data?.length || batch.length;
             }
 
-            showSuccessToast(`${inserted} mandat(s) importé(s) avec succès.`);
+            // UPDATE des mandats existants (fusion intelligente : ne pas écraser les données existantes)
+            for (const { new: newData, existing: existingData } of toUpdate) {
+                const updateData = {
+                    updated_at: new Date().toISOString()
+                };
+
+                // Ne mettre à jour QUE les champs vides dans la BDD
+                if (!existingData.client_name && newData.client_name) updateData.client_name = newData.client_name;
+                if (!existingData.phone && newData.phone) updateData.phone = newData.phone;
+                if (!existingData.email && newData.email) updateData.email = newData.email;
+                if (!existingData.address && newData.address) updateData.address = newData.address;
+                if (!existingData.npa && newData.npa) updateData.npa = newData.npa;
+                if (!existingData.city && newData.city) updateData.city = newData.city;
+                if (!existingData.canton && newData.canton) updateData.canton = newData.canton;
+                if (!existingData.pto_reference && newData.pto_reference) updateData.pto_reference = newData.pto_reference;
+                if (!existingData.tu && newData.tu) updateData.tu = newData.tu;
+                if (!existingData.note && newData.note) updateData.note = newData.note;
+                
+                // TOUJOURS mettre à jour l'activity si fourni (type de mandat)
+                if (newData.activity) updateData.activity = newData.activity;
+
+                // Ne faire l'update que si on a des données à mettre à jour
+                if (Object.keys(updateData).length > 1) { // > 1 car updated_at est toujours présent
+                    const { error } = await window.supabase
+                        .from('appointments')
+                        .update(updateData)
+                        .eq('id', existingData.id);
+
+                    if (error) {
+                        console.error('Erreur mise à jour:', error);
+                    } else {
+                        updated++;
+                        console.log(`✅ Mis à jour:`, newData.mandate_number, updateData);
+                    }
+                }
+            }
+
+            const message = [];
+            if (inserted > 0) message.push(`${inserted} créé(s)`);
+            if (updated > 0) message.push(`${updated} mis à jour`);
+            
+            showSuccessToast(`✅ Import terminé : ${message.join(', ')}`);
             invalidateMandatsCache();
             await loadMandats(true);
         }
@@ -1579,35 +1913,70 @@
             });
         }
 
-        function mapRowsToAppointments(rows) {
+        function mapRowsToAppointments(rows, mandatType) {
             return rows.map(row => {
                 const normalized = normalizeRow(row);
-                const phoneFromColumns = getPhoneFromColumns(row, normalized);
-                const orderId = getValue(normalized, ['order id', 'orderid', 'numero', 'numéro']);
-                const fullName = getValue(normalized, ['execution location', 'client', 'nom', 'nom client']);
-                const zip = getValue(normalized, ['zip', 'npa']);
-                const city = getValue(normalized, ['city', 'ville']);
-                const street = getValue(normalized, ['street', 'adresse']);
-                const phone = phoneFromColumns || getValue(normalized, ['phone', 'telephone', 'téléphone', 'p']) || getValue(normalized, ['mobile', 'q']);
-                const infoSe = getValue(normalized, ['info se', 'infose', 'info']);
-                const email = extractEmail(infoSe);
-                const dateIntervention = parseDate(getValue(normalized, ['app. start', 'app start', 'date', 'date intervention']));
+                
+                // DEBUG : Afficher TOUTES les colonnes pour la première ligne seulement
+                if (rows.indexOf(row) === 0) {
+                    console.log('🔍 TOUTES les colonnes normalisées:', Object.keys(normalized));
+                    console.log('🔍 Sample data:', Object.entries(normalized).slice(0, 5).map(([k,v]) => `${k}="${v}"`));
+                }
+                
+                // Mappings Excel selon spécifications utilisateur:
+                const orderId = getValue(normalized, ['order id', 'orderid']);
+                const fullName = getValue(normalized, ['execution location']);
+                const zip = getValue(normalized, ['zip']);
+                const city = getValue(normalized, ['city']);
+                const street = getValue(normalized, ['street']);
+                const region = getValue(normalized, ['region']);
+                
+                // Phone: chercher dans "Phone" OU "Mobile"
+                const phone = getValue(normalized, ['phone']) || getValue(normalized, ['mobile']);
+                
+                // Email: chercher dans "Info SE" ET "Info IDC" avec regex
+                // Variations possibles : "Info SE", "Infos SE", "info se", "INFO SE", etc.
+                const infoSe = getValue(normalized, ['info se', 'infos se', 'info_se', 'infos_se', 'infose']);
+                const infoIdc = getValue(normalized, ['info idc', 'infos idc', 'info_idc', 'infos_idc', 'infoidc']);
+                
+                // Concaténer les deux sources pour la recherche (si Info SE contient du texte non-email, Info IDC doit quand même être vérifié)
+                const emailSource = (infoSe || '') + ' ' + (infoIdc || '');
+                
+                const email = extractEmail(emailSource);
+                
+                // Date de référence (archivée, ne sera jamais importée dans appointments.date)
+                const dateReference = parseDate(getValue(normalized, ['app. start', 'app start', 'date', 'date intervention']));
+                
+                // N° prise OTO
                 const socketLabel = getValue(normalized, ['socket label']);
-                // const orderType = getValue(normalized, ['order type']);
-                // const bu = getValue(normalized, ['bu']);
+                
+                // Order Type (stocké dans notes)
+                const orderType = getValue(normalized, ['order type']);
+                
+                // BU → TU (colonne dédiée)
+                const bu = getValue(normalized, ['bu']);
 
-                // Adresse concaténée
-                const addressParts = [street, zip, city].filter(Boolean);
-                const fullAddress = addressParts.length > 0 ? addressParts.join(' ') : null;
+                // Construction notes pour Order Type, Region et date de référence Excel
+                let notesArray = [];
+                if (orderType) notesArray.push(`Order Type: ${orderType}`);
+                if (dateReference) notesArray.push(`Date référence Excel: ${dateReference}`);
 
                 return {
-                    mandate_number: orderId, // CLE UNIQUE
+                    mandate_number: orderId,
                     client_name: fullName || 'Client Inconnu',
                     phone: phone || null,
                     email: email || null,
-                    address: fullAddress,
-                    date: dateIntervention || null, // Format YYYY-MM-DD
-                    pto_reference: socketLabel || null
+                    address: street || null,
+                    npa: zip || null,
+                    city: city || null,
+                    canton: region || null,
+                    // ⚠️ NE JAMAIS importer la date du fichier Excel - elle doit rester NULL
+                    // La date est définie uniquement via planif.html
+                    date: null,
+                    pto_reference: socketLabel || null,
+                    tu: bu || null,
+                    note: notesArray.join(' | '),
+                    activity: mandatType // Type de mandat (swisscom, ftth_fr, pully4net, sig, rea, smartmetering)
                 };
             }).filter(m => m.mandate_number);
         }
@@ -1645,8 +2014,18 @@
 
         function extractEmail(text) {
             if (!text) return '';
-            const match = String(text).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-            return match ? match[0] : '';
+            const textStr = String(text).trim();
+            
+            // Regex améliorée pour capturer davantage de formats d'email
+            const emailRegex = /[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*/g;
+            
+            // Chercher tous les emails et retourner le premier trouvé
+            const matches = textStr.match(emailRegex);
+            if (matches && matches.length > 0) {
+                return matches[0].toLowerCase();
+            }
+            
+            return '';
         }
 
         function parseDate(value) {
@@ -1668,42 +2047,43 @@
             return '';
         }
 
-        async function renderMandatsTable() {
-            console.log('🎨 Rendu de', mandats.length, 'mandats');
+        async function renderMandatsTable(mandatsList) {
+            // Utiliser la liste passée en paramètre ou la globale
+            const dataToRender = mandatsList || mandats;
+            
+            console.log('🎨 Rendu de', dataToRender.length, 'mandats');
             const tbody = document.getElementById('mandatsTableBody');
             
             // Afficher un indicateur de chargement
-            tbody.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">Chargement...</td></tr>';
+            if (!tbody.innerHTML || tbody.innerHTML.includes('Chargement')) {
+                tbody.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">Chargement...</td></tr>';
+            }
 
-            if (mandats.length === 0) {
+            if (dataToRender.length === 0) {
                 console.warn('⚠️ Aucun mandat à afficher');
                 tbody.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">Aucun mandat trouvé</td></tr>';
                 return;
             }
 
-            // Récupérer toutes les assignations de techniciens en une seule requête
-            const mandatIds = mandats.map(m => m.id);
+            // Récupérer assignations techniciens (pour la colonne Action/Assignation)
+            const mandatIds = dataToRender.map(m => m.id);
             let techCountsMap = {};
             
-            try {
-                const { data: allAssignments } = await window.supabase
+            // Charger les compteurs de techniciens assignés
+            if (mandatIds.length > 0) {
+                const { data: techCounts } = await window.supabase
                     .from('mandat_techniciens')
-                    .select('mandat_id')
-                    .in('mandat_id', mandatIds);
+                    .select('appointment_id')
+                    .in('appointment_id', mandatIds);
                 
-                // Compter les techniciens par mandat
-                if (allAssignments) {
-                    allAssignments.forEach(assignment => {
-                        techCountsMap[assignment.mandat_id] = (techCountsMap[assignment.mandat_id] || 0) + 1;
+                if (techCounts) {
+                    techCounts.forEach(tc => {
+                        techCountsMap[tc.appointment_id] = (techCountsMap[tc.appointment_id] || 0) + 1;
                     });
                 }
-                console.log('✅ Assignations chargées:', Object.keys(techCountsMap).length, 'mandats avec techniciens');
-            } catch (error) {
-                console.warn('⚠️ Erreur chargement assignations:', error);
-                // Continuer même si les assignations ne peuvent pas être chargées
             }
 
-            // Constantes pour le rendu
+            // Constantes pour le rendu (Statuts demandés)
             const statusColors = {
                 'en_attente': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
                 'assigne': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
@@ -1717,78 +2097,133 @@
                 'en_attente': 'En attente',
                 'assigne': 'Assigné',
                 'planifie': 'Planifié',
-                'en_cours': 'En cours',
                 'termine': 'Terminé',
+                'en_cours': 'En cours',
                 'annule': 'Annulé'
             };
             
             const typeLabels = {
                 'swisscom': 'Swisscom',
                 'ftth_fr': 'FTTH FR',
+                'pully4net': 'Pully4Net',
                 'sig': 'SIG',
                 'rea': 'REA',
                 'smartmetering': 'Smart Metering'
             };
 
-            // Construire toutes les lignes en une seule fois
-            const rowsHTML = mandats.map(mandat => {
+            // Construire toutes les lignes
+            const rowsHTML = dataToRender.map(mandat => {
+                // Compter les techniciens assignés (0 par défaut si pas de données)
                 const techCount = techCountsMap[mandat.id] || 0;
-                const plannedDate = mandat.date_intervention;
-                const plannedTech = mandat._employee_prenom && mandat._employee_nom 
-                    ? `${mandat._employee_prenom} ${mandat._employee_nom}`.trim() 
-                    : null;
-                // Statut auto: si date planifiée existe, statut devient 'planifie'
-                const actualStatut = plannedDate ? 'planifie' : mandat.statut;
                 
-                // Extraire Order Type des notes
-                const orderTypeMatch = mandat.notes?.match(/Order Type:\s*([^|]+)/);
-                const orderType = orderTypeMatch ? orderTypeMatch[1].trim() : null;
+                // Logique stricte d'affichage demandée:
                 
+                // 1. Client & Order Type
+                // Nom client en haut, Order Type en dessous (gris)
+                const clientCell = `
+                    <div class="text-xs font-bold text-gray-900 dark:text-white">${mandat.nom_client}</div>
+                    ${mandat.order_type ? `<div class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">${mandat.order_type}</div>` : ''}
+                `;
+
+                // 2. Contact
+                // Téléphone en haut, Email en dessous
+                const contactCell = `
+                    ${mandat.telephone ? `<div class="text-xs text-gray-900 dark:text-white">${mandat.telephone}</div>` : ''}
+                    ${mandat.email ? `<div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" style="max-width: 150px;">${mandat.email}</div>` : (mandat.telephone ? '' : '-')}
+                `;
+
+                // 3. Adresse
+                // Rue en haut, NPA + Ville en dessous
+                const addressOne = mandat.adresse || '-';
+                const addressTwo = (mandat.npa || mandat.ville) ? `${mandat.npa || ''} ${mandat.ville || ''}`.trim() : '';
+                const addressCell = `
+                    <div class="text-xs text-gray-900 dark:text-white truncate" style="max-width: 180px;">${addressOne}</div>
+                    ${addressTwo ? `<div class="text-[10px] text-gray-500 dark:text-gray-400">${addressTwo}</div>` : ''}
+                `;
+
+                // 4. Planifié (Date + Tech)
+                // Affiche la date SI définie, et le technicien SI défini
+                let plannedCell = '-';
+                if (mandat.date_intervention) {
+                    const dateFr = new Date(mandat.date_intervention).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});
+                    plannedCell = `
+                        <div class="flex flex-col gap-0.5">
+                            <span class="font-medium text-xs">${dateFr}</span>
+                            ${mandat.tech_name ? `<span class="text-[10px] text-purple-600 dark:text-purple-400 font-medium">${mandat.tech_name}</span>` : ''}
+                        </div>
+                    `;
+                }
+
+                // 5. Statut
+                const displayStatus = mandat.statut || 'en_attente';
+                const statusBadge = `
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[displayStatus] || 'bg-gray-100'}">
+                        ${statusLabels[displayStatus] || displayStatus}
+                    </span>
+                `;
+
+                // 6. Texte de recherche (pour le filtre)
+                const searchText = `
+                    ${mandat.numero_mandat} 
+                    ${mandat.nom_client || ''} 
+                    ${mandat.telephone || ''} 
+                    ${mandat.email || ''} 
+                    ${mandat.adresse || ''} 
+                    ${mandat.ville || ''} 
+                    ${mandat.canton || ''} 
+                    ${mandat.pto_reference || ''} 
+                    ${mandat.notes || ''}
+                `.toLowerCase().replace(/\s+/g, ' ').trim();
+
                 return `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors mandat-row" 
-                        data-statut="${actualStatut}" 
-                        data-type="${mandat.type_intervention}" 
-                        data-search="${(mandat.numero_mandat + ' ' + mandat.nom_client + ' ' + (mandat.ville || '')).toLowerCase()}">
+                        data-statut="${displayStatus}" 
+                        data-type="${mandat.type_intervention}"
+                        data-search="${searchText}"
+                        onclick="showMandatDetails('${mandat.id}')"
+                        style="cursor: pointer;">
+                        
+                        <!-- Numéro Mandat -->
                         <td class="px-3 py-3 whitespace-nowrap">
-                            <div class="flex items-center">
-                                ${mandat.priorite ? '<span class="material-symbols-outlined text-red-500 text-sm mr-1">priority_high</span>' : ''}
-                                <span class="text-xs font-bold text-gray-900 dark:text-white">${mandat.numero_mandat}</span>
-                            </div>
+                             <span class="text-xs font-bold text-gray-900 dark:text-white">${mandat.numero_mandat}</span>
                         </td>
+
+                        <!-- Client / Order Type -->
                         <td class="px-3 py-3 whitespace-nowrap">
-                            <div class="text-xs font-medium text-gray-900 dark:text-white">${mandat.nom_client}</div>
-                            ${mandat.prenom_client ? `<div class="text-[10px] text-gray-500 dark:text-gray-400">${mandat.prenom_client}</div>` : ''}
-                            ${orderType ? `<div class="text-[10px] text-gray-500 dark:text-gray-400">${orderType}</div>` : ''}
+                            ${clientCell}
                         </td>
+
+                        <!-- Contact (Tel / Email) -->
                         <td class="px-3 py-3 whitespace-nowrap">
-                            ${mandat.telephone ? `<div class="text-xs text-gray-900 dark:text-white">${mandat.telephone}</div>` : ''}
-                            ${mandat.email ? `<div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" style="max-width: 150px;">${mandat.email}</div>` : (mandat.telephone ? '' : '-')}
+                            ${contactCell}
                         </td>
+
+                        <!-- Adresse (Rue / NPA Ville) -->
                         <td class="px-3 py-3">
-                            <div class="text-xs text-gray-900 dark:text-white truncate" style="max-width: 180px;">${mandat.adresse || '-'}</div>
-                            ${mandat.npa || mandat.ville ? `<div class="text-[10px] text-gray-500 dark:text-gray-400">${mandat.npa || ''} ${mandat.ville || ''}</div>` : ''}
+                            ${addressCell}
                         </td>
+
+                        <!-- Type -->
                         <td class="px-3 py-3 whitespace-nowrap">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
                                 ${typeLabels[mandat.type_intervention] || mandat.type_intervention}
                             </span>
                         </td>
+
+                        <!-- Planifié (Date / Tech) -->
                         <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
-                            ${plannedDate ? `
-                                <div class="flex flex-col gap-0.5">
-                                    <span class="font-medium">${new Date(plannedDate).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'})}</span>
-                                    ${plannedTech ? `<span class="text-[10px] text-gray-400 dark:text-gray-500">${plannedTech}</span>` : ''}
-                                </div>
-                            ` : '-'}
+                            ${plannedCell}
                         </td>
+
+                        <!-- Statut -->
                         <td class="px-3 py-3 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[actualStatut]}">
-                                ${statusLabels[actualStatut] || actualStatut}
-                            </span>
+                            ${statusBadge}
                         </td>
-                        <td class="px-3 py-3 whitespace-nowrap text-center">
+
+                        <!-- Actions (Reste inchangé) -->
+                        <td class="px-3 py-3 whitespace-nowrap text-center" onclick="event.stopPropagation()">
                             <div class="flex flex-col items-center gap-1">
-                                ${mandat.tu ? `<span class="text-[10px] text-gray-600 dark:text-gray-400 font-medium truncate" style="max-width: 80px;">${mandat.tu}</span>` : '<span class="text-[10px] text-gray-400">-</span>'}
+                                ${mandat.tu ? `<span class="text-[10px] text-gray-600 dark:text-gray-400 font-medium truncate" style="max-width: 80px;">${mandat.tu}</span>` : ''}
                                 <div class="flex items-center gap-1">
                                     <button data-mandat-id="${mandat.id}" 
                                             data-mandat-number="${mandat.numero_mandat}" 
@@ -1835,9 +2270,9 @@
             const rows = document.querySelectorAll('.mandat-row');
 
             rows.forEach(row => {
-                const searchText = row.getAttribute('data-search');
-                const statut = row.getAttribute('data-statut');
-                const type = row.getAttribute('data-type');
+                const searchText = row.getAttribute('data-search') || '';
+                const statut = row.getAttribute('data-statut') || '';
+                const type = row.getAttribute('data-type') || '';
                 
                 const matchesSearch = searchText.includes(searchTerm);
                 const matchesStatut = statutFilter === 'All' || statut === statutFilter;
@@ -1974,15 +2409,23 @@
             }
         }
 
+        // Fonction pour afficher les détails d'un mandat (appelée au clic sur une ligne)
+        function showMandatDetails(mandatId) {
+            // Pour l'instant, ne rien faire (ou ouvrir un modal de détails si nécessaire)
+            console.log('Détails du mandat:', mandatId);
+            // Si besoin d'un modal de détails, décommenter :
+            // openMandatDetailsModal(mandatId);
+        }
+
         async function openAssignTechniciansModal(mandatId, mandatNumber) {
             currentMandatId = mandatId;
             document.getElementById('assignMandatNumber').textContent = mandatNumber;
             
-            // Get currently assigned technicians
+            // Get currently assigned technicians from mandat_techniciens table
             const { data: assignedTechs } = await window.supabase
                 .from('mandat_techniciens')
                 .select('employee_id')
-                .eq('mandat_id', mandatId);
+                .eq('appointment_id', mandatId);
             
             const assignedIds = assignedTechs ? assignedTechs.map(t => t.employee_id) : [];
             
@@ -2002,6 +2445,7 @@
                                id="tech_${emp.id}" 
                                value="${emp.id}" 
                                ${isChecked ? 'checked' : ''}
+                               onchange="updateSelectAllCheckbox()"
                                class="rounded border-gray-300 text-primary focus:ring-primary">
                         <label for="tech_${emp.id}" class="ml-3 flex-1 cursor-pointer">
                             <div class="text-sm font-medium text-gray-900 dark:text-white">${emp.first_name} ${emp.last_name}</div>
@@ -2013,6 +2457,42 @@
             }
             
             openModal('assignTechniciansModal');
+            
+            // Mettre à jour l'état de la case "Tout sélectionner"
+            updateSelectAllCheckbox();
+        }
+        
+        // Fonction pour tout sélectionner/désélectionner
+        function toggleAllTechnicians(checked) {
+            const checkboxes = document.querySelectorAll('#techniciansList input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+            });
+        }
+        
+        // Mettre à jour l'état de la case "Tout sélectionner" selon l'état des cases individuelles
+        function updateSelectAllCheckbox() {
+            const checkboxes = document.querySelectorAll('#techniciansList input[type="checkbox"]');
+            const selectAllCheckbox = document.getElementById('selectAllTechs');
+            
+            if (checkboxes.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+                return;
+            }
+            
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            
+            if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === checkboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
         }
 
         async function saveAssignedTechnicians() {
@@ -2029,12 +2509,12 @@
                 await window.supabase
                     .from('mandat_techniciens')
                     .delete()
-                    .eq('mandat_id', currentMandatId);
+                    .eq('appointment_id', currentMandatId);
                 
                 // Then, insert new assignments
                 if (selectedTechIds.length > 0) {
                     const assignments = selectedTechIds.map(techId => ({
-                        mandat_id: currentMandatId,
+                        appointment_id: currentMandatId,
                         employee_id: techId
                     }));
                     
@@ -2043,18 +2523,6 @@
                         .insert(assignments);
                     
                     if (error) throw error;
-                    
-                    // Update mandat status to "assigne" if technicians are assigned
-                    await window.supabase
-                        .from('mandats')
-                        .update({ statut: 'assigne' })
-                        .eq('id', currentMandatId);
-                } else {
-                    // If no technicians assigned, set status back to "en_attente"
-                    await window.supabase
-                        .from('mandats')
-                        .update({ statut: 'en_attente' })
-                        .eq('id', currentMandatId);
                 }
                 
                 closeModal('assignTechniciansModal');
